@@ -8,7 +8,7 @@ from typing import Any
 
 import pandas as pd
 
-from .config import GRID_SEARCH_DIR, METRICS_DIR
+from .config import GRID_SEARCH_DIR, METRICS_DIR, PREDICTIONS_DIR
 
 
 def _slugifier(valeur: str) -> str:
@@ -44,6 +44,30 @@ def sauvegarder_placeholder_tuning(
     return _ecrire_json(GRID_SEARCH_DIR / nom_fichier, contenu)
 
 
+def sauvegarder_resultats_grid_search(
+    nom_modele: str,
+    tableau: pd.DataFrame,
+) -> Path:
+    """Sauvegarde le tableau brut d'un GridSearchCV dans `results/grid_search`."""
+    chemin = GRID_SEARCH_DIR / f"{_slugifier(nom_modele)}__grid_search.csv"
+    chemin.parent.mkdir(parents=True, exist_ok=True)
+    tableau.to_csv(chemin, index=False, encoding="utf-8")
+    return chemin
+
+
+def sauvegarder_predictions(
+    nom_modele: str,
+    variante: str,
+    tableau: pd.DataFrame,
+) -> Path:
+    """Sauvegarde les predictions detaillees dans `results/predictions`."""
+    nom_fichier = f"{_slugifier(nom_modele)}__{_slugifier(variante)}__predictions.csv"
+    chemin = PREDICTIONS_DIR / nom_fichier
+    chemin.parent.mkdir(parents=True, exist_ok=True)
+    tableau.to_csv(chemin, index=False, encoding="utf-8")
+    return chemin
+
+
 def charger_mesures() -> list[dict[str, Any]]:
     """Charge tous les JSON de mesures actuellement disponibles."""
     enregistrements: list[dict[str, Any]] = []
@@ -58,4 +82,3 @@ def charger_mesures() -> list[dict[str, Any]]:
 def charger_tableau_mesures() -> pd.DataFrame:
     """Retourne les mesures sous forme tabulaire."""
     return pd.DataFrame(charger_mesures())
-

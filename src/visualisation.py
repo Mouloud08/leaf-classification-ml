@@ -1,28 +1,144 @@
-"""Fonctions de visualisation reutilisables pour les notebooks."""
+"""Reusable visualization helpers for the project notebooks."""
 
 from __future__ import annotations
 
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
 import pandas as pd
 import seaborn as sns
+
+
+def _format_label(text: str) -> str:
+    """Convert internal metric or column names into presentation labels."""
+    replacements = {
+        "val_accuracy_mean": "Validation Accuracy",
+        "val_f1_macro_mean": "Validation F1-Macro",
+        "train_accuracy_mean": "Train Accuracy",
+        "train_f1_macro_mean": "Train F1-Macro",
+        "generalization_gap_accuracy": "Accuracy Gap",
+        "generalization_gap_f1_macro": "F1-Macro Gap",
+        "elapsed_seconds": "Elapsed Seconds",
+        "modele": "Model",
+        "variante": "Variant",
+        "nombre_erreurs": "Number of Errors",
+        "classe_vraie": "True Class",
+        "classe_predite": "Predicted Class",
+        "param_modele__alpha": "Alpha",
+        "param_modele__penalty": "Penalty",
+    }
+    if text in replacements:
+        return replacements[text]
+    return text.replace("_", " ").title()
 
 
 def tracer_barres_comparaison(
     tableau: pd.DataFrame,
     metrique: str = "val_f1_macro_mean",
-    titre: str = "Comparaison des performances",
+    titre: str = "Performance Comparison",
 ) -> plt.Axes:
-    """Trace un barplot simple a partir du tableau de resultats."""
+    """Plot a ranked model comparison bar chart."""
     if tableau.empty:
-        raise ValueError("Le tableau de resultats est vide.")
+        raise ValueError("The results table is empty.")
 
-    ordre = tableau.sort_values(by=metrique, ascending=False)
-    figure, axe = plt.subplots(figsize=(12, 6))
-    sns.barplot(data=ordre, x="modele", y=metrique, hue="variante", ax=axe)
+    ordre_modeles = (
+        tableau.groupby("modele")[metrique]
+        .mean()
+        .sort_values(ascending=False)
+        .index
+    )
+
+    figure, axe = plt.subplots(figsize=(10.8, 6.2))
+    sns.barplot(
+        data=tableau,
+        x="modele",
+        y=metrique,
+        hue="variante",
+        order=ordre_modeles,
+        palette="mako",
+        ax=axe,
+    )
     axe.set_title(titre)
-    axe.set_xlabel("Modele")
-    axe.set_ylabel(metrique)
-    axe.tick_params(axis="x", rotation=30)
+    axe.set_xlabel("Model", fontweight="bold")
+    axe.set_ylabel(_format_label(metrique), fontweight="bold")
+    axe.set_xticks(axe.get_xticks())
+    axe.set_xticklabels(axe.get_xticklabels(), rotation=45, ha="right")
+    sns.move_legend(
+        axe,
+        "upper left",
+        bbox_to_anchor=(1.02, 1),
+        frameon=False,
+        title="Variant",
+    )
+    sns.despine(ax=axe)
+    figure.tight_layout()
+    return axe
+
+
+def tracer_comparaison_variantes(
+    tableau: pd.DataFrame,
+    colonnes_metriques: list[str],
+    titre: str = "Variant Comparison",
+) -> plt.Axes:
+    """Compare multiple variants of the same model across metrics."""
+    if tableau.empty:
+        raise ValueError("The results table is empty.")
+
+    donnees = tableau.copy()
+    donnees = donnees.melt(
+        id_vars=["variante"],
+        value_vars=colonnes_metriques,
+        var_name="metrique",
+        value_name="score",
+    )
+    donnees["metrique"] = donnees["metrique"].map(_format_label)
+
+    ordre_metriques = [
+        _format_label(metric_name)
+        for metric_name in colonnes_metriques
+    ]
+    donnees["metrique"] = pd.Categorical(
+        donnees["metrique"],
+        categories=ordre_metriques,
+        ordered=True,
+    )
+
+    palette_reference = {
+        "Validation Accuracy": "#4C78A8",
+        "Validation F1-Macro": "#F58518",
+        "Train Accuracy": "#72B7B2",
+        "Train F1-Macro": "#E45756",
+        "Accuracy Gap": "#54A24B",
+        "F1-Macro Gap": "#B279A2",
+    }
+    palette = {
+        metric_name: palette_reference.get(metric_name, color)
+        for metric_name, color in zip(
+            ordre_metriques,
+            sns.color_palette("Set2", n_colors=max(len(ordre_metriques), 1)),
+        )
+    }
+
+    figure, axe = plt.subplots(figsize=(9.6, 5.6))
+    sns.barplot(
+        data=donnees,
+        x="variante",
+        y="score",
+        hue="metrique",
+        palette=palette,
+        ax=axe,
+    )
+    axe.set_title(titre)
+    axe.set_xlabel("Variant")
+    axe.set_ylabel("Score")
+    axe.set_ylim(0, 1.0)
+    sns.move_legend(
+        axe,
+        "upper left",
+        bbox_to_anchor=(1.02, 1),
+        frameon=False,
+        title="Metric",
+    )
+    sns.despine(ax=axe)
     figure.tight_layout()
     return axe
 
@@ -31,11 +147,11 @@ def tracer_temps_vs_performance(
     tableau: pd.DataFrame,
     metrique: str = "val_f1_macro_mean",
 ) -> plt.Axes:
-    """Trace un nuage de points temps d'entrainement vs performance."""
+    """Plot training time against a chosen performance metric."""
     if tableau.empty:
-        raise ValueError("Le tableau de resultats est vide.")
+        raise ValueError("The results table is empty.")
 
-    figure, axe = plt.subplots(figsize=(10, 6))
+    figure, axe = plt.subplots(figsize=(11, 6.5))
     sns.scatterplot(
         data=tableau,
         x="elapsed_seconds",
@@ -43,34 +159,83 @@ def tracer_temps_vs_performance(
         hue="modele",
         style="variante",
         s=120,
+        alpha=0.75,
         ax=axe,
     )
-    axe.set_title("Compromis temps / performance")
-    axe.set_xlabel("Temps total de CV (secondes)")
-    axe.set_ylabel(metrique)
+    axe.set_title("Training Time vs Performance")
+    axe.set_xlabel("Total CV Time (seconds)", fontweight="bold")
+    axe.set_ylabel(_format_label(metrique), fontweight="bold")
+    sns.move_legend(
+        axe,
+        "upper left",
+        bbox_to_anchor=(1.02, 1),
+        frameon=False,
+    )
+    sns.despine(ax=axe)
     figure.tight_layout()
     return axe
 
 
 def tracer_top_confusions(
     tableau_confusions: pd.DataFrame,
-    titre: str = "Top confusions",
+    top_n: int = 10,
+    titre: str = "Top Confusions",
 ) -> plt.Axes:
-    """Trace les confusions les plus frequentes."""
+    """Plot the most frequent confusion pairs."""
     if tableau_confusions.empty:
-        raise ValueError("Aucune confusion a tracer.")
+        raise ValueError("There are no confusions to plot.")
 
-    donnees = tableau_confusions.copy()
+    donnees = (
+        tableau_confusions.sort_values(by="nombre_erreurs", ascending=False)
+        .head(top_n)
+        .copy()
+    )
     donnees["pair"] = (
         donnees["classe_vraie"].astype(str)
         + " -> "
         + donnees["classe_predite"].astype(str)
     )
-    figure, axe = plt.subplots(figsize=(12, 6))
-    sns.barplot(data=donnees, x="nombre_erreurs", y="pair", ax=axe)
-    axe.set_title(titre)
-    axe.set_xlabel("Nombre d'erreurs")
-    axe.set_ylabel("Confusion")
+    figure, axe = plt.subplots(figsize=(10.8, 6.2))
+    sns.barplot(
+        data=donnees,
+        x="nombre_erreurs",
+        y="pair",
+        color="#4C78A8",
+        ax=axe,
+    )
+    axe.set_title(f"{titre} (Top {top_n})")
+    axe.set_xlabel("Number of Errors", fontweight="bold")
+    axe.set_ylabel("Confusion Pair (True -> Predicted)", fontweight="bold")
+    axe.xaxis.set_major_locator(MaxNLocator(integer=True))
+    sns.despine(ax=axe)
     figure.tight_layout()
     return axe
 
+
+def tracer_heatmap_tuning(
+    tableau: pd.DataFrame,
+    x: str,
+    y: str,
+    valeur: str,
+    titre: str = "Tuning Heatmap",
+) -> plt.Axes:
+    """Plot a hyperparameter tuning heatmap."""
+    if tableau.empty:
+        raise ValueError("The tuning table is empty.")
+
+    donnees = tableau.copy()
+    donnees = donnees.pivot_table(index=y, columns=x, values=valeur, aggfunc="mean")
+    figure, axe = plt.subplots(figsize=(9, 7))
+    sns.heatmap(
+        donnees,
+        annot=True,
+        fmt=".3f",
+        cmap="crest",
+        linewidths=0.5,
+        ax=axe,
+    )
+    axe.set_title(titre)
+    axe.set_xlabel(_format_label(x), fontweight="bold")
+    axe.set_ylabel(_format_label(y), fontweight="bold")
+    figure.tight_layout()
+    return axe
