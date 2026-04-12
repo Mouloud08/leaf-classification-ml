@@ -1,0 +1,205 @@
+"""Validation stricte des artefacts de metriques."""
+
+from __future__ import annotations
+
+import math
+from typing import Any
+
+import pandas as pd
+
+from ..config import TIMING_POLICY
+from .schema import (
+    METRICS_SCHEMA_VERSION,
+    NESTED_CV_INVALID_FIELDS,
+    REQUIRED_METRIC_KEYS,
+    VALID_EVALUATION_STAGES,
+    VALID_SELECTION_PROTOCOLS,
+)
+
+
+class MetricsArtifactValidationError(ValueError):
+    """Raised when saved metrics artifacts do not match the report-safe schema."""
+
+
+STAGE_MAP: dict[str, str] = {
+    "simple": "baseline",
+    "default": "baseline",
+    "preprocessed": "improved_untuned",
+    "scaled_only": "improved_untuned",
+    "scaled_pca": "improved_untuned",
+    "restricted_depth": "improved_untuned",
+    "conservative_learning": "improved_untuned",
+    "tuned": "tuned",
+}
+
+LEGACY_KEYS: frozenset[str] = frozenset(
+    {
+        "perceptron__simple",
+        "perceptron__preprocessed",
+        "adaboost__default",
+        "adaboost__conservative_learning",
+        "adaboost__tuned",
+    }
+)
+
+
+def derive_stage(variante: str) -> str:
+    return STAGE_MAP.get(str(variante).lower(), "autre")
+
+
+def derive_selection_protocol(variante: str, contenu: dict[str, Any]) -> str:
+    protocole = contenu.get("selection_protocol")
+    if protocole:
+        return str(protocole)
+    if str(variante).lower() == "tuned":
+        return "nested_cv"
+    return "simple_cv"
+
+
+def _is_nan_like(valeur: Any) -> bool:
+    if valeur is None:
+        return True
+    if isinstance(valeur, float):
+        return math.isnan(valeur)
+    return False
+
+
+def _prefixer(source: str | None, message: str) -> str:
+    return f"{source}: {message}" if source else message
+
+
+def valider_enregistrement_mesures(
+    enregistrement: dict[str, Any],
+    source: str | None = None,
+) -> list[str]:
+    """Valide un enregistrement de metriques contre le schema."""
+    erreurs: list[str] = []
+
+    for cle in sorted(REQUIRED_METRIC_KEYS):
+        if cle not in enregistrement:
+            erreurs.append(_prefixer(source, f"champ requis manquant: {cle}"))
+
+    if erreurs:
+        return erreurs
+
+    protocole = str(enregistrement["selection_protocol"])
+    if protocole not in VALID_SELECTION_PROTOCOLS:
+        erreurs.append(
+            _prefixer(source, f"selection_protocol invalide: {protocole}")
+        )
+
+    stade = str(enregistrement["evaluation_stage"])
+    if stade not in VALID_EVALUATION_STAGES:
+        erreurs.append(
+            _prefixer(source, f"evaluation_stage invalide: {stade}")
+        )
+
+    variante = str(enregistrement["variante"]).lower()
+    stade_attendu = derive_stage(variante)
+    if stade != stade_attendu:
+        erreurs.append(
+            _prefixer(
+                source,
+                f"evaluation_stage incoherent pour la variante '{variante}': "
+                f"{stade} != {stade_attendu}",
+            )
+        )
+
+    if str(enregistrement["timing_policy"]) != TIMING_POLICY:
+        erreurs.append(
+            _prefixer(
+                source,
+                f"timing_policy incoherent: "
+                f"{enregistrement['timing_policy']} != {TIMING_POLICY}",
+            )
+        )
+
+    if variante == "tuned" and protocole != "nested_cv":
+        erreurs.append(
+            _prefixer(
+                source,
+                "une variante tuned doit utiliser selection_protocol='nested_cv'",
+            )
+        )
+
+    if protocole == "nested_cv":
+        if "inner_splits" not in enregistrement:
+            erreurs.append(
+                _prefixer(source, "inner_splits manquant pour un artefact nested_cv")
+            )
+        for champ in NESTED_CV_INVALID_FIELDS:
+            if not _is_nan_like(enregistrement.get(champ)):
+                erreurs.append(
+                    _prefixer(
+                        source,
+                        f"{champ} doit etre NaN/null pour un artefact nested_cv",
+                    )
+                )
+    elif "n_splits" not in enregistrement:
+        erreurs.append(
+            _prefixer(source, "n_splits manquant pour un artefact simple_cv")
+        )
+
+    return erreurs
+
+
+def valider_artefacts_mesures(
+    enregistrements: list[dict[str, Any]],
+    sources: list[str] | None = None,
+) -> list[str]:
+    """Retourne la liste complete des erreurs de schema et protocole."""
+    erreurs: list[str] = []
+    for index, enregistrement in enumerate(enregistrements):
+        source = None if sources is None else sources[index]
+        erreurs.extend(valider_enregistrement_mesures(enregistrement, source=source))
+    return erreurs
+
+
+def normaliser_stades(df: pd.DataFrame) -> pd.DataFrame:
+    """Ajoute une colonne 'stade' (baseline / improved_untuned / tuned)."""
+    if df.empty:
+        return df.copy()
+    resultat = df.copy()
+    if "evaluation_stage" in resultat.columns:
+        resultat["stade"] = resultat["evaluation_stage"].fillna("autre")
+    elif "variante" in resultat.columns:
+        resultat["stade"] = resultat["variante"].map(
+            lambda v: STAGE_MAP.get(str(v).lower(), "autre")
+        )
+    else:
+        resultat["stade"] = "autre"
+    return resultat
+
+
+def filtrer_legacy(df: pd.DataFrame) -> pd.DataFrame:
+    """Retire les artefacts legacy qui polluent la comparaison."""
+    if df.empty or "modele" not in df.columns or "variante" not in df.columns:
+        return df.copy()
+    cle = (
+        df["modele"].astype(str).str.lower()
+        + "__"
+        + df["variante"].astype(str).str.lower()
+    )
+    masque = ~cle.isin(LEGACY_KEYS)
+    return df[masque].reset_index(drop=True)
+
+
+def normaliser_mesures_pour_schema(
+    nom_modele: str,
+    variante: str,
+    mesures: dict[str, Any],
+) -> dict[str, Any]:
+    """Normalise un dict de metriques pour le rendre conforme au schema."""
+    contenu = dict(mesures)
+    contenu["modele"] = nom_modele
+    contenu["variante"] = variante
+    contenu.setdefault("schema_version", METRICS_SCHEMA_VERSION)
+    contenu["selection_protocol"] = derive_selection_protocol(variante, contenu)
+    contenu["evaluation_stage"] = derive_stage(variante)
+    contenu.setdefault("timing_policy", TIMING_POLICY)
+
+    if contenu["selection_protocol"] == "nested_cv":
+        for champ in NESTED_CV_INVALID_FIELDS:
+            contenu[champ] = float("nan")
+
+    return contenu

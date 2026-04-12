@@ -22,4 +22,16 @@ PRIMARY_METRIC = "f1_macro"
 SECONDARY_METRIC = "accuracy"
 PCA_COMPONENTS = 116
 CV_N_JOBS = 1
-SUPPORTED_VARIANTS = ("simple", "preprocessed", "tuned_placeholder")
+METRICS_SCHEMA_VERSION = 2
+TIMING_POLICY = f"cv_n_jobs={CV_N_JOBS}"
+SUPPORTED_VARIANTS = (
+    "simple",
+    "preprocessed",
+    "default",
+    "scaled_only",
+    "scaled_pca",
+    "restricted_depth",
+    "conservative_learning",
+    "tuned",
+    "tuned_placeholder",
+)

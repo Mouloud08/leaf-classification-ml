@@ -1,6 +1,5 @@
-"""Pont de compatibilite vers les utilitaires de donnees actuels."""
+"""Package de donnees — chargement et validation."""
 
 from .donnees import LeafDataLoader, charger_donnees
 
 __all__ = ["LeafDataLoader", "charger_donnees"]
-

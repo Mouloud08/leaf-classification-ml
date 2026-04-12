@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 
-from .config import DEFAULT_TRAIN_CSV
+from ..config import DEFAULT_TRAIN_CSV
 
 
 def _resoudre_csv(csv_path: str | Path | None = None) -> Path:
@@ -69,4 +69,3 @@ class LeafDataLoader:
     def decoder_labels(self, y_encoded: np.ndarray) -> np.ndarray:
         """Decode les classes numeriques vers les noms d'especes."""
         return self.label_encoder.inverse_transform(y_encoded)
-

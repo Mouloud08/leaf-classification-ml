@@ -23,10 +23,9 @@ Projet_Session_IFT712/
 │   ├── 03_Modele_Regression_Logistique.ipynb
 │   ├── 04_Modele_SVM.ipynb
 │   ├── 05_Modele_Foret_Aleatoire.ipynb
-│   ├── 06_Modele_AdaBoost.ipynb
+│   ├── 06_Modele_Arbre_Decision.ipynb
 │   ├── 07_Modele_MLP.ipynb
-│   ├── 08_Comparaison_Globale.ipynb
-│   └── 09_Bonus_Ensemble.ipynb
+│   └── 08_Comparaison_Globale.ipynb
 ├── results/
 │   ├── metrics/
 │   ├── grid_search/
@@ -35,16 +34,14 @@ Projet_Session_IFT712/
 │   └── models/
 ├── src/
 │   ├── config.py
-│   ├── donnees.py
-│   ├── data_manager.py
-│   ├── pipelines.py
-│   ├── modeles.py
-│   ├── models.py
-│   ├── evaluation.py
-│   ├── evaluator.py
-│   ├── visualisation.py
-│   ├── plotting.py
-│   ├── resultats.py
+│   ├── data/
+│   ├── evaluation/
+│   ├── experiments/
+│   ├── models/
+│   ├── plots/
+│   ├── artifacts/
+│   ├── notebook_support.py
+│   ├── cli/
 │   └── __init__.py
 ├── models/                  # artefacts legacy de l'ancienne version
 ├── requirements.txt
@@ -63,7 +60,6 @@ pip install -r requirements.txt
 2. Executer `01_Exploratory_Data_Analysis.ipynb`.
 3. Executer les notebooks `02` a `07`.
 4. Executer `08_Comparaison_Globale.ipynb`.
-5. Completer ensuite `09_Bonus_Ensemble.ipynb`.
 
 ## Regle commune des notebooks modeles
 
@@ -71,12 +67,17 @@ Chaque notebook `02` a `07` suit la meme structure :
 
 1. baseline simple sans preprocessing ;
 2. variante amelioree avec preprocessing adapte ;
-3. tuning en boilerplate seulement pour la v1.
+3. tuning et comparaison finale avec validation croisee imbriquee.
 
 ## Notes
 
 - L'EDA actuel est garde tel quel.
-- Les wrappers `src/data_manager.py`, `src/models.py` et `src/evaluator.py`
-  sont presents pour ne pas casser l'ancien notebook.
+- Les facades `src/modeles.py`, `src/pipelines.py` et `src/visualisation.py`
+  preservent les imports utilises par les notebooks.
 - Le dossier `models/` existant reste en place comme legacy, mais la nouvelle
   source de verite pour les artefacts est `results/`.
+- Les scores `tuned` sauvegardes dans `results/metrics/` proviennent d'une
+  validation croisee imbriquee, afin d'eviter le biais de selection.
+- Les figures prefixees `exploratory__` sont des diagnostics descriptifs
+  refittes sur tout le dataset; elles ne doivent pas etre interpretees comme
+  preuve confirmatoire au meme titre que les metriques CV/nested CV.

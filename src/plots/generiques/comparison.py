@@ -1,9 +1,8 @@
-"""Reusable visualization helpers for the project notebooks."""
+"""Graphiques de comparaison entre modeles et variantes."""
 
 from __future__ import annotations
 
 import matplotlib.pyplot as plt
-from matplotlib.ticker import MaxNLocator
 import pandas as pd
 import seaborn as sns
 
@@ -21,10 +20,32 @@ def _format_label(text: str) -> str:
         "modele": "Model",
         "variante": "Variant",
         "nombre_erreurs": "Number of Errors",
+        "classe": "Class",
         "classe_vraie": "True Class",
         "classe_predite": "Predicted Class",
+        "precision": "Precision",
+        "recall": "Recall",
+        "f1": "F1 Score",
+        "support": "Support",
+        "fpr": "False Positive Rate",
+        "fnr": "False Negative Rate",
+        "specificite": "Specificity",
+        "param_modele__C": "C",
+        "param_modele__gamma": "Gamma",
         "param_modele__alpha": "Alpha",
         "param_modele__penalty": "Penalty",
+        "param_modele__n_estimators": "Number of Estimators",
+        "param_modele__max_depth": "Max Depth",
+        "param_modele__min_samples_leaf": "Min Samples per Leaf",
+        "param_modele__criterion": "Criterion",
+        "param_modele__learning_rate": "Learning Rate",
+        "param_modele__hidden_layer_sizes": "Hidden Layer Sizes",
+        "param_n_estimators": "Number of Estimators",
+        "param_max_depth": "Max Depth",
+        "param_min_samples_leaf": "Min Samples per Leaf",
+        "param_criterion": "Criterion",
+        "param_learning_rate": "Learning Rate",
+        "param_hidden_layer_sizes": "Hidden Layer Sizes",
     }
     if text in replacements:
         return replacements[text]
@@ -172,70 +193,5 @@ def tracer_temps_vs_performance(
         frameon=False,
     )
     sns.despine(ax=axe)
-    figure.tight_layout()
-    return axe
-
-
-def tracer_top_confusions(
-    tableau_confusions: pd.DataFrame,
-    top_n: int = 10,
-    titre: str = "Top Confusions",
-) -> plt.Axes:
-    """Plot the most frequent confusion pairs."""
-    if tableau_confusions.empty:
-        raise ValueError("There are no confusions to plot.")
-
-    donnees = (
-        tableau_confusions.sort_values(by="nombre_erreurs", ascending=False)
-        .head(top_n)
-        .copy()
-    )
-    donnees["pair"] = (
-        donnees["classe_vraie"].astype(str)
-        + " -> "
-        + donnees["classe_predite"].astype(str)
-    )
-    figure, axe = plt.subplots(figsize=(10.8, 6.2))
-    sns.barplot(
-        data=donnees,
-        x="nombre_erreurs",
-        y="pair",
-        color="#4C78A8",
-        ax=axe,
-    )
-    axe.set_title(f"{titre} (Top {top_n})")
-    axe.set_xlabel("Number of Errors", fontweight="bold")
-    axe.set_ylabel("Confusion Pair (True -> Predicted)", fontweight="bold")
-    axe.xaxis.set_major_locator(MaxNLocator(integer=True))
-    sns.despine(ax=axe)
-    figure.tight_layout()
-    return axe
-
-
-def tracer_heatmap_tuning(
-    tableau: pd.DataFrame,
-    x: str,
-    y: str,
-    valeur: str,
-    titre: str = "Tuning Heatmap",
-) -> plt.Axes:
-    """Plot a hyperparameter tuning heatmap."""
-    if tableau.empty:
-        raise ValueError("The tuning table is empty.")
-
-    donnees = tableau.copy()
-    donnees = donnees.pivot_table(index=y, columns=x, values=valeur, aggfunc="mean")
-    figure, axe = plt.subplots(figsize=(9, 7))
-    sns.heatmap(
-        donnees,
-        annot=True,
-        fmt=".3f",
-        cmap="crest",
-        linewidths=0.5,
-        ax=axe,
-    )
-    axe.set_title(titre)
-    axe.set_xlabel(_format_label(x), fontweight="bold")
-    axe.set_ylabel(_format_label(y), fontweight="bold")
     figure.tight_layout()
     return axe
