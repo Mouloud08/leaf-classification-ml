@@ -11,12 +11,33 @@ def tracer_decision_function_histogram(
     donnees: pd.DataFrame,
     titre: str = "Decision Function Distribution",
 ) -> plt.Figure:
-    """Trace l'histogramme de la decision function."""
+    """Trace l'histogramme de la decision function colore par statut de prediction.
+
+    Si la colonne ``correct`` est presente, les predictions correctes sont
+    affichees en vert et les erreurs en rouge — meme convention que
+    l'histogramme de confiance du MLP.
+    """
     fig, ax = plt.subplots(figsize=(10, 6))
-    ax.hist(donnees["score"], bins=50, color="#4C78A8", alpha=0.75, edgecolor="white")
+
+    if "correct" in donnees.columns:
+        bins = 50
+        ax.hist(
+            donnees.loc[donnees["correct"], "score"],
+            bins=bins, color="#54A24B", alpha=0.75, edgecolor="white",
+            label="Correct",
+        )
+        ax.hist(
+            donnees.loc[~donnees["correct"], "score"],
+            bins=bins, color="#E45756", alpha=0.75, edgecolor="white",
+            label="Erreurs",
+        )
+        ax.legend(frameon=False)
+    else:
+        ax.hist(donnees["score"], bins=50, color="#4C78A8", alpha=0.75, edgecolor="white")
+
     ax.set_title(titre)
-    ax.set_xlabel("Decision Function Score", fontweight="bold")
-    ax.set_ylabel("Count", fontweight="bold")
+    ax.set_xlabel("Max Decision Function Score", fontweight="bold")
+    ax.set_ylabel("Nombre de predictions", fontweight="bold")
     sns.despine(ax=ax)
     fig.tight_layout()
     return fig

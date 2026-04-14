@@ -1,7 +1,5 @@
 """Package d'evaluation — metriques pures, validation croisee, diagnostics."""
 
-from ..config import CV_N_JOBS  # noqa: F401 — re-exporte pour mutation par les notebooks
-
 from .evaluateur import (  # noqa: F401
     ModelEvaluator,
     comparer_variantes,
@@ -43,7 +41,6 @@ from .sanity_checks import (  # noqa: F401
 
 __all__ = [
     "CHANCE_LEVEL",
-    "CV_N_JOBS",
     "calculer_brier_score_multiclasse",
     "ModelEvaluator",
     "calculer_metriques",

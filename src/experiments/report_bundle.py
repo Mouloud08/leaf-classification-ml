@@ -10,6 +10,7 @@ import pandas as pd
 
 from ..artifacts import (
     StudyRunResult,
+    canonical_artifact_completeness,
     global_paths,
 )
 from ..artifacts.schema import METRICS_SCHEMA_VERSION
@@ -111,15 +112,16 @@ def generer_comparaison_globale(
         df = df.sort_values("val_f1_macro_mean", ascending=False).reset_index(drop=True)
         df.to_csv(paths.metrics_summary_file, index=False, encoding="utf-8")
 
-        # Classement par meilleur score par modele
-        ranked = (
-            df.groupby("modele")["val_f1_macro_mean"]
-            .max()
-            .sort_values(ascending=False)
-            .reset_index()
-        )
-        ranked.columns = ["modele", "best_f1_macro"]
-        ranked["rank"] = range(1, len(ranked) + 1)
-        ranked.to_csv(paths.ranked_models_file, index=False, encoding="utf-8")
+        completeness = canonical_artifact_completeness(study.models, root=study.output_root)
+        if bool(completeness["canonical_complete"].all()):
+            ranked = (
+                df.groupby("modele")["val_f1_macro_mean"]
+                .max()
+                .sort_values(ascending=False)
+                .reset_index()
+            )
+            ranked.columns = ["modele", "best_f1_macro"]
+            ranked["rank"] = range(1, len(ranked) + 1)
+            ranked.to_csv(paths.ranked_models_file, index=False, encoding="utf-8")
 
     return df

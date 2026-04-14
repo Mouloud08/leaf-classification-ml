@@ -65,6 +65,7 @@ class TuningRunResult:
     evaluation_stage: str = "tuned"
     best_params_exploratory: dict[str, Any] = field(default_factory=dict)
     best_params_per_fold: list[dict[str, Any]] = field(default_factory=list)
+    outer_fold_metrics: list[dict[str, Any]] = field(default_factory=list)
     exploratory_tuning_seconds: float = 0.0
     fit_time_mean: float = 0.0
     score_time_mean: float = 0.0
@@ -88,22 +89,12 @@ class TuningRunResult:
             "inner_splits": self.inner_splits,
             "best_params_exploratory": self.best_params_exploratory,
             "best_params_per_fold": self.best_params_per_fold,
+            "outer_fold_metrics": self.outer_fold_metrics,
             "exploratory_tuning_seconds": self.exploratory_tuning_seconds,
             "fit_time_mean": self.fit_time_mean,
             "score_time_mean": self.score_time_mean,
         }
         return result
-
-
-@dataclass(frozen=True)
-class NestedEvaluationResult:
-    """Resultat brut de la nested CV avant assemblage en TuningRunResult."""
-
-    metrics: dict[str, Any]
-    outer_fold_metrics: Any  # pd.DataFrame
-    best_params_per_fold: Any  # pd.DataFrame
-    oof_predictions: Any  # pd.DataFrame
-    oof_probabilities: Any | None  # pd.DataFrame | None
 
 
 @dataclass(frozen=True)

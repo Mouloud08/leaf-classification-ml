@@ -8,11 +8,13 @@ Regle 5 des bonnes pratiques ML :
 
 from __future__ import annotations
 
+import warnings
 from typing import Any
 
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.neural_network import MLPClassifier
 
 from ..config import RANDOM_SEED
@@ -68,15 +70,22 @@ def verifier_overfit_petit_echantillon(
         hidden_layer_sizes=(64, 32),
         max_iter=max_iter,
         random_state=random_state,
+        solver="lbfgs",
         tol=1e-8,
     )
-    mlp.fit(X_mini, y_mini)
+    with warnings.catch_warnings(record=True) as warning_list:
+        warnings.simplefilter("always", ConvergenceWarning)
+        mlp.fit(X_mini, y_mini)
 
     train_accuracy = float(mlp.score(X_mini, y_mini))
     final_loss = float(mlp.loss_) if hasattr(mlp, "loss_") else float("nan")
+    convergence_warning = any(
+        issubclass(w.category, ConvergenceWarning) for w in warning_list
+    )
 
     return {
         "train_accuracy": train_accuracy,
         "final_loss": final_loss,
         "overfit_ok": train_accuracy >= 0.95,
+        "converged": not convergence_warning,
     }

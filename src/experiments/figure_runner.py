@@ -38,8 +38,7 @@ from ..evaluation.diagnostics_specifiques import (
     coefficients_absolus,
     compute_learning_curve,
     decision_function_histogram,
-    feature_importance_arbre,
-    importance_avec_dispersion,
+    importance_oob_foret,
     loss_curve_mlp,
     oob_vs_n_estimators,
     regularization_path,
@@ -229,10 +228,6 @@ def _dispatch_figure(
         data = validation_curve_max_depth(estimateur, X, y)
         return plots_arbre.tracer_validation_curve_max_depth(data)
 
-    if fig_name == "feature_importance" and model_name == "arbre_decision":
-        data = feature_importance_arbre(estimateur, X, y)
-        return plots_arbre.tracer_feature_importance(data)
-
     if fig_name == "arbre_tronque" and model_name == "arbre_decision":
         from sklearn.base import clone
         est = clone(estimateur)
@@ -260,7 +255,7 @@ def _dispatch_figure(
         return plots_foret.tracer_oob_vs_n_estimators(data)
 
     if fig_name == "importance_dispersion" and model_name == "foret_aleatoire":
-        data = importance_avec_dispersion(estimateur, X, y)
+        data = importance_oob_foret(estimateur, X, y)
         return plots_foret.tracer_importance_dispersion(data)
 
     # MLP

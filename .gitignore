@@ -9,6 +9,9 @@ __pycache__/
 .ipynb_checkpoints/
 *.ipynb_checkpoints
 
+# Tests
+tests/
+
 # Virtual environments
 venv/
 .venv/
@@ -29,9 +32,6 @@ models/**/*.pkl
 results/models/*.pkl
 
 # Generated figures and images
-results/figures/*.png
-results/figures/*.pdf
-results/figures/*.svg
 _nb_images/
 *.png
 *.jpg
@@ -40,22 +40,42 @@ _nb_images/
 *.pdf
 
 # Generated result files
-results/predictions/*.csv
+results/*/metrics/*.json
+results/*/predictions/*.csv
+results/*/tuning/*.csv
 results/metrics/*.json
+results/predictions/*.csv
 results/grid_search/*.csv
-results/mlp/
+results/figures/**/*.png
+results/figures/**/*.pdf
+results/figures/**/*.svg
+results/*/figures/**/*.png
+results/*/figures/**/*.pdf
+results/*/figures/**/*.svg
+results/global/**/*.json
+results/global/**/*.csv
+results/global/**/*.png
 
 # Claude Code and AI agent files
 .claude/
 .mcp.json
 *.jsonl
 
-# Local utility scripts (not part of the project deliverable)
-scripts/
-
-# Tests (not part of the project deliverable)
-tests/
 .pytest_cache/
+tmp*/
+
+# Python build and tooling artifacts
+build/
+dist/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+pip-wheel-metadata/
 
 # IDE
 .vscode/

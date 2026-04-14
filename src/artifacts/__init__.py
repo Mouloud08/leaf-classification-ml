@@ -1,6 +1,23 @@
 """Package de gestion des artefacts — schema, chemins, stores."""
 
-from .figures_store import sauvegarder_figure, sauvegarder_figure_globale
+from .integrity import (
+    artifact_integrity_table,
+    canonical_artifact_completeness,
+    recompute_metrics_from_predictions,
+    verifier_integrite_artefacts_modele,
+)
+from .io import (
+    charger_predictions,
+    charger_predictions_modele,
+    charger_probabilites,
+    charger_probabilites_modele,
+    charger_resultats_grid_search,
+    sauvegarder_figure,
+    sauvegarder_figure_globale,
+    sauvegarder_predictions,
+    sauvegarder_probabilites_oof,
+    sauvegarder_resultats_grid_search,
+)
 from .metrics_store import (
     charger_mesures,
     charger_tableau_mesures,
@@ -13,33 +30,20 @@ from .paths import (
     global_paths,
     model_paths,
 )
-from .predictions_store import (
-    charger_predictions,
-    charger_probabilites,
-    sauvegarder_predictions,
-    sauvegarder_probabilites_oof,
-)
 from .schema import (
     METRICS_SCHEMA_VERSION,
     FigureBundleResult,
     FigureRequest,
-    NestedEvaluationResult,
     StudyRunResult,
     TuningRunResult,
     UntunedVariantResult,
 )
-from .tuning_store import (
-    charger_resultats_grid_search,
-    sauvegarder_resultats_grid_search,
-)
 from .validation import (
-    LEGACY_KEYS,
     REQUIRED_METRIC_KEYS,
     STAGE_MAP,
     MetricsArtifactValidationError,
     derive_selection_protocol,
     derive_stage,
-    filtrer_legacy,
     normaliser_mesures_pour_schema,
     normaliser_stades,
     valider_artefacts_mesures,
@@ -47,30 +51,32 @@ from .validation import (
 
 __all__ = [
     "GlobalArtifactPaths",
-    "LEGACY_KEYS",
     "METRICS_SCHEMA_VERSION",
     "MetricsArtifactValidationError",
     "ModelArtifactPaths",
     "FigureBundleResult",
     "FigureRequest",
-    "NestedEvaluationResult",
     "STAGE_MAP",
     "StudyRunResult",
     "TuningRunResult",
     "UntunedVariantResult",
+    "artifact_integrity_table",
+    "canonical_artifact_completeness",
     "charger_mesures",
     "charger_predictions",
+    "charger_predictions_modele",
     "charger_probabilites",
+    "charger_probabilites_modele",
     "charger_resultats_grid_search",
     "charger_tableau_mesures",
     "charger_tableau_mesures_valides",
     "derive_selection_protocol",
     "derive_stage",
-    "filtrer_legacy",
     "global_paths",
     "model_paths",
     "normaliser_mesures_pour_schema",
     "normaliser_stades",
+    "recompute_metrics_from_predictions",
     "REQUIRED_METRIC_KEYS",
     "sauvegarder_figure",
     "sauvegarder_figure_globale",
@@ -78,5 +84,6 @@ __all__ = [
     "sauvegarder_predictions",
     "sauvegarder_probabilites_oof",
     "sauvegarder_resultats_grid_search",
+    "verifier_integrite_artefacts_modele",
     "valider_artefacts_mesures",
 ]

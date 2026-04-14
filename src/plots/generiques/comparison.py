@@ -151,7 +151,9 @@ def tracer_comparaison_variantes(
     axe.set_title(titre)
     axe.set_xlabel("Variant")
     axe.set_ylabel("Score")
-    axe.set_ylim(0, 1.0)
+    min_val = donnees["score"].min()
+    lower = min_val * 1.15 if min_val < 0 else 0
+    axe.set_ylim(lower, 1.0)
     sns.move_legend(
         axe,
         "upper left",

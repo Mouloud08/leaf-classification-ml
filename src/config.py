@@ -8,30 +8,16 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT_DIR / "data"
 RAW_DATA_DIR = DATA_DIR / "raw"
 RESULTS_DIR = ROOT_DIR / "results"
-METRICS_DIR = RESULTS_DIR / "metrics"
-GRID_SEARCH_DIR = RESULTS_DIR / "grid_search"
-PREDICTIONS_DIR = RESULTS_DIR / "predictions"
-FIGURES_DIR = RESULTS_DIR / "figures"
-SAVED_MODELS_DIR = RESULTS_DIR / "models"
 
 DEFAULT_TRAIN_CSV = RAW_DATA_DIR / "train.csv"
 
 RANDOM_SEED = 42
 N_SPLITS = 5
+INNER_TUNING_SPLITS = 3
+EXPLORATORY_TUNING_SPLITS = 3
 PRIMARY_METRIC = "f1_macro"
-SECONDARY_METRIC = "accuracy"
-PCA_COMPONENTS = 116
+# La PCA conserve 99% de la variance expliquee afin de rester valide
+# dans chaque pli de validation croisee.
+PCA_EXPLAINED_VARIANCE = 0.99
 CV_N_JOBS = 1
-METRICS_SCHEMA_VERSION = 2
 TIMING_POLICY = f"cv_n_jobs={CV_N_JOBS}"
-SUPPORTED_VARIANTS = (
-    "simple",
-    "preprocessed",
-    "default",
-    "scaled_only",
-    "scaled_pca",
-    "restricted_depth",
-    "conservative_learning",
-    "tuned",
-    "tuned_placeholder",
-)

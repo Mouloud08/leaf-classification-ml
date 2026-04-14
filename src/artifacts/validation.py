@@ -32,17 +32,6 @@ STAGE_MAP: dict[str, str] = {
     "tuned": "tuned",
 }
 
-LEGACY_KEYS: frozenset[str] = frozenset(
-    {
-        "perceptron__simple",
-        "perceptron__preprocessed",
-        "adaboost__default",
-        "adaboost__conservative_learning",
-        "adaboost__tuned",
-    }
-)
-
-
 def derive_stage(variante: str) -> str:
     return STAGE_MAP.get(str(variante).lower(), "autre")
 
@@ -169,19 +158,6 @@ def normaliser_stades(df: pd.DataFrame) -> pd.DataFrame:
     else:
         resultat["stade"] = "autre"
     return resultat
-
-
-def filtrer_legacy(df: pd.DataFrame) -> pd.DataFrame:
-    """Retire les artefacts legacy qui polluent la comparaison."""
-    if df.empty or "modele" not in df.columns or "variante" not in df.columns:
-        return df.copy()
-    cle = (
-        df["modele"].astype(str).str.lower()
-        + "__"
-        + df["variante"].astype(str).str.lower()
-    )
-    masque = ~cle.isin(LEGACY_KEYS)
-    return df[masque].reset_index(drop=True)
 
 
 def normaliser_mesures_pour_schema(

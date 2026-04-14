@@ -9,17 +9,13 @@ from typing import Any
 
 import pandas as pd
 
+from ..config import RESULTS_DIR
 from .paths import ModelArtifactPaths, model_paths
 from .validation import (
-    LEGACY_KEYS,
     MetricsArtifactValidationError,
     normaliser_mesures_pour_schema,
     valider_artefacts_mesures,
 )
-
-
-def _slugifier(valeur: str) -> str:
-    return valeur.lower().replace(" ", "_")
 
 
 def _ecrire_json(chemin: Path, contenu: dict[str, Any]) -> Path:
@@ -29,6 +25,33 @@ def _ecrire_json(chemin: Path, contenu: dict[str, Any]) -> Path:
         encoding="utf-8",
     )
     return chemin
+
+
+def _iter_metric_files(metrics_dir: Path) -> list[Path]:
+    """Return metric JSON files from either canonical or explicit flat directories."""
+    if not metrics_dir.exists():
+        return []
+
+    if metrics_dir.name == "metrics":
+        return sorted(metrics_dir.glob("*.json"))
+
+    canonical_files = sorted(metrics_dir.glob("*/metrics/*.json"))
+    if canonical_files:
+        return canonical_files
+
+    return sorted(metrics_dir.glob("*.json"))
+
+
+def _validate_with_policy(
+    enregistrements: list[dict[str, Any]],
+    sources: list[str],
+    validation: str,
+) -> None:
+    erreurs = valider_artefacts_mesures(enregistrements, sources=sources)
+    if validation == "strict" and erreurs:
+        raise MetricsArtifactValidationError("\n".join(erreurs))
+    if validation == "warn" and erreurs:
+        warnings.warn("\n".join(erreurs), stacklevel=2)
 
 
 def sauvegarder_mesures(
@@ -43,32 +66,37 @@ def sauvegarder_mesures(
         paths.ensure_dirs()
         chemin = paths.metrics_file(variante)
     else:
-        # Fallback vers l'ancien layout plat
-        from ..config import METRICS_DIR
-        chemin = METRICS_DIR / f"{_slugifier(nom_modele)}__{_slugifier(variante)}.json"
+        # Sans chemins explicites, on sauvegarde toujours dans le layout canonique.
+        chemins_modele = model_paths(nom_modele, root=RESULTS_DIR)
+        chemins_modele.ensure_dirs()
+        chemin = chemins_modele.metrics_file(variante)
     return _ecrire_json(chemin, contenu)
 
 
 def charger_mesures(
     validation: str = "none",
-    exclure_legacy: bool = False,
     modeles: list[str] | tuple[str, ...] | set[str] | None = None,
     metrics_dir: Path | None = None,
 ) -> list[dict[str, Any]]:
-    """Charge tous les JSON de metriques actuellement disponibles."""
+    """Charge les metriques depuis le layout canonique par defaut.
+
+    Si ``metrics_dir`` pointe explicitement vers un dossier ``metrics`` plat, la
+    fonction charge ce dossier tel quel, ce qui reste utile pour certains tests
+    et pour certains tests unitaires.
+    """
     if metrics_dir is None:
-        from ..config import METRICS_DIR
-        metrics_dir = METRICS_DIR
+        metrics_dir = RESULTS_DIR
 
     enregistrements: list[dict[str, Any]] = []
     sources: list[str] = []
     modeles_normalises = None
     if modeles is not None:
         modeles_normalises = {str(m).lower() for m in modeles}
-    if not metrics_dir.exists():
+    fichiers = _iter_metric_files(metrics_dir)
+    if not fichiers:
         return enregistrements
 
-    for chemin in sorted(metrics_dir.glob("*.json")):
+    for chemin in fichiers:
         enregistrement = json.loads(chemin.read_text(encoding="utf-8"))
         if modeles_normalises is not None:
             modele = str(enregistrement.get("modele", "")).lower()
@@ -77,33 +105,17 @@ def charger_mesures(
         enregistrements.append(enregistrement)
         sources.append(str(chemin))
 
-    if exclure_legacy:
-        enregistrements_filtres: list[dict[str, Any]] = []
-        sources_filtrees: list[str] = []
-        for enregistrement, source in zip(enregistrements, sources, strict=False):
-            cle = (
-                f"{str(enregistrement.get('modele', '')).lower()}"
-                f"__{str(enregistrement.get('variante', '')).lower()}"
-            )
-            if cle in LEGACY_KEYS:
-                continue
-            enregistrements_filtres.append(enregistrement)
-            sources_filtrees.append(source)
-        enregistrements = enregistrements_filtres
-        sources = sources_filtrees
-
-    erreurs = valider_artefacts_mesures(enregistrements, sources=sources)
-    if validation == "strict" and erreurs:
-        raise MetricsArtifactValidationError("\n".join(erreurs))
-    if validation == "warn" and erreurs:
-        warnings.warn("\n".join(erreurs), stacklevel=2)
+    _validate_with_policy(
+        enregistrements,
+        sources=sources,
+        validation=validation,
+    )
 
     return enregistrements
 
 
 def charger_tableau_mesures(
     validation: str = "none",
-    exclure_legacy: bool = False,
     modeles: list[str] | tuple[str, ...] | set[str] | None = None,
     metrics_dir: Path | None = None,
 ) -> pd.DataFrame:
@@ -111,7 +123,6 @@ def charger_tableau_mesures(
     return pd.DataFrame(
         charger_mesures(
             validation=validation,
-            exclure_legacy=exclure_legacy,
             modeles=modeles,
             metrics_dir=metrics_dir,
         )
@@ -119,14 +130,12 @@ def charger_tableau_mesures(
 
 
 def charger_tableau_mesures_valides(
-    exclure_legacy: bool = True,
     modeles: list[str] | tuple[str, ...] | set[str] | None = None,
     metrics_dir: Path | None = None,
 ) -> pd.DataFrame:
     """Charge uniquement des artefacts valides pour la synthese finale."""
     return charger_tableau_mesures(
         validation="strict",
-        exclure_legacy=exclure_legacy,
         modeles=modeles,
         metrics_dir=metrics_dir,
     )

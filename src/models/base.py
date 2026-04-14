@@ -10,7 +10,7 @@ from sklearn.decomposition import PCA
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
-from ..config import PCA_COMPONENTS, RANDOM_SEED
+from ..config import PCA_EXPLAINED_VARIANCE, RANDOM_SEED
 
 
 class ModeleBase(ABC):
@@ -63,7 +63,12 @@ class ModeleBase(ABC):
             etapes.append(("scaler", StandardScaler()))
 
         if utiliser_pca:
-            etapes.append(("pca", PCA(n_components=PCA_COMPONENTS, random_state=RANDOM_SEED)))
+            etapes.append(
+                (
+                    "pca",
+                    PCA(n_components=PCA_EXPLAINED_VARIANCE, random_state=RANDOM_SEED),
+                )
+            )
 
         etapes.append(("modele", self.creer_estimateur()))
         return Pipeline(etapes)

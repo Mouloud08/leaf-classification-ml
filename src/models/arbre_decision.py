@@ -26,14 +26,12 @@ class ModeleArbreDecision(ModeleBase):
 
     supported_diagnostics = (
         "validation_curve_max_depth",
-        "feature_importance",
         "arbre_tronque",
         "learning_curve",
         "confusion_classes_difficiles",
     )
     core_figures = (
         "validation_curve_max_depth",
-        "feature_importance",
         "arbre_tronque",
         "learning_curve",
     )
@@ -44,8 +42,8 @@ class ModeleArbreDecision(ModeleBase):
 
     def grille_tuning(self) -> dict:
         return {
-            "modele__max_depth": [None, 5, 10, 20],
-            "modele__min_samples_leaf": [1, 2, 4, 8],
-            "modele__criterion": ["gini", "entropy"],
-            "modele__ccp_alpha": [0.0, 0.001, 0.005, 0.01],
+            "modele__max_depth": [10, 20],
+            "modele__min_samples_leaf": [1, 4],
+            "modele__criterion": ["gini"],
+            "modele__ccp_alpha": [0.0, 0.005],
         }

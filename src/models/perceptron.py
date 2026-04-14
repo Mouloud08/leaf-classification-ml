@@ -5,7 +5,7 @@ from __future__ import annotations
 from sklearn.decomposition import PCA
 from sklearn.linear_model import Perceptron
 
-from ..config import PCA_COMPONENTS, RANDOM_SEED
+from ..config import PCA_EXPLAINED_VARIANCE, RANDOM_SEED
 from .base import ModeleBase
 
 
@@ -40,8 +40,8 @@ class ModelePerceptron(ModeleBase):
         return {
             "pca": [
                 "passthrough",
-                PCA(n_components=PCA_COMPONENTS, random_state=RANDOM_SEED),
+                PCA(n_components=PCA_EXPLAINED_VARIANCE, random_state=RANDOM_SEED),
             ],
-            "modele__alpha": [0.0001, 0.001, 0.01],
+            "modele__alpha": [0.0001, 0.001],
             "modele__penalty": [None, "l2", "l1"],
         }

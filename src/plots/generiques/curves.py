@@ -105,9 +105,14 @@ def tracer_reliability_diagram(
     tableau_probabilites: pd.DataFrame,
     titre: str = "Reliability Diagram",
     n_bins: int = 10,
+    strategy: str = "quantile",
 ) -> plt.Axes:
     """Trace un reliability diagram a partir de la confiance max."""
-    donnees = calculer_reliability_curve(tableau_probabilites, n_bins=n_bins)
+    donnees = calculer_reliability_curve(
+        tableau_probabilites,
+        n_bins=n_bins,
+        strategy=strategy,
+    )
     figure, axe = plt.subplots(figsize=(7.2, 6.2))
     axe.plot([0, 1], [0, 1], linestyle="--", color="#999999", label="Perfect calibration")
     axe.plot(

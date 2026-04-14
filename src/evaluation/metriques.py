@@ -165,7 +165,9 @@ def calculer_top_k_accuracies(
     y_vrai, scores, _ = extraire_scores_probabilites(tableau_probabilites)
     labels = _inferer_labels_depuis_tableau_probabilites(tableau_probabilites)
     resultats: dict[str, float] = {}
-    for k in ks:
+    # Toujours exposer top-1 pour compatibilite avec les notebooks historiques.
+    ks_effectifs = tuple(dict.fromkeys((1, *ks)))
+    for k in ks_effectifs:
         k_effectif = min(k, scores.shape[1])
         resultats[f"top_{k}_accuracy"] = float(
             top_k_accuracy_score(y_vrai, scores, k=k_effectif, labels=labels)
@@ -181,10 +183,14 @@ def calculer_statistiques_confiance(tableau_probabilites: pd.DataFrame) -> dict[
     y_pred = labels[scores.argmax(axis=1)]
     correct = y_pred == y_vrai
 
+    confiance_moyenne_erreurs = float(max_proba[~correct].mean()) if (~correct).any() else 0.0
+
     return {
         "confiance_moyenne": float(max_proba.mean()),
         "confiance_moyenne_correctes": float(max_proba[correct].mean()),
-        "confiance_moyenne_erreurs": float(max_proba[~correct].mean()) if (~correct).any() else 0.0,
+        "confiance_moyenne_erreurs": confiance_moyenne_erreurs,
+        # Alias historique conserve pour compatibilite avec les notebooks.
+        "confiance_erreurs": confiance_moyenne_erreurs,
         "proportion_erreurs_confiance_sup_0_5": float((max_proba[~correct] > 0.5).mean()) if (~correct).any() else 0.0,
         "proportion_erreurs_confiance_inf_0_3": float((max_proba[~correct] < 0.3).mean()) if (~correct).any() else 0.0,
     }
@@ -209,6 +215,7 @@ def calculer_brier_score_multiclasse(tableau_probabilites: pd.DataFrame) -> floa
 def calculer_reliability_curve(
     tableau_probabilites: pd.DataFrame,
     n_bins: int = 10,
+    strategy: str = "quantile",
 ) -> pd.DataFrame:
     """Construit les points du reliability diagram a partir de la confiance max."""
     y_vrai, scores, _ = extraire_scores_probabilites(tableau_probabilites)
@@ -216,11 +223,13 @@ def calculer_reliability_curve(
     max_proba = scores.max(axis=1)
     y_pred = labels[scores.argmax(axis=1)]
     correct = (y_pred == y_vrai).astype(int)
+    if strategy not in {"uniform", "quantile"}:
+        raise ValueError("strategy must be either 'uniform' or 'quantile'")
     fraction_positifs, moyenne_predite = calibration_curve(
         correct,
         max_proba,
         n_bins=n_bins,
-        strategy="uniform",
+        strategy=strategy,
     )
     return pd.DataFrame(
         {

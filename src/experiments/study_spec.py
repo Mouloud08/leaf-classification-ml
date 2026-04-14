@@ -6,7 +6,14 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from ..config import N_SPLITS, PRIMARY_METRIC, RANDOM_SEED, RESULTS_DIR
+from ..config import (
+    EXPLORATORY_TUNING_SPLITS,
+    INNER_TUNING_SPLITS,
+    N_SPLITS,
+    PRIMARY_METRIC,
+    RANDOM_SEED,
+    RESULTS_DIR,
+)
 
 
 @dataclass(frozen=True)
@@ -41,6 +48,8 @@ class StudySpec:
     models: list[str]
     output_root: Path = RESULTS_DIR
     n_splits: int = N_SPLITS
+    inner_tuning_splits: int = INNER_TUNING_SPLITS
+    exploratory_tuning_splits: int = EXPLORATORY_TUNING_SPLITS
     random_seed: int = RANDOM_SEED
     primary_metric: str = PRIMARY_METRIC
     figures_mode: str = "core"  # "core", "all", "none"

@@ -43,29 +43,3 @@ def charger_donnees(
     labels = label_encoder.fit_transform(labels_bruts)
 
     return features, labels, label_encoder
-
-
-class LeafDataLoader:
-    """Compatibilite orientee objet pour le notebook EDA existant."""
-
-    def __init__(self, csv_path: str | Path | None = None) -> None:
-        self.csv_path = _resoudre_csv(csv_path)
-        self.label_encoder = LabelEncoder()
-        self.feature_names: list[str] = []
-
-    def charger_donnees(self) -> tuple[pd.DataFrame, np.ndarray]:
-        """Charge les donnees et memorise les noms de colonnes."""
-        dataframe = pd.read_csv(self.csv_path)
-        self.feature_names = [
-            colonne
-            for colonne in dataframe.columns
-            if colonne not in {"id", "species"}
-        ]
-        self.label_encoder.fit(dataframe["species"])
-        X = dataframe[self.feature_names].copy()
-        y = self.label_encoder.transform(dataframe["species"])
-        return X, y
-
-    def decoder_labels(self, y_encoded: np.ndarray) -> np.ndarray:
-        """Decode les classes numeriques vers les noms d'especes."""
-        return self.label_encoder.inverse_transform(y_encoded)

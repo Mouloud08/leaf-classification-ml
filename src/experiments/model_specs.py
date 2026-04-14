@@ -88,6 +88,11 @@ def _spec_foret_aleatoire() -> ModelStudySpec:
         ),
         tuning_uses_pipeline=False,
         supports_probabilities=m.supports_probabilities,
+        tuning_heatmap_axes=(
+            "param_modele__n_estimators",
+            "param_modele__max_depth",
+        ),
+        tuning_facet_column="param_modele__min_samples_leaf",
         core_figures=m.core_figures,
         advanced_figures=m.advanced_figures,
     )

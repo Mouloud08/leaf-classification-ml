@@ -80,6 +80,7 @@ def _charger_resultat_tuning(paths) -> TuningRunResult | None:
         evaluation_stage=contenu["evaluation_stage"],
         best_params_exploratory=contenu.get("best_params_exploratory", {}),
         best_params_per_fold=contenu.get("best_params_per_fold", []),
+        outer_fold_metrics=contenu.get("outer_fold_metrics", []),
         exploratory_tuning_seconds=contenu.get("exploratory_tuning_seconds", 0.0),
         fit_time_mean=contenu.get("fit_time_mean", 0.0),
         score_time_mean=contenu.get("score_time_mean", 0.0),
@@ -193,6 +194,18 @@ def executer_tuning(
     study: StudySpec,
 ) -> TuningRunResult:
     """Execute le tuning exploratoire et la nested CV confirmatoire."""
+    bundle = executer_tuning_bundle(spec, X, y, label_encoder, study)
+    return bundle["tuning_result"]
+
+
+def executer_tuning_bundle(
+    spec: ModelStudySpec,
+    X: pd.DataFrame,
+    y: Any,
+    label_encoder: Any,
+    study: StudySpec,
+) -> dict[str, Any]:
+    """Execute the shared tuning workflow and return notebook-friendly outputs."""
     paths = model_paths(spec.model_name, root=study.output_root)
 
     logger.info("  Tuning exploratoire...")
@@ -200,7 +213,7 @@ def executer_tuning(
         spec=spec,
         X=X,
         y=y,
-        n_splits=study.n_splits,
+        n_splits=study.exploratory_tuning_splits,
         random_seed=study.random_seed,
     )
     sauvegarder_resultats_grid_search(spec.model_name, resultats_grid, paths=paths)
@@ -214,7 +227,7 @@ def executer_tuning(
         y=y,
         label_encoder=label_encoder,
         outer_splits=study.n_splits,
-        inner_splits=study.n_splits,
+        inner_splits=study.inner_tuning_splits,
         random_state=study.random_seed,
         return_probabilities=spec.supports_probabilities,
     )
@@ -226,29 +239,41 @@ def executer_tuning(
         exploratory_tuning_seconds=temps_tuning,
     )
 
-    sauvegarder_mesures(
+    metrics_path = sauvegarder_mesures(
         spec.model_name,
         "tuned",
         tuning_result.to_dict(),
         paths=paths,
     )
 
-    sauvegarder_predictions(
+    predictions_path = sauvegarder_predictions(
         spec.model_name,
         "tuned",
         nested_tuned["oof_predictions"],
         paths=paths,
     )
 
+    probabilities_path = None
     if nested_tuned.get("oof_probabilities") is not None:
-        sauvegarder_probabilites_oof(
+        probabilities_path = sauvegarder_probabilites_oof(
             spec.model_name,
             "tuned",
             nested_tuned["oof_probabilities"],
             paths=paths,
         )
 
-    return tuning_result
+    return {
+        "grid": grid,
+        "grid_results": resultats_grid,
+        "grid_path": paths.grid_search_file(),
+        "nested": nested_tuned,
+        "tuning_result": tuning_result,
+        "metrics": tuning_result.to_dict(),
+        "metrics_path": metrics_path,
+        "predictions_path": predictions_path,
+        "probabilities_path": probabilities_path,
+        "exploratory_tuning_seconds": temps_tuning,
+    }
 
 
 def executer_modele(

@@ -23,7 +23,13 @@ import numpy as np
 import pandas as pd
 from sklearn.base import clone
 from sklearn.inspection import permutation_importance
-from sklearn.model_selection import StratifiedKFold, learning_curve, validation_curve
+from sklearn.metrics import f1_score
+from sklearn.model_selection import (
+    StratifiedKFold,
+    cross_validate,
+    learning_curve,
+    validation_curve,
+)
 
 from ..config import CV_N_JOBS, N_SPLITS, RANDOM_SEED
 
@@ -72,43 +78,32 @@ def validation_curve_max_depth(
         )
 
     if has_none:
-        # Evaluer sans limite de profondeur
         est = clone(estimateur)
         est.set_params(max_depth=None)
-        from .evaluateur import evaluer_modele_cv
-
-        mesures = evaluer_modele_cv(est, X, y)
+        resultats_none = cross_validate(
+            est,
+            X,
+            y,
+            cv=StratifiedKFold(
+                n_splits=N_SPLITS,
+                shuffle=True,
+                random_state=RANDOM_SEED,
+            ),
+            scoring="f1_macro",
+            return_train_score=True,
+            n_jobs=CV_N_JOBS,
+        )
         lignes.append(
             {
                 "max_depth": "None",
-                "train_mean": mesures["train_f1_macro_mean"],
-                "train_std": float("nan"),  # evaluer_modele_cv ne retourne pas le std train
-                "val_mean": mesures["val_f1_macro_mean"],
-                "val_std": mesures["val_f1_macro_std"],
+                "train_mean": float(resultats_none["train_score"].mean()),
+                "train_std": float(resultats_none["train_score"].std()),
+                "val_mean": float(resultats_none["test_score"].mean()),
+                "val_std": float(resultats_none["test_score"].std()),
             }
         )
 
     return pd.DataFrame(lignes)
-
-
-def feature_importance_arbre(
-    estimateur: Any,
-    X: pd.DataFrame,
-    y: np.ndarray,
-) -> pd.DataFrame:
-    """Importance des variables pour un arbre de decision."""
-    modele = clone(estimateur)
-    modele.fit(X, y)
-    return (
-        pd.DataFrame(
-            {
-                "feature": X.columns,
-                "importance": modele.feature_importances_,
-            }
-        )
-        .sort_values("importance", ascending=False)
-        .reset_index(drop=True)
-    )
 
 
 # ---------------------------------------------------------------------------
@@ -146,7 +141,15 @@ def importance_avec_dispersion(
     y: np.ndarray,
     n_repeats: int = 10,
 ) -> pd.DataFrame:
-    """Permutation importance avec dispersion inter-repetitions."""
+    """Permutation importance avec dispersion inter-repetitions.
+
+    Pour la foret aleatoire, on privilegie une lecture OOB afin de rester sur
+    un diagnostic hors apprentissage plus coherent avec la litterature.
+    """
+    nom_modele = getattr(estimateur, "__class__", type(estimateur)).__name__.lower()
+    if "randomforest" in nom_modele:
+        return importance_oob_foret(estimateur, X, y, n_repeats=n_repeats)
+
     modele = clone(estimateur)
     modele.fit(X, y)
     result = permutation_importance(
@@ -164,6 +167,87 @@ def importance_avec_dispersion(
                 "feature": X.columns,
                 "importance_mean": result.importances_mean,
                 "importance_std": result.importances_std,
+            }
+        )
+        .sort_values("importance_mean", ascending=False)
+        .reset_index(drop=True)
+    )
+
+
+def importance_oob_foret(
+    estimateur: Any,
+    X: pd.DataFrame,
+    y: np.ndarray,
+    n_repeats: int = 10,
+) -> pd.DataFrame:
+    """Calcule une importance par permutation fondee sur les observations OOB.
+
+    Ce diagnostic suit l'esprit de l'importance de Breiman pour les forets :
+    chaque arbre est evalue sur ses observations out-of-bag, puis on mesure la
+    baisse de F1-macro apres permutation d'une feature dans cet echantillon OOB.
+    Le resultat reste exploratoire, mais il evite le biais du refit in-sample
+    complet qui rendait la lecture de la foret peu informative.
+    """
+    modele = clone(estimateur)
+    modele.fit(X, y)
+
+    if hasattr(modele, "named_steps"):
+        foret = modele.named_steps["modele"]
+        if len(modele.steps) > 1:
+            transformateur = clone(modele[:-1])
+            X_modele = transformateur.fit_transform(X, y)
+        else:
+            X_modele = X.to_numpy()
+    else:
+        foret = modele
+        X_modele = X.to_numpy() if hasattr(X, "to_numpy") else np.asarray(X)
+
+    if not hasattr(foret, "estimators_samples_"):
+        raise ValueError(
+            "Le diagnostic OOB exige une foret entrainee avec bootstrap et "
+            "l'exposition des echantillons par arbre."
+        )
+
+    y_array = np.asarray(y)
+    importances_par_feature: list[list[float]] = [[] for _ in range(X_modele.shape[1])]
+    rng = np.random.RandomState(RANDOM_SEED)
+
+    for arbre, indices_bootstrap in zip(foret.estimators_, foret.estimators_samples_):
+        masque_oob = np.ones(len(y_array), dtype=bool)
+        masque_oob[np.unique(indices_bootstrap)] = False
+        indices_oob = np.flatnonzero(masque_oob)
+        if len(indices_oob) == 0:
+            continue
+
+        X_oob = X_modele[indices_oob].copy()
+        y_oob = y_array[indices_oob]
+        score_reference = f1_score(y_oob, arbre.predict(X_oob), average="macro")
+
+        for indice_feature in range(X_oob.shape[1]):
+            for _ in range(n_repeats):
+                X_permute = X_oob.copy()
+                X_permute[:, indice_feature] = rng.permutation(X_permute[:, indice_feature])
+                score_permute = f1_score(
+                    y_oob,
+                    arbre.predict(X_permute),
+                    average="macro",
+                )
+                importances_par_feature[indice_feature].append(
+                    float(score_reference - score_permute)
+                )
+
+    return (
+        pd.DataFrame(
+            {
+                "feature": list(X.columns),
+                "importance_mean": [
+                    float(np.mean(valeurs)) if valeurs else 0.0
+                    for valeurs in importances_par_feature
+                ],
+                "importance_std": [
+                    float(np.std(valeurs, ddof=1)) if len(valeurs) > 1 else 0.0
+                    for valeurs in importances_par_feature
+                ],
             }
         )
         .sort_values("importance_mean", ascending=False)
@@ -189,8 +273,13 @@ def loss_curve_mlp(
     Ce fit sert uniquement au diagnostic de convergence — les metriques de
     performance proviennent de la nested CV.
 
-    Si ``best_params`` est fourni (dict sans prefixe, ex. {"alpha": 0.001}),
-    ces hyperparametres remplacent les valeurs par defaut de l'estimateur.
+    ``estimateur`` peut etre un ``MLPClassifier`` brut ou un pipeline complet
+    dont la derniere etape s'appelle ``modele``.
+
+    Si ``best_params`` est fourni, ces hyperparametres remplacent les valeurs
+    par defaut de l'estimateur ou du pipeline. Les cles prefixees de type
+    ``modele__alpha`` sont donc supportees.
+
     La colonne ``val_score`` contient le score de validation interne par
     iteration (holdout early-stopping de sklearn, 10% du jeu d'entrainement).
     """
@@ -198,11 +287,16 @@ def loss_curve_mlp(
     if best_params:
         modele.set_params(**best_params)
     modele.fit(X, y)
-    if not hasattr(modele, "loss_curve_"):
+
+    estimateur_appris = modele
+    if hasattr(modele, "named_steps"):
+        estimateur_appris = modele.named_steps.get("modele", estimateur_appris)
+
+    if not hasattr(estimateur_appris, "loss_curve_"):
         raise AttributeError("Le modele n'expose pas loss_curve_.")
 
-    n = len(modele.loss_curve_)
-    val_scores = getattr(modele, "validation_scores_", None)
+    n = len(estimateur_appris.loss_curve_)
+    val_scores = getattr(estimateur_appris, "validation_scores_", None)
     if val_scores is not None and len(val_scores) == n:
         val_col = list(val_scores)
     else:
@@ -211,7 +305,7 @@ def loss_curve_mlp(
     return pd.DataFrame(
         {
             "iteration": range(1, n + 1),
-            "loss": modele.loss_curve_,
+            "loss": estimateur_appris.loss_curve_,
             "val_score": val_col,
         }
     )
@@ -237,7 +331,10 @@ def regularization_path(
     lignes = []
     for C in C_values:
         est = clone(estimateur)
-        est.set_params(C=C)
+        try:
+            est.set_params(C=C)
+        except ValueError:
+            est.set_params(modele__C=C)
         mesures = evaluer_modele_cv(est, X, y)
         lignes.append(
             {
@@ -281,8 +378,9 @@ def analyse_support_vectors(
     """Analyse basique des vecteurs de support."""
     modele = clone(estimateur)
     modele.fit(X, y)
-    n_sv = modele.n_support_
-    classes = modele.classes_
+    svc = modele.named_steps["modele"] if hasattr(modele, "named_steps") else modele
+    n_sv = svc.n_support_
+    classes = svc.classes_
     total = sum(n_sv)
     return {
         "n_support_per_class": dict(zip(classes.tolist(), n_sv.tolist())),
@@ -301,17 +399,34 @@ def decision_function_histogram(
     X: pd.DataFrame,
     y: np.ndarray,
 ) -> pd.DataFrame:
-    """Histogramme de la decision_function pour le perceptron."""
+    """Histogramme de la decision_function pour le perceptron.
+
+    Retourne le score maximum par echantillon, la classe predite et
+    un flag correct/incorrect pour permettre une coloration par statut
+    de prediction (analogue a l'histogramme de confiance du MLP).
+    """
     modele = clone(estimateur)
     modele.fit(X, y)
     if not hasattr(modele, "decision_function"):
         raise AttributeError("Le modele n'expose pas decision_function.")
     scores = modele.decision_function(X)
     if scores.ndim == 1:
-        return pd.DataFrame({"score": scores, "y_true": y})
-    # Multiclasse: prendre le max score
+        y_pred = (scores >= 0).astype(int)
+        return pd.DataFrame({
+            "score": scores,
+            "y_true": y,
+            "y_pred": y_pred,
+            "correct": y_pred == y,
+        })
+    # Multiclasse: prendre le max score et la classe predite
     max_scores = scores.max(axis=1)
-    return pd.DataFrame({"score": max_scores, "y_true": y})
+    y_pred = modele.predict(X)
+    return pd.DataFrame({
+        "score": max_scores,
+        "y_true": y,
+        "y_pred": y_pred,
+        "correct": y_pred == y,
+    })
 
 
 # ---------------------------------------------------------------------------
@@ -327,7 +442,10 @@ def compute_learning_curve(
 ) -> pd.DataFrame:
     """Calcule la learning curve generique."""
     if train_sizes is None:
-        train_sizes = [0.1, 0.2, 0.4, 0.6, 0.8, 1.0]
+        # On evite les tres petites fractions d'entrainement pour ce dataset:
+        # avec 99 classes et peu d'exemples par classe, elles deviennent peu
+        # interpretables et peuvent declencher des warnings trompeurs.
+        train_sizes = [0.4, 0.6, 0.8, 1.0]
 
     train_sizes_abs, train_scores, val_scores = learning_curve(
         estimateur,

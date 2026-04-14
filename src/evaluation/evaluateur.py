@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import sys
 from time import perf_counter
 from typing import Any
 
@@ -13,26 +12,13 @@ from sklearn.dummy import DummyClassifier
 from sklearn.metrics import accuracy_score, f1_score
 from sklearn.model_selection import GridSearchCV, StratifiedKFold, cross_val_predict, cross_validate
 
-from ..config import N_SPLITS, RANDOM_SEED
+from ..config import CV_N_JOBS, N_SPLITS, RANDOM_SEED
 from .metriques import (
     _obtenir_labels_et_noms,
     calculer_metriques,
     calculer_metriques_par_classe,
     extraire_top_confusions,
 )
-
-
-def _get_cv_n_jobs() -> int:
-    """Lit CV_N_JOBS depuis le namespace du package src.evaluation.
-
-    Ceci permet aux notebooks de muter ``src.evaluation.CV_N_JOBS``
-    et que la valeur soit prise en compte au moment de l'appel.
-    """
-    mod = sys.modules.get("src.evaluation")
-    if mod and hasattr(mod, "CV_N_JOBS"):
-        return mod.CV_N_JOBS
-    from ..config import CV_N_JOBS
-    return CV_N_JOBS
 
 
 def _creer_cv(n_splits: int = N_SPLITS, random_state: int = RANDOM_SEED) -> StratifiedKFold:
@@ -109,6 +95,7 @@ def evaluer_modele_cv(
     y: np.ndarray,
     n_splits: int = N_SPLITS,
     random_state: int = RANDOM_SEED,
+    n_jobs: int = CV_N_JOBS,
 ) -> dict[str, float]:
     """Evalue proprement un modele avec validation croisee stratifiee."""
     scoring = _scoring_standard()
@@ -121,7 +108,7 @@ def evaluer_modele_cv(
         cv=cv,
         scoring=scoring,
         return_train_score=True,
-        n_jobs=_get_cv_n_jobs(),
+        n_jobs=n_jobs,
     )
     duree = perf_counter() - debut
 
@@ -146,6 +133,7 @@ def predictions_oof(
     label_encoder: Any | None = None,
     n_splits: int = N_SPLITS,
     random_state: int = RANDOM_SEED,
+    n_jobs: int = CV_N_JOBS,
 ) -> pd.DataFrame:
     """Retourne les predictions out-of-fold pour l'analyse d'erreurs."""
     cv = _creer_cv(n_splits=n_splits, random_state=random_state)
@@ -154,7 +142,7 @@ def predictions_oof(
         X,
         y,
         cv=cv,
-        n_jobs=_get_cv_n_jobs(),
+        n_jobs=n_jobs,
     )
     return _construire_tableau_predictions(
         y_vrai=y,
@@ -214,6 +202,7 @@ def evaluer_modele_tuned_nested_cv(
     refit: str = "f1_macro",
     scoring: dict[str, str] | None = None,
     return_probabilities: bool = False,
+    n_jobs: int = CV_N_JOBS,
 ) -> dict[str, Any]:
     """Evalue un modele tune via une validation croisee imbriquee.
 
@@ -250,7 +239,7 @@ def evaluer_modele_tuned_nested_cv(
             scoring=scoring,
             refit=refit,
             cv=inner_cv,
-            n_jobs=_get_cv_n_jobs(),
+            n_jobs=n_jobs,
             return_train_score=True,
         )
 
@@ -302,9 +291,9 @@ def evaluer_modele_tuned_nested_cv(
     tableau_plis = pd.DataFrame(mesures_plis)
     mesures = {
         "val_accuracy_mean": float(tableau_plis["val_accuracy"].mean()),
-        "val_accuracy_std": float(tableau_plis["val_accuracy"].std(ddof=0)),
+        "val_accuracy_std": float(tableau_plis["val_accuracy"].std(ddof=1)),
         "val_f1_macro_mean": float(tableau_plis["val_f1_macro"].mean()),
-        "val_f1_macro_std": float(tableau_plis["val_f1_macro"].std(ddof=0)),
+        "val_f1_macro_std": float(tableau_plis["val_f1_macro"].std(ddof=1)),
         # Train scores and generalization gaps are not scientifically valid
         # for nested CV tuned results.  Per-fold train scores remain available
         # in ``outer_fold_metrics`` for diagnostic purposes.
@@ -412,6 +401,7 @@ class ModelEvaluator:
         random_state: int = RANDOM_SEED,
         refit: str = "f1_macro",
         return_probabilities: bool = False,
+        n_jobs: int = CV_N_JOBS,
     ) -> dict[str, Any]:
         return evaluer_modele_tuned_nested_cv(
             estimateur_ou_pipeline=estimateur_ou_pipeline,
@@ -424,6 +414,7 @@ class ModelEvaluator:
             random_state=random_state,
             refit=refit,
             return_probabilities=return_probabilities,
+            n_jobs=n_jobs,
         )
 
     @staticmethod

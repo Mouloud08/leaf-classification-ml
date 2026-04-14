@@ -135,6 +135,7 @@ def construire_tuning_run_result(
             {k: normaliser_parametre_pour_json(v) for k, v in row.items()}
             for row in nested_tuned["best_params_per_fold"].to_dict(orient="records")
         ],
+        outer_fold_metrics=nested_tuned["outer_fold_metrics"].to_dict(orient="records"),
         exploratory_tuning_seconds=exploratory_tuning_seconds,
         fit_time_mean=mesures_nested["fit_time_mean"],
         score_time_mean=mesures_nested["score_time_mean"],

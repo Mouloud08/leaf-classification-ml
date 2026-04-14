@@ -71,10 +71,7 @@ def tracer_metrique_par_classe(
         data=donnees,
         x=metrique,
         y="classe",
-        palette="mako",
-        hue="classe",
-        dodge=False,
-        legend=False,
+        color="#4C78A8",
         ax=axe,
     )
     axe.set_title(f"{titre} ({_format_label(metrique)})")

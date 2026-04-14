@@ -41,33 +41,6 @@ def tracer_validation_curve_max_depth(
     sns.despine(ax=ax)
     fig.tight_layout()
     return fig
-
-
-def tracer_feature_importance(
-    donnees: pd.DataFrame,
-    top_n: int = 20,
-    titre: str = "Feature Importance (Decision Tree)",
-) -> plt.Figure:
-    """Trace les importances des variables."""
-    donnees_top = donnees.head(top_n)
-    fig, ax = plt.subplots(figsize=(10, 6))
-    sns.barplot(
-        data=donnees_top,
-        x="importance",
-        y="feature",
-        palette="mako",
-        hue="feature",
-        legend=False,
-        ax=ax,
-    )
-    ax.set_title(titre)
-    ax.set_xlabel("Importance", fontweight="bold")
-    ax.set_ylabel("Feature", fontweight="bold")
-    sns.despine(ax=ax)
-    fig.tight_layout()
-    return fig
-
-
 def tracer_arbre_tronque(
     estimateur: Any,
     feature_names: list[str],
