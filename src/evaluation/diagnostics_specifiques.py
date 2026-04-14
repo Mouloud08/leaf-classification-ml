@@ -43,7 +43,7 @@ def validation_curve_max_depth(
     estimateur: Any,
     X: pd.DataFrame,
     y: np.ndarray,
-    param_range: list[int] | None = None,
+    param_range: list[int | None] | None = None,
 ) -> pd.DataFrame:
     """Validation curve pour max_depth d'un arbre de decision."""
     if param_range is None:

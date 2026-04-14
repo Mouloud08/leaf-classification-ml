@@ -365,7 +365,7 @@ def evaluer_dummy_classifier(
     strategie: str = "most_frequent",
     n_splits: int = N_SPLITS,
     random_state: int = RANDOM_SEED,
-) -> dict[str, float]:
+) -> dict[str, Any]:
     """Evalue un DummyClassifier avec la meme CV stratifiee que les autres modeles."""
     dummy = DummyClassifier(strategy=strategie, random_state=random_state)
     mesures = evaluer_modele_cv(dummy, X, y, n_splits=n_splits, random_state=random_state)
