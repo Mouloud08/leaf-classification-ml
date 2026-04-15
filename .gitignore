@@ -39,9 +39,13 @@ _nb_images/
 *.jpeg
 *.svg
 *.pdf
+docs/*.html
+docs/rapport_leaf_classification*.md
+docs/rapport_parts_pdf/
 
 # Generated result files
 results/*/metrics/*.json
+results/*/metrics/*.csv
 results/*/predictions/*.csv
 results/*/tuning/*.csv
 results/metrics/*.json

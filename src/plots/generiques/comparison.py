@@ -166,6 +166,64 @@ def tracer_comparaison_variantes(
     return axe
 
 
+def tracer_comparaison_variantes_rapport(
+    tableau: pd.DataFrame,
+    titre: str = "Comparaison finale des variantes",
+) -> plt.Axes:
+    """Plot a report-ready per-model comparison including the tuned variant.
+
+    Keeps the same simple visual logic as the original notebook charts:
+    grouped bars by variant, one bar per metric, no extra overlays.
+    """
+    if tableau.empty:
+        raise ValueError("The results table is empty.")
+
+    ordre_variantes = ["default", "scaled_only", "scaled_pca", "restricted_depth", "tuned"]
+    donnees = tableau.copy()
+    donnees["variante"] = donnees["variante"].astype(str)
+    donnees = donnees[donnees["variante"].isin(ordre_variantes)].copy()
+    variantes_presentes = [v for v in ordre_variantes if v in set(donnees["variante"])]
+    donnees = donnees.melt(
+        id_vars=["variante"],
+        value_vars=["val_f1_macro_mean", "val_accuracy_mean"],
+        var_name="metrique",
+        value_name="score",
+    )
+    donnees["metrique"] = donnees["metrique"].map(
+        {
+            "val_f1_macro_mean": "F1-macro",
+            "val_accuracy_mean": "Accuracy",
+        }
+    )
+
+    figure, axe = plt.subplots(figsize=(9.6, 5.6))
+    sns.barplot(
+        data=donnees,
+        x="variante",
+        y="score",
+        hue="metrique",
+        order=variantes_presentes,
+        palette={"F1-macro": "#F58518", "Accuracy": "#4C78A8"},
+        ax=axe,
+    )
+
+    axe.set_title(titre)
+    axe.set_xlabel("Variante")
+    axe.set_ylabel("Score moyen")
+    axe.set_ylim(0.0, 1.0)
+    sns.move_legend(
+        axe,
+        "upper left",
+        bbox_to_anchor=(1.02, 1),
+        frameon=False,
+        title="Metrique",
+    )
+    axe.tick_params(axis="x", rotation=0)
+    sns.despine(ax=axe)
+    figure.tight_layout()
+    return axe
+
+
 def tracer_temps_vs_performance(
     tableau: pd.DataFrame,
     metrique: str = "val_f1_macro_mean",

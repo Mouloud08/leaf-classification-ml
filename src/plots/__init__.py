@@ -5,6 +5,7 @@
 from .generiques import (
     tracer_barres_comparaison,
     tracer_comparaison_variantes,
+    tracer_comparaison_variantes_rapport,
     tracer_courbes_precision_rappel_ovr,
     tracer_courbes_roc_ovr,
     tracer_heatmap_tuning,
@@ -20,6 +21,7 @@ from .generiques import (
 __all__ = [
     "tracer_barres_comparaison",
     "tracer_comparaison_variantes",
+    "tracer_comparaison_variantes_rapport",
     "tracer_courbes_precision_rappel_ovr",
     "tracer_courbes_roc_ovr",
     "tracer_heatmap_tuning",

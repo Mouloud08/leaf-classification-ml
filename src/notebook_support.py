@@ -7,7 +7,9 @@ convenience functions that notebooks call cell-by-cell.
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -20,6 +22,7 @@ from .config import (
     CV_N_JOBS,
     N_SPLITS,
     RANDOM_SEED,
+    RESULTS_DIR,
     TIMING_POLICY,
 )
 from .data import charger_donnees
@@ -327,6 +330,79 @@ def construire_tableau_variantes(
     return tableau_variantes(
         [r.to_dict() for r in resultats_untuned], mesures_tuned,
     )
+
+
+def ordonner_tableau_variantes(tableau: pd.DataFrame) -> pd.DataFrame:
+    """Order notebook/report variants in a stable, presentation-friendly way."""
+    if tableau.empty or "variante" not in tableau.columns:
+        return tableau.copy()
+
+    ordre_variantes = {
+        "default": 0,
+        "scaled_only": 1,
+        "scaled_pca": 2,
+        "restricted_depth": 3,
+        "tuned": 99,
+    }
+    return (
+        tableau.copy()
+        .assign(
+            _ordre=lambda df: df["variante"].astype("string").map(
+                lambda v: ordre_variantes.get(str(v), 50)
+            )
+        )
+        .sort_values(["_ordre", "variante"])
+        .drop(columns="_ordre")
+        .reset_index(drop=True)
+    )
+
+
+def charger_tableau_variantes_modele(
+    nom_modele: str,
+    root: Path | None = None,
+) -> pd.DataFrame:
+    """Load all canonical variant metrics for a model from results/<modele>/metrics."""
+    metrics_dir = Path(root or RESULTS_DIR) / nom_modele / "metrics"
+    lignes: list[dict[str, Any]] = []
+    for chemin in sorted(metrics_dir.glob("*.json")):
+        with open(chemin, encoding="utf-8") as fh:
+            contenu = json.load(fh)
+        lignes.append({"variante": chemin.stem, **contenu})
+    tableau = pd.DataFrame(lignes)
+    if tableau.empty:
+        raise FileNotFoundError(f"Aucune metrique canonique trouvee pour {nom_modele}.")
+    return ordonner_tableau_variantes(tableau)
+
+
+def construire_tableau_variantes_rapport(tableau: pd.DataFrame) -> pd.DataFrame:
+    """Return a compact report-ready variant table with explicit status labels."""
+    if tableau.empty:
+        return tableau.copy()
+
+    statut = tableau.get("evaluation_stage", pd.Series(index=tableau.index, dtype="object")).map(
+        {
+            "baseline": "exploratoire",
+            "improved_untuned": "exploratoire",
+            "tuned": "confirmatoire",
+        }
+    )
+    colonnes = [
+        "variante",
+        "val_f1_macro_mean",
+        "val_accuracy_mean",
+        "evaluation_stage",
+    ]
+    present = [c for c in colonnes if c in tableau.columns]
+    retour = tableau.loc[:, present].copy()
+    retour["statut"] = statut.fillna("")
+    retour = retour.rename(
+        columns={
+            "val_f1_macro_mean": "f1_macro",
+            "val_accuracy_mean": "accuracy",
+            "evaluation_stage": "evaluation_stage",
+        }
+    )
+    return retour
 
 
 def construire_resume_confusions_variantes(
