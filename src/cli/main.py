@@ -21,7 +21,7 @@ from ..experiments import (
     generer_manifeste,
     selectionner_meilleure_variante_untuned,
 )
-from ..data import charger_donnees
+from ..data import charger_donnees_modelisation
 
 logger = logging.getLogger("src")
 
@@ -143,7 +143,8 @@ def main(argv: list[str] | None = None) -> int:
 
     # Generation des figures
     if not study.no_figures and study.figures_mode != "none":
-        X, y, label_encoder = charger_donnees()
+        split = charger_donnees_modelisation(output_root=study.output_root)
+        X, y, label_encoder = split.X_dev, split.y_dev, split.label_encoder
         for result in resultats:
             if not result.success:
                 continue

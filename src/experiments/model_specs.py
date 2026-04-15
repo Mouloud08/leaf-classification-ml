@@ -114,6 +114,7 @@ def _spec_arbre_decision() -> ModelStudySpec:
         ),
         tuning_uses_pipeline=False,
         supports_probabilities=m.supports_probabilities,
+        secondary_holdout_enabled=False,
         tuning_heatmap_axes=(
             "param_modele__max_depth",
             "param_modele__min_samples_leaf",

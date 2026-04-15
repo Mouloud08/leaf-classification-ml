@@ -5,7 +5,7 @@ necessaires aux plots specifiques. Les plots eux-memes sont dans
 src/plots/specifiques/.
 
 NOTE METHODOLOGIQUE — Les fonctions qui appellent ``model.fit(X, y)``
-sur le jeu complet sont des diagnostics *exploratoires* (visualisation
+sur le sous-ensemble de developpement disponible sont des diagnostics *exploratoires* (visualisation
 de la structure du modele : coefficients, importance, loss curve, etc.).
 Elles ne servent PAS a l'evaluation de la performance generalisable —
 celle-ci est assuree par ``evaluer_modele_cv`` et
@@ -356,7 +356,8 @@ def coefficients_absolus(
     """Top des coefficients absolus moyens sur toutes les classes."""
     modele = clone(estimateur)
     modele.fit(X, y)
-    coef_abs_mean = np.abs(modele.coef_).mean(axis=0)
+    estimateur_appris = modele.named_steps["modele"] if hasattr(modele, "named_steps") else modele
+    coef_abs_mean = np.abs(estimateur_appris.coef_).mean(axis=0)
     df = pd.DataFrame(
         {"feature": X.columns, "coef_abs_mean": coef_abs_mean}
     )

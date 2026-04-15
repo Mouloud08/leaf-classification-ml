@@ -25,7 +25,7 @@ from .config import (
     RESULTS_DIR,
     TIMING_POLICY,
 )
-from .data import charger_donnees
+from .data import charger_donnees_modelisation
 from .evaluation import (
     calculer_metriques_par_classe,
     evaluer_dummy_classifier,
@@ -180,9 +180,13 @@ class NotebookContext:
 
     spec: NotebookModelSpec
     definition: dict[str, Any]
+    output_root: Path
     X: pd.DataFrame
     y: Any
+    X_holdout: pd.DataFrame
+    y_holdout: Any
     label_encoder: Any
+    split_metadata: dict[str, Any]
     cv_eval: StratifiedKFold    # display only (n_splits) — evaluation functions create their own CV
     cv_tuning: StratifiedKFold  # outer CV used by the confirmatory tuning workflow
     timing_policy: str = TIMING_POLICY
@@ -217,18 +221,27 @@ NOTEBOOK_MODEL_SPECS: dict[str, NotebookModelSpec] = {
 }
 
 
-def creer_notebook_context(model_name: str) -> NotebookContext:
+def creer_notebook_context(
+    model_name: str,
+    *,
+    output_root: str | Path | None = None,
+) -> NotebookContext:
     """Build the shared execution context for a classifier notebook."""
     spec = obtenir_notebook_model_spec(model_name)
     definition = MODELES[model_name.lower()]().definition()
-    X, y, label_encoder = charger_donnees()
+    racine_sortie = Path(output_root) if output_root is not None else RESULTS_DIR
+    split = charger_donnees_modelisation(output_root=racine_sortie)
     cv = creer_cv(n_splits=N_SPLITS, random_seed=RANDOM_SEED)
     return NotebookContext(
         spec=spec,
         definition=definition,
-        X=X,
-        y=y,
-        label_encoder=label_encoder,
+        output_root=racine_sortie,
+        X=split.X_dev,
+        y=split.y_dev,
+        X_holdout=split.X_holdout,
+        y_holdout=split.y_holdout,
+        label_encoder=split.label_encoder,
+        split_metadata=split.metadata,
         cv_eval=cv,
         cv_tuning=cv,
     )
@@ -245,13 +258,17 @@ def evaluer_variantes_untuned(
     from .experiments.runner import executer_variantes_untuned as _run_untuned
     from .experiments.study_spec import StudySpec
 
-    study = StudySpec(models=[contexte.spec.model_name])
+    study = StudySpec(
+        models=[contexte.spec.model_name],
+        output_root=contexte.output_root,
+    )
     spec = obtenir_model_study_spec(contexte.spec.model_name)
     return _run_untuned(spec, contexte.X, contexte.y, study)
 
 
 def executer_tuning_confirmatoire(
     contexte: NotebookContext,
+    resultats_untuned: list[UntunedVariantResult] | None = None,
 ) -> dict[str, Any]:
     """Run the shared confirmatory tuning workflow for a notebook."""
     from .experiments.runner import executer_tuning_bundle
@@ -263,6 +280,7 @@ def executer_tuning_confirmatoire(
         models=[model_name],
         n_splits=contexte.cv_tuning.n_splits,
         random_seed=contexte.cv_tuning.random_state,
+        output_root=contexte.output_root,
     )
 
     bundle = executer_tuning_bundle(
@@ -270,6 +288,10 @@ def executer_tuning_confirmatoire(
         X=contexte.X,
         y=contexte.y,
         label_encoder=contexte.label_encoder,
+        untuned_results=resultats_untuned or evaluer_variantes_untuned(contexte),
+        X_holdout=contexte.X_holdout,
+        y_holdout=contexte.y_holdout,
+        split_metadata=contexte.split_metadata,
         study=study,
     )
     return {
@@ -285,6 +307,8 @@ def charger_ou_generer_predictions_variante(
     X: pd.DataFrame,
     y: Any,
     label_encoder: Any | None = None,
+    *,
+    root: str | Path | None = None,
 ) -> pd.DataFrame:
     """Return a standard prediction table for a model variant.
 
@@ -292,8 +316,9 @@ def charger_ou_generer_predictions_variante(
     Untuned variants are recomputed as OOF predictions with the shared simple-CV
     protocol so notebooks can compare confusion matrices across every variant.
     """
+    racine = Path(root) if root is not None else None
     try:
-        return charger_predictions_modele(model_name, variante)
+        return charger_predictions_modele(model_name, variante, root=racine)
     except FileNotFoundError:
         pass
 
@@ -330,6 +355,38 @@ def construire_tableau_variantes(
     return tableau_variantes(
         [r.to_dict() for r in resultats_untuned], mesures_tuned,
     )
+
+
+def construire_tableau_holdout_secondaire(
+    mesures_tuned: dict[str, Any],
+) -> pd.DataFrame:
+    """Construit un tableau compact `tuned` vs reference sur holdout."""
+    secondary_holdout = mesures_tuned.get("secondary_holdout", {})
+    if not isinstance(secondary_holdout, dict) or not secondary_holdout.get("enabled"):
+        return pd.DataFrame()
+
+    reference = secondary_holdout.get("reference", {})
+    tuned = secondary_holdout.get("tuned", {})
+    tableau = pd.DataFrame(
+        [
+            {
+                "variante": reference.get("variant", secondary_holdout.get("reference_variant")),
+                "f1_macro_holdout": reference.get("f1_macro"),
+                "accuracy_holdout": reference.get("accuracy"),
+                "role": "reference",
+            },
+            {
+                "variante": "tuned",
+                "f1_macro_holdout": tuned.get("f1_macro"),
+                "accuracy_holdout": tuned.get("accuracy"),
+                "role": "tuned",
+            },
+        ]
+    )
+    tableau["delta_f1_vs_reference"] = (
+        tableau["f1_macro_holdout"] - float(reference.get("f1_macro", np.nan))
+    )
+    return tableau
 
 
 def ordonner_tableau_variantes(tableau: pd.DataFrame) -> pd.DataFrame:
@@ -595,6 +652,36 @@ def construire_tableau_plis_tuned_global(
     return pd.DataFrame(lignes)
 
 
+def construire_tableau_holdout_global(
+    modeles: list[str] | tuple[str, ...],
+    root: Path | None = None,
+) -> pd.DataFrame:
+    """Agrège les corroborations holdout disponibles pour les modeles eligibles."""
+    lignes: list[dict[str, Any]] = []
+    for nom_modele in modeles:
+        chemin = Path(root or RESULTS_DIR) / nom_modele / "metrics" / "tuned.json"
+        if not chemin.exists():
+            continue
+        contenu = json.loads(chemin.read_text(encoding="utf-8"))
+        secondary_holdout = contenu.get("secondary_holdout", {})
+        if not isinstance(secondary_holdout, dict) or not secondary_holdout.get("enabled"):
+            continue
+        lignes.append(
+            {
+                "modele": nom_modele,
+                "reference_variant": secondary_holdout.get("reference_variant"),
+                "nested_cv_f1": contenu.get("val_f1_macro_mean"),
+                "holdout_tuned_f1": secondary_holdout.get("tuned", {}).get("f1_macro"),
+                "holdout_reference_f1": secondary_holdout.get("reference", {}).get("f1_macro"),
+                "delta_holdout": (
+                    secondary_holdout.get("tuned", {}).get("f1_macro", np.nan)
+                    - secondary_holdout.get("reference", {}).get("f1_macro", np.nan)
+                ),
+            }
+        )
+    return pd.DataFrame(lignes)
+
+
 def construire_tableau_complementarite_erreurs(
     predictions_par_modele: dict[str, pd.DataFrame],
 ) -> pd.DataFrame:
@@ -653,8 +740,9 @@ def executer_verifications_validite(
 
     note = (
         "Les variantes non tunees restent exploratoires; les figures refittees "
-        "sur tout le dataset aussi. Les predictions OOF de la variante tuned "
-        "sont des diagnostics descriptifs confirmatoires, mais seul le score "
+        "sur le sous-ensemble de developpement (80 %) aussi. Les predictions "
+        "OOF de la variante tuned sont des diagnostics descriptifs "
+        "confirmatoires, mais seul le score "
         "tuned en nested CV sert au classement final inter-modeles."
     )
 

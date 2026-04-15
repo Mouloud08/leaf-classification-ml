@@ -89,6 +89,42 @@ def _scoring_standard() -> dict[str, str]:
     }
 
 
+def _predire_avec_probabilites(
+    estimateur: Any,
+    X: pd.DataFrame,
+    labels: np.ndarray,
+    noms_classes: list[Any],
+    y_vrai: np.ndarray,
+    label_encoder: Any | None = None,
+) -> tuple[pd.DataFrame, pd.DataFrame | None]:
+    """Construit les tableaux standardises de predictions et probabilites."""
+    y_pred = estimateur.predict(X)
+    tableau_predictions = _construire_tableau_predictions(
+        y_vrai=y_vrai,
+        y_pred=y_pred,
+        label_encoder=label_encoder,
+    )
+    try:
+        probas = estimateur.predict_proba(X)
+    except AttributeError:
+        return tableau_predictions, None
+
+    classes_modele = getattr(estimateur, "classes_", labels)
+    probas_alignees = _aligner_probabilites(
+        probabilites=probas,
+        classes_modele=np.asarray(classes_modele),
+        labels_attendus=labels,
+    )
+    tableau_probabilites = _construire_tableau_probabilites(
+        y_vrai=y_vrai,
+        y_pred=y_pred,
+        probabilites=probas_alignees,
+        noms_classes=noms_classes,
+        label_encoder=label_encoder,
+    )
+    return tableau_predictions, tableau_probabilites
+
+
 def evaluer_modele_cv(
     modele_ou_pipeline: Any,
     X: pd.DataFrame,
@@ -332,6 +368,46 @@ def evaluer_modele_tuned_nested_cv(
         resultat["oof_probabilities"] = None
 
     return resultat
+
+
+def evaluer_modele_holdout(
+    estimateur: Any,
+    X_dev: pd.DataFrame,
+    y_dev: np.ndarray,
+    X_holdout: pd.DataFrame,
+    y_holdout: np.ndarray,
+    label_encoder: Any | None = None,
+) -> dict[str, Any]:
+    """Fit sur le dev et evalue une seule fois sur le holdout."""
+    labels, noms_classes = _obtenir_labels_et_noms(y_dev, label_encoder=label_encoder)
+    modele = clone(estimateur)
+    debut_total = perf_counter()
+    debut_fit = perf_counter()
+    modele.fit(X_dev, y_dev)
+    fit_time = perf_counter() - debut_fit
+    debut_score = perf_counter()
+    tableau_predictions, tableau_probabilites = _predire_avec_probabilites(
+        modele,
+        X_holdout,
+        labels=labels,
+        noms_classes=noms_classes,
+        y_vrai=y_holdout,
+        label_encoder=label_encoder,
+    )
+    score_time = perf_counter() - debut_score
+    y_pred = tableau_predictions["y_pred"].to_numpy()
+
+    return {
+        "metrics": {
+            "accuracy": float(accuracy_score(y_holdout, y_pred)),
+            "f1_macro": float(f1_score(y_holdout, y_pred, average="macro")),
+            "fit_time": float(fit_time),
+            "score_time": float(score_time),
+            "elapsed_seconds": float(perf_counter() - debut_total),
+        },
+        "predictions": tableau_predictions,
+        "probabilities": tableau_probabilites,
+    }
 
 
 def comparer_variantes(resultats: list[dict[str, Any]]) -> pd.DataFrame:

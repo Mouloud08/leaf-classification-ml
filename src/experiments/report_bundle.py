@@ -114,13 +114,15 @@ def generer_comparaison_globale(
 
         completeness = canonical_artifact_completeness(study.models, root=study.output_root)
         if bool(completeness["canonical_complete"].all()):
+            ranked_source = df[df["evaluation_stage"] == "tuned"].copy()
+            if ranked_source.empty:
+                ranked_source = df.copy()
             ranked = (
-                df.groupby("modele")["val_f1_macro_mean"]
-                .max()
-                .sort_values(ascending=False)
-                .reset_index()
+                ranked_source.loc[:, ["modele", "val_f1_macro_mean"]]
+                .rename(columns={"val_f1_macro_mean": "best_f1_macro"})
+                .sort_values("best_f1_macro", ascending=False)
+                .reset_index(drop=True)
             )
-            ranked.columns = ["modele", "best_f1_macro"]
             ranked["rank"] = range(1, len(ranked) + 1)
             ranked.to_csv(paths.ranked_models_file, index=False, encoding="utf-8")
 

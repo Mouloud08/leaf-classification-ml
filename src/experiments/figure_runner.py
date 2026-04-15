@@ -23,7 +23,7 @@ from ..artifacts import (
     model_paths,
     sauvegarder_figure,
 )
-from ..data import charger_donnees
+from ..data import charger_donnees_modelisation
 from ..evaluation import (
     construire_matrice_confusion,
     extraire_top_confusions,
@@ -161,7 +161,8 @@ def generer_figures_specifiques(
     paths = model_paths(model_name, root=study.output_root)
     paths.ensure_dirs()
 
-    X, y, label_encoder = charger_donnees()
+    split = charger_donnees_modelisation(output_root=study.output_root)
+    X, y, label_encoder = split.X_dev, split.y_dev, split.label_encoder
     bundle = FigureBundleResult(model_name=model_name)
 
     # Determiner quelles figures generer

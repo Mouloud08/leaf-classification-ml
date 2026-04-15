@@ -69,6 +69,7 @@ class TuningRunResult:
     exploratory_tuning_seconds: float = 0.0
     fit_time_mean: float = 0.0
     score_time_mean: float = 0.0
+    secondary_holdout: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         result: dict[str, Any] = {
@@ -94,6 +95,8 @@ class TuningRunResult:
             "fit_time_mean": self.fit_time_mean,
             "score_time_mean": self.score_time_mean,
         }
+        if self.secondary_holdout:
+            result["secondary_holdout"] = self.secondary_holdout
         return result
 
 

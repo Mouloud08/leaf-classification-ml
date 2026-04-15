@@ -93,6 +93,10 @@ class GlobalArtifactPaths:
     def ranked_models_file(self) -> Path:
         return self.comparison_dir / "ranked_models.csv"
 
+    @property
+    def frozen_holdout_split_file(self) -> Path:
+        return self.comparison_dir / "frozen_holdout_split.json"
+
     def ensure_dirs(self) -> None:
         for d in (self.comparison_dir, self.figures_dir):
             d.mkdir(parents=True, exist_ok=True)

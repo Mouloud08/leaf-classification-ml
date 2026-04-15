@@ -20,8 +20,12 @@ from ..artifacts import (
     sauvegarder_resultats_grid_search,
 )
 from ..config import TIMING_POLICY
-from ..data import charger_donnees
-from ..evaluation import evaluer_modele_cv, evaluer_modele_tuned_nested_cv
+from ..data import charger_donnees_modelisation
+from ..evaluation import (
+    evaluer_modele_cv,
+    evaluer_modele_holdout,
+    evaluer_modele_tuned_nested_cv,
+)
 from .model_specs import obtenir_model_study_spec
 from .shared import (
     ajouter_gaps,
@@ -29,6 +33,7 @@ from .shared import (
     construire_tuning_run_result,
     executer_grid_search_exploratoire,
     preparer_tuning_modele,
+    selectionner_meilleure_variante_untuned,
 )
 from .study_spec import ModelStudySpec, StudySpec, UntunedVariantSpec
 
@@ -84,6 +89,7 @@ def _charger_resultat_tuning(paths) -> TuningRunResult | None:
         exploratory_tuning_seconds=contenu.get("exploratory_tuning_seconds", 0.0),
         fit_time_mean=contenu.get("fit_time_mean", 0.0),
         score_time_mean=contenu.get("score_time_mean", 0.0),
+        secondary_holdout=contenu.get("secondary_holdout", {}),
     )
 
 
@@ -106,7 +112,24 @@ def _peut_reutiliser_artefacts(
 
     tuned_metrics = paths.metrics_file("tuned")
     tuned_predictions = paths.predictions_file("tuned")
-    return tuned_metrics.exists() and tuned_predictions.exists()
+    if not (tuned_metrics.exists() and tuned_predictions.exists()):
+        return False
+
+    contenu_tuned = _charger_json(tuned_metrics)
+    if not spec.secondary_holdout_enabled:
+        return True
+
+    secondary_holdout = contenu_tuned.get("secondary_holdout")
+    if not isinstance(secondary_holdout, dict) or not secondary_holdout.get("enabled"):
+        return False
+
+    reference_variant = str(secondary_holdout.get("reference_variant", "")).strip()
+    if not reference_variant:
+        return False
+    return (
+        paths.predictions_file("tuned_holdout").exists()
+        and paths.predictions_file(f"{reference_variant}_holdout").exists()
+    )
 
 
 def _charger_resultats_existants(
@@ -191,10 +214,24 @@ def executer_tuning(
     X: pd.DataFrame,
     y: Any,
     label_encoder: Any,
+    untuned_results: list[UntunedVariantResult],
+    X_holdout: pd.DataFrame,
+    y_holdout: Any,
+    split_metadata: dict[str, Any],
     study: StudySpec,
 ) -> TuningRunResult:
     """Execute le tuning exploratoire et la nested CV confirmatoire."""
-    bundle = executer_tuning_bundle(spec, X, y, label_encoder, study)
+    bundle = executer_tuning_bundle(
+        spec,
+        X,
+        y,
+        label_encoder,
+        untuned_results=untuned_results,
+        X_holdout=X_holdout,
+        y_holdout=y_holdout,
+        split_metadata=split_metadata,
+        study=study,
+    )
     return bundle["tuning_result"]
 
 
@@ -203,6 +240,11 @@ def executer_tuning_bundle(
     X: pd.DataFrame,
     y: Any,
     label_encoder: Any,
+    *,
+    untuned_results: list[UntunedVariantResult],
+    X_holdout: pd.DataFrame,
+    y_holdout: Any,
+    split_metadata: dict[str, Any],
     study: StudySpec,
 ) -> dict[str, Any]:
     """Execute the shared tuning workflow and return notebook-friendly outputs."""
@@ -239,6 +281,86 @@ def executer_tuning_bundle(
         exploratory_tuning_seconds=temps_tuning,
     )
 
+    secondary_holdout_summary: dict[str, Any] | None = None
+    if spec.secondary_holdout_enabled:
+        reference_variant_spec = selectionner_meilleure_variante_untuned(
+            spec,
+            untuned_results,
+        )
+        reference_estimateur = construire_estimateur_variante(
+            spec.model_name,
+            reference_variant_spec,
+        )
+        holdout_reference = evaluer_modele_holdout(
+            reference_estimateur,
+            X_dev=X,
+            y_dev=y,
+            X_holdout=X_holdout,
+            y_holdout=y_holdout,
+            label_encoder=label_encoder,
+        )
+        holdout_tuned = evaluer_modele_holdout(
+            grid.best_estimator_,
+            X_dev=X,
+            y_dev=y,
+            X_holdout=X_holdout,
+            y_holdout=y_holdout,
+            label_encoder=label_encoder,
+        )
+        secondary_holdout_summary = {
+            "enabled": True,
+            "reference_variant": reference_variant_spec.name,
+            "split_artifact": split_metadata.get("split_artifact"),
+            "n_dev": int(split_metadata.get("n_dev", len(y))),
+            "n_holdout": int(split_metadata.get("n_holdout", len(y_holdout))),
+            "tuned": {
+                "f1_macro": holdout_tuned["metrics"]["f1_macro"],
+                "accuracy": holdout_tuned["metrics"]["accuracy"],
+                "best_params": {
+                    k: str(v) if hasattr(v, "get_params") else v
+                    for k, v in grid.best_params_.items()
+                },
+            },
+            "reference": {
+                "variant": reference_variant_spec.name,
+                "f1_macro": holdout_reference["metrics"]["f1_macro"],
+                "accuracy": holdout_reference["metrics"]["accuracy"],
+            },
+        }
+        tuning_result = construire_tuning_run_result(
+            nested_tuned=nested_tuned,
+            grid=grid,
+            timing_policy=TIMING_POLICY,
+            exploratory_tuning_seconds=temps_tuning,
+            secondary_holdout=secondary_holdout_summary,
+        )
+        sauvegarder_predictions(
+            spec.model_name,
+            "tuned_holdout",
+            holdout_tuned["predictions"],
+            paths=paths,
+        )
+        sauvegarder_predictions(
+            spec.model_name,
+            f"{reference_variant_spec.name}_holdout",
+            holdout_reference["predictions"],
+            paths=paths,
+        )
+        if holdout_tuned["probabilities"] is not None:
+            sauvegarder_probabilites_oof(
+                spec.model_name,
+                "tuned_holdout",
+                holdout_tuned["probabilities"],
+                paths=paths,
+            )
+        if holdout_reference["probabilities"] is not None:
+            sauvegarder_probabilites_oof(
+                spec.model_name,
+                f"{reference_variant_spec.name}_holdout",
+                holdout_reference["probabilities"],
+                paths=paths,
+            )
+
     metrics_path = sauvegarder_mesures(
         spec.model_name,
         "tuned",
@@ -273,6 +395,7 @@ def executer_tuning_bundle(
         "predictions_path": predictions_path,
         "probabilities_path": probabilities_path,
         "exploratory_tuning_seconds": temps_tuning,
+        "secondary_holdout": secondary_holdout_summary,
     }
 
 
@@ -288,7 +411,13 @@ def executer_modele(
         logger.info("Reutilisation des artefacts existants pour %s", spec.model_name)
         return _charger_resultats_existants(spec, study)
 
-    X, y, label_encoder = charger_donnees()
+    split = charger_donnees_modelisation(output_root=study.output_root)
+    X = split.X_dev
+    y = split.y_dev
+    label_encoder = split.label_encoder
+    X_holdout = split.X_holdout
+    y_holdout = split.y_holdout
+    split_metadata = split.metadata
 
     # Variantes non tunees
     logger.info("Variantes non tunees...")
@@ -298,7 +427,17 @@ def executer_modele(
     tuning_result = None
     if not study.no_tuning:
         logger.info("Tuning...")
-        tuning_result = executer_tuning(spec, X, y, label_encoder, study)
+        tuning_result = executer_tuning(
+            spec,
+            X,
+            y,
+            label_encoder,
+            untuned_results=untuned_results,
+            X_holdout=X_holdout,
+            y_holdout=y_holdout,
+            split_metadata=split_metadata,
+            study=study,
+        )
 
     return StudyRunResult(
         model_name=model_name,

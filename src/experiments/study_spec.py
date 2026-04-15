@@ -35,6 +35,7 @@ class ModelStudySpec:
     untuned_variants: tuple[UntunedVariantSpec, ...]
     tuning_uses_pipeline: bool
     supports_probabilities: bool = False
+    secondary_holdout_enabled: bool = True
     tuning_heatmap_axes: tuple[str, str] | None = None
     tuning_facet_column: str | None = None
     core_figures: tuple[str, ...] = ()

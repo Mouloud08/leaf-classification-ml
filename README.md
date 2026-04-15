@@ -79,5 +79,6 @@ Chaque notebook `02` a `07` suit la meme structure :
 - Les scores `tuned` sauvegardes dans `results/metrics/` proviennent d'une
   validation croisee imbriquee, afin d'eviter le biais de selection.
 - Les figures prefixees `exploratory__` sont des diagnostics descriptifs
-  refittes sur tout le dataset; elles ne doivent pas etre interpretees comme
-  preuve confirmatoire au meme titre que les metriques CV/nested CV.
+  refittes sur le sous-ensemble de developpement (`80 %`); elles ne doivent
+  pas etre interpretees comme preuve confirmatoire au meme titre que les
+  metriques CV/nested CV.

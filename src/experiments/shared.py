@@ -61,6 +61,16 @@ def normaliser_parametre_pour_json(valeur: Any) -> Any:
     return repr(valeur) if hasattr(valeur, "get_params") else valeur
 
 
+def _ordre_simplicite_variante(variante: str) -> int:
+    ordre = {
+        "default": 0,
+        "scaled_only": 1,
+        "scaled_pca": 2,
+        "restricted_depth": 3,
+    }
+    return ordre.get(str(variante), 50)
+
+
 def preparer_tuning_modele(
     spec: ModelStudySpec,
 ) -> tuple[Any, dict[str, list[Any]]]:
@@ -115,6 +125,7 @@ def construire_tuning_run_result(
     grid: GridSearchCV,
     timing_policy: str,
     exploratory_tuning_seconds: float,
+    secondary_holdout: dict[str, Any] | None = None,
 ) -> TuningRunResult:
     """Assemble le resultat confirme d'un tuning a partir des artefacts bruts."""
     mesures_nested = nested_tuned["metrics"]
@@ -139,6 +150,7 @@ def construire_tuning_run_result(
         exploratory_tuning_seconds=exploratory_tuning_seconds,
         fit_time_mean=mesures_nested["fit_time_mean"],
         score_time_mean=mesures_nested["score_time_mean"],
+        secondary_holdout=secondary_holdout or {},
     )
 
 
@@ -149,7 +161,11 @@ def selectionner_meilleure_variante_untuned(
     """Retourne la specification de la meilleure variante non tunee."""
     meilleure_variante = max(
         untuned_results,
-        key=lambda item: item.val_f1_macro_mean,
+        key=lambda item: (
+            item.val_f1_macro_mean,
+            item.val_accuracy_mean,
+            -_ordre_simplicite_variante(item.variante),
+        ),
     )
     return next(
         variante
