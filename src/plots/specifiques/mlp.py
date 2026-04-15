@@ -1,4 +1,4 @@
-"""Plots specifiques pour le MLP."""
+"""Graphiques spécifiques pour le MLP."""
 
 from __future__ import annotations
 
@@ -9,13 +9,13 @@ import seaborn as sns
 
 def tracer_loss_curve(
     donnees: pd.DataFrame,
-    titre: str = "MLP Loss Curve",
+    titre: str = "Courbe de perte du MLP",
 ) -> plt.Figure:
-    """Trace la loss curve et, si disponible, le score de validation interne.
+    """Trace la courbe de perte et, si disponible, le score de validation interne.
 
     Si ``donnees`` contient une colonne ``val_score`` non-NaN, un second axe
     y (droite) affiche le score de validation de l'early stopping par iteration.
-    Une ligne verticale indique l'iteration de convergence (dernier point).
+    Une ligne verticale indique l'itération de convergence (dernier point).
     """
     has_val = (
         "val_score" in donnees.columns
@@ -24,16 +24,20 @@ def tracer_loss_curve(
 
     fig, ax1 = plt.subplots(figsize=(11, 6))
 
-    # Training loss — axe gauche
+    # Perte d'entraînement — axe gauche
     ax1.plot(
         donnees["iteration"],
         donnees["loss"],
         color="#4C78A8",
         linewidth=1.8,
-        label="Training loss",
+        label="Perte d'entraînement",
     )
-    ax1.set_xlabel("Iteration", fontweight="bold")
-    ax1.set_ylabel("Cross-entropy loss (train)", color="#4C78A8", fontweight="bold")
+    ax1.set_xlabel("Itération", fontweight="bold")
+    ax1.set_ylabel(
+        "Perte d'entraînement (entropie croisée)",
+        color="#4C78A8",
+        fontweight="bold",
+    )
     ax1.tick_params(axis="y", labelcolor="#4C78A8")
 
     if has_val:
@@ -44,10 +48,10 @@ def tracer_loss_curve(
             color="#F58518",
             linewidth=1.8,
             linestyle="--",
-            label="Val accuracy (early stopping holdout)",
+            label="Exactitude de validation (holdout d'early stopping)",
         )
         ax2.set_ylabel(
-            "Validation accuracy\n(early stopping holdout — 10% du train)",
+            "Exactitude de validation\n(holdout d'early stopping — 10 % du train)",
             color="#F58518",
             fontweight="bold",
         )
@@ -59,7 +63,7 @@ def tracer_loss_curve(
             color="grey",
             linestyle=":",
             linewidth=1.2,
-            label=f"Convergence iter={stop_iter}",
+            label=f"Convergence à l'itération {stop_iter}",
         )
 
         lines1, labels1 = ax1.get_legend_handles_labels()
@@ -76,13 +80,19 @@ def tracer_loss_curve(
 
 def tracer_learning_curve_mlp(
     donnees: pd.DataFrame,
-    titre: str = "Learning Curve (MLP)",
+    titre: str = "Courbe d'apprentissage (MLP)",
 ) -> plt.Figure:
-    """Trace la learning curve du MLP."""
+    """Trace la courbe d'apprentissage du MLP."""
     fig, ax = plt.subplots(figsize=(10, 6))
     import numpy as np
 
-    ax.plot(donnees["train_size"], donnees["train_mean"], "o-", label="Train", color="#4C78A8")
+    ax.plot(
+        donnees["train_size"],
+        donnees["train_mean"],
+        "o-",
+        label="Entraînement",
+        color="#4C78A8",
+    )
     ax.fill_between(
         donnees["train_size"],
         np.clip(donnees["train_mean"] - donnees["train_std"], 0, 1),
@@ -90,7 +100,13 @@ def tracer_learning_curve_mlp(
         alpha=0.15,
         color="#4C78A8",
     )
-    ax.plot(donnees["train_size"], donnees["val_mean"], "o-", label="Validation", color="#F58518")
+    ax.plot(
+        donnees["train_size"],
+        donnees["val_mean"],
+        "o-",
+        label="Validation",
+        color="#F58518",
+    )
     ax.fill_between(
         donnees["train_size"],
         np.clip(donnees["val_mean"] - donnees["val_std"], 0, 1),
@@ -99,7 +115,7 @@ def tracer_learning_curve_mlp(
         color="#F58518",
     )
     ax.set_title(titre)
-    ax.set_xlabel("Training Set Size", fontweight="bold")
+    ax.set_xlabel("Taille du jeu d'entraînement", fontweight="bold")
     ax.set_ylabel("F1-Macro", fontweight="bold")
     ax.legend(frameon=False)
     sns.despine(ax=ax)
@@ -109,9 +125,9 @@ def tracer_learning_curve_mlp(
 
 def tracer_heatmap_hidden_alpha(
     tableau_grid: pd.DataFrame,
-    titre: str = "Hidden Layer Sizes vs Alpha",
+    titre: str = "Tailles des couches cachées vs alpha",
 ) -> plt.Figure:
-    """Trace la heatmap hidden_layer_sizes x alpha."""
+    """Trace la carte thermique ``hidden_layer_sizes`` x ``alpha``."""
     pivot = tableau_grid.pivot_table(
         index="param_modele__hidden_layer_sizes",
         columns="param_modele__alpha",
@@ -129,6 +145,6 @@ def tracer_heatmap_hidden_alpha(
     )
     ax.set_title(titre)
     ax.set_xlabel("Alpha", fontweight="bold")
-    ax.set_ylabel("Hidden Layer Sizes", fontweight="bold")
+    ax.set_ylabel("Tailles des couches cachées", fontweight="bold")
     fig.tight_layout()
     return fig

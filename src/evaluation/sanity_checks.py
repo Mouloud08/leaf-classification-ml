@@ -1,7 +1,7 @@
-"""Sanity checks pour valider le pipeline experimental.
+"""Contrôles élémentaires pour valider le pipeline expérimental.
 
 Regle 5 des bonnes pratiques ML :
-- DummyClassifier comme reference baseline (deja dans evaluateur.py)
+- DummyClassifier comme référence simple (déjà dans evaluateur.py)
 - Test de bruit aleatoire : remplacer X par du bruit, verifier ~chance
 - Test d'overfit petit echantillon : 5 samples, verifier loss -> 0
 """

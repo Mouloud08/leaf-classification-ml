@@ -5,10 +5,10 @@ dataset **Kaggle Leaf Classification**.
 
 Cette version reconstruit la base du projet avec une architecture modulaire :
 
-- le notebook EDA existant est conserve ;
-- le code reutilisable vit dans `src/` ;
-- les notebooks modeles suivent tous la meme progression ;
-- les artefacts de la nouvelle version sont ecrits dans `results/`.
+- le notebook EDA existant est conservé ;
+- le code réutilisable vit dans `src/` ;
+- les notebooks modèles suivent tous la même progression ;
+- les artefacts de la nouvelle version sont écrits dans `results/`.
 
 ## Structure
 
@@ -54,31 +54,51 @@ Projet_Session_IFT712/
 pip install -r requirements.txt
 ```
 
-## Ordre d'execution
+## Utilisation rapide
+
+1. Installer l'environnement :
+
+```bash
+pip install -r requirements.txt
+```
+
+2. Lancer une étude complète :
+
+```bash
+python -m src.cli.main --all
+```
+
+3. Ouvrir et exécuter les notebooks :
+
+```bash
+jupyter notebook
+```
+
+## Ordre d'exécution
 
 1. Placer `train.csv` dans `data/raw/`.
-2. Executer `01_Exploratory_Data_Analysis.ipynb`.
-3. Executer les notebooks `02` a `07`.
-4. Executer `08_Comparaison_Globale.ipynb`.
+2. Exécuter `01_Exploratory_Data_Analysis.ipynb`.
+3. Exécuter les notebooks `02` à `07`.
+4. Exécuter `08_Comparaison_Globale.ipynb`.
 
-## Regle commune des notebooks modeles
+## Règle commune des notebooks modèles
 
-Chaque notebook `02` a `07` suit la meme structure :
+Chaque notebook `02` à `07` suit la même structure :
 
-1. baseline simple sans preprocessing ;
-2. variante amelioree avec preprocessing adapte ;
-3. tuning et comparaison finale avec validation croisee imbriquee.
+1. référence simple sans prétraitement ;
+2. variante améliorée avec prétraitement adapté ;
+3. ajustement d'hyperparamètres et comparaison finale avec validation croisée imbriquée.
 
 ## Notes
 
-- L'EDA actuel est garde tel quel.
+- L'EDA actuel est gardé tel quel.
 - Les facades `src/modeles.py`, `src/pipelines.py` et `src/visualisation.py`
-  preservent les imports utilises par les notebooks.
+  préservent les imports utilisés par les notebooks.
 - Le dossier `models/` existant reste en place comme legacy, mais la nouvelle
-  source de verite pour les artefacts est `results/`.
-- Les scores `tuned` sauvegardes dans `results/metrics/` proviennent d'une
-  validation croisee imbriquee, afin d'eviter le biais de selection.
-- Les figures prefixees `exploratory__` sont des diagnostics descriptifs
-  refittes sur le sous-ensemble de developpement (`80 %`); elles ne doivent
-  pas etre interpretees comme preuve confirmatoire au meme titre que les
-  metriques CV/nested CV.
+  source de vérité pour les artefacts est `results/`.
+- Les scores `tuned` sauvegardés dans `results/metrics/` proviennent d'une
+  validation croisée imbriquée, afin d'éviter le biais de sélection.
+- Les figures préfixées `exploratory__` sont des diagnostics descriptifs
+  réappris sur le sous-ensemble de développement (`80 %`) ; elles ne doivent
+  pas être interprétées comme preuve confirmatoire au même titre que les
+  métriques de CV et de validation croisée imbriquée.

@@ -1,4 +1,4 @@
-"""Graphiques de comparaison entre modeles et variantes."""
+"""Graphiques de comparaison entre modèles et variantes."""
 
 from __future__ import annotations
 
@@ -8,44 +8,44 @@ import seaborn as sns
 
 
 def _format_label(text: str) -> str:
-    """Convert internal metric or column names into presentation labels."""
+    """Convertit des noms internes en libellés de présentation."""
     replacements = {
-        "val_accuracy_mean": "Validation Accuracy",
-        "val_f1_macro_mean": "Validation F1-Macro",
-        "train_accuracy_mean": "Train Accuracy",
-        "train_f1_macro_mean": "Train F1-Macro",
-        "generalization_gap_accuracy": "Accuracy Gap",
-        "generalization_gap_f1_macro": "F1-Macro Gap",
-        "elapsed_seconds": "Elapsed Seconds",
-        "modele": "Model",
-        "variante": "Variant",
-        "nombre_erreurs": "Number of Errors",
-        "classe": "Class",
-        "classe_vraie": "True Class",
-        "classe_predite": "Predicted Class",
-        "precision": "Precision",
-        "recall": "Recall",
-        "f1": "F1 Score",
+        "val_accuracy_mean": "Exactitude de validation",
+        "val_f1_macro_mean": "F1-macro de validation",
+        "train_accuracy_mean": "Exactitude d'entraînement",
+        "train_f1_macro_mean": "F1-macro d'entraînement",
+        "generalization_gap_accuracy": "Écart d'exactitude",
+        "generalization_gap_f1_macro": "Écart de F1-macro",
+        "elapsed_seconds": "Temps écoulé (s)",
+        "modele": "Modèle",
+        "variante": "Variante",
+        "nombre_erreurs": "Nombre d'erreurs",
+        "classe": "Classe",
+        "classe_vraie": "Classe vraie",
+        "classe_predite": "Classe prédite",
+        "precision": "Précision",
+        "recall": "Rappel",
+        "f1": "Score F1",
         "support": "Support",
-        "fpr": "False Positive Rate",
-        "fnr": "False Negative Rate",
-        "specificite": "Specificity",
+        "fpr": "Taux de faux positifs",
+        "fnr": "Taux de faux négatifs",
+        "specificite": "Spécificité",
         "param_modele__C": "C",
         "param_modele__gamma": "Gamma",
         "param_modele__alpha": "Alpha",
-        "param_modele__penalty": "Penalty",
-        "param_modele__n_estimators": "Number of Estimators",
-        "param_modele__max_depth": "Max Depth",
-        "param_modele__min_samples_leaf": "Min Samples per Leaf",
-        "param_modele__criterion": "Criterion",
-        "param_modele__learning_rate": "Learning Rate",
-        "param_modele__hidden_layer_sizes": "Hidden Layer Sizes",
-        "param_n_estimators": "Number of Estimators",
-        "param_max_depth": "Max Depth",
-        "param_min_samples_leaf": "Min Samples per Leaf",
-        "param_criterion": "Criterion",
-        "param_learning_rate": "Learning Rate",
-        "param_hidden_layer_sizes": "Hidden Layer Sizes",
+        "param_modele__penalty": "Pénalité",
+        "param_modele__n_estimators": "Nombre d'estimateurs",
+        "param_modele__max_depth": "Profondeur maximale",
+        "param_modele__min_samples_leaf": "Échantillons min. par feuille",
+        "param_modele__criterion": "Critère",
+        "param_modele__learning_rate": "Taux d'apprentissage",
+        "param_modele__hidden_layer_sizes": "Tailles des couches cachées",
+        "param_n_estimators": "Nombre d'estimateurs",
+        "param_max_depth": "Profondeur maximale",
+        "param_min_samples_leaf": "Échantillons min. par feuille",
+        "param_criterion": "Critère",
+        "param_learning_rate": "Taux d'apprentissage",
+        "param_hidden_layer_sizes": "Tailles des couches cachées",
     }
     if text in replacements:
         return replacements[text]
@@ -55,11 +55,11 @@ def _format_label(text: str) -> str:
 def tracer_barres_comparaison(
     tableau: pd.DataFrame,
     metrique: str = "val_f1_macro_mean",
-    titre: str = "Performance Comparison",
+    titre: str = "Comparaison des performances",
 ) -> plt.Axes:
-    """Plot a ranked model comparison bar chart."""
+    """Trace un graphique en barres classant les modèles."""
     if tableau.empty:
-        raise ValueError("The results table is empty.")
+        raise ValueError("Le tableau de résultats est vide.")
 
     ordre_modeles = (
         tableau.groupby("modele")[metrique]
@@ -79,7 +79,7 @@ def tracer_barres_comparaison(
         ax=axe,
     )
     axe.set_title(titre)
-    axe.set_xlabel("Model", fontweight="bold")
+    axe.set_xlabel("Modèle", fontweight="bold")
     axe.set_ylabel(_format_label(metrique), fontweight="bold")
     axe.set_xticks(axe.get_xticks())
     axe.set_xticklabels(axe.get_xticklabels(), rotation=45, ha="right")
@@ -88,7 +88,7 @@ def tracer_barres_comparaison(
         "upper left",
         bbox_to_anchor=(1.02, 1),
         frameon=False,
-        title="Variant",
+        title="Variante",
     )
     sns.despine(ax=axe)
     figure.tight_layout()
@@ -98,11 +98,11 @@ def tracer_barres_comparaison(
 def tracer_comparaison_variantes(
     tableau: pd.DataFrame,
     colonnes_metriques: list[str],
-    titre: str = "Variant Comparison",
+    titre: str = "Comparaison des variantes",
 ) -> plt.Axes:
-    """Compare multiple variants of the same model across metrics."""
+    """Compare plusieurs variantes d'un même modèle sur plusieurs métriques."""
     if tableau.empty:
-        raise ValueError("The results table is empty.")
+        raise ValueError("Le tableau de résultats est vide.")
 
     donnees = tableau.copy()
     donnees = donnees.melt(
@@ -124,12 +124,12 @@ def tracer_comparaison_variantes(
     )
 
     palette_reference = {
-        "Validation Accuracy": "#4C78A8",
-        "Validation F1-Macro": "#F58518",
-        "Train Accuracy": "#72B7B2",
-        "Train F1-Macro": "#E45756",
-        "Accuracy Gap": "#54A24B",
-        "F1-Macro Gap": "#B279A2",
+        "Exactitude de validation": "#4C78A8",
+        "F1-macro de validation": "#F58518",
+        "Exactitude d'entraînement": "#72B7B2",
+        "F1-macro d'entraînement": "#E45756",
+        "Écart d'exactitude": "#54A24B",
+        "Écart de F1-macro": "#B279A2",
     }
     palette = {
         metric_name: palette_reference.get(metric_name, color)
@@ -149,7 +149,7 @@ def tracer_comparaison_variantes(
         ax=axe,
     )
     axe.set_title(titre)
-    axe.set_xlabel("Variant")
+    axe.set_xlabel("Variante")
     axe.set_ylabel("Score")
     min_val = donnees["score"].min()
     lower = min_val * 1.15 if min_val < 0 else 0
@@ -159,7 +159,7 @@ def tracer_comparaison_variantes(
         "upper left",
         bbox_to_anchor=(1.02, 1),
         frameon=False,
-        title="Metric",
+        title="Métrique",
     )
     sns.despine(ax=axe)
     figure.tight_layout()
@@ -170,15 +170,21 @@ def tracer_comparaison_variantes_rapport(
     tableau: pd.DataFrame,
     titre: str = "Comparaison finale des variantes",
 ) -> plt.Axes:
-    """Plot a report-ready per-model comparison including the tuned variant.
+    """Trace une comparaison finale par modèle incluant la variante ``tuned``.
 
-    Keeps the same simple visual logic as the original notebook charts:
-    grouped bars by variant, one bar per metric, no extra overlays.
+    Le graphique conserve la logique visuelle simple des notebooks d'origine :
+    des barres groupées par variante, une barre par métrique, sans surcharge.
     """
     if tableau.empty:
-        raise ValueError("The results table is empty.")
+        raise ValueError("Le tableau de résultats est vide.")
 
-    ordre_variantes = ["default", "scaled_only", "scaled_pca", "restricted_depth", "tuned"]
+    ordre_variantes = [
+        "default",
+        "scaled_only",
+        "scaled_pca",
+        "restricted_depth",
+        "tuned",
+    ]
     donnees = tableau.copy()
     donnees["variante"] = donnees["variante"].astype(str)
     donnees = donnees[donnees["variante"].isin(ordre_variantes)].copy()
@@ -192,7 +198,7 @@ def tracer_comparaison_variantes_rapport(
     donnees["metrique"] = donnees["metrique"].map(
         {
             "val_f1_macro_mean": "F1-macro",
-            "val_accuracy_mean": "Accuracy",
+            "val_accuracy_mean": "Exactitude",
         }
     )
 
@@ -203,7 +209,7 @@ def tracer_comparaison_variantes_rapport(
         y="score",
         hue="metrique",
         order=variantes_presentes,
-        palette={"F1-macro": "#F58518", "Accuracy": "#4C78A8"},
+        palette={"F1-macro": "#F58518", "Exactitude": "#4C78A8"},
         ax=axe,
     )
 
@@ -228,9 +234,9 @@ def tracer_temps_vs_performance(
     tableau: pd.DataFrame,
     metrique: str = "val_f1_macro_mean",
 ) -> plt.Axes:
-    """Plot training time against a chosen performance metric."""
+    """Trace le temps d'entraînement en fonction d'une métrique de performance."""
     if tableau.empty:
-        raise ValueError("The results table is empty.")
+        raise ValueError("Le tableau de résultats est vide.")
 
     figure, axe = plt.subplots(figsize=(11, 6.5))
     sns.scatterplot(
@@ -243,8 +249,8 @@ def tracer_temps_vs_performance(
         alpha=0.75,
         ax=axe,
     )
-    axe.set_title("Training Time vs Performance")
-    axe.set_xlabel("Total CV Time (seconds)", fontweight="bold")
+    axe.set_title("Temps d'entraînement vs performance")
+    axe.set_xlabel("Temps total de CV (secondes)", fontweight="bold")
     axe.set_ylabel(_format_label(metrique), fontweight="bold")
     sns.move_legend(
         axe,

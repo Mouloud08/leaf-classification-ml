@@ -1,4 +1,4 @@
-"""Modele Perceptron."""
+"""Modèle Perceptron."""
 
 from __future__ import annotations
 
@@ -12,9 +12,12 @@ from .base import ModeleBase
 class ModelePerceptron(ModeleBase):
     nom = "perceptron"
     nom_affiche = "Perceptron"
-    famille = "lineaire"
-    description = "Modele lineaire simple servant de baseline rapide."
-    hypothese = "Le Perceptron donne une baseline correcte mais limitera la separabilite non lineaire."
+    famille = "linéaire"
+    description = "Modèle linéaire simple servant de référence rapide."
+    hypothese = (
+        "Le perceptron fournit une référence correcte mais limitera la "
+        "séparabilité non linéaire."
+    )
     utiliser_pca_par_defaut = True
     necessite_scaling = True
     supports_probabilities = False

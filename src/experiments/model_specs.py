@@ -1,4 +1,4 @@
-"""Table explicite des specs d'etude pour les 6 modeles."""
+"""Table explicite des spécifications d'étude pour les 6 modèles."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ def _spec_perceptron() -> ModelStudySpec:
     return ModelStudySpec(
         model_name="perceptron",
         title="Perceptron",
-        objective="Mesurer le plafond d'une baseline lineaire minimale.",
+        objective="Mesurer le plafond d'une référence linéaire minimale.",
         untuned_variants=(
             UntunedVariantSpec(name="default", kind="simple"),
             UntunedVariantSpec(name="scaled_only", kind="pipeline_no_pca"),
@@ -38,7 +38,7 @@ def _spec_regression_logistique() -> ModelStudySpec:
     return ModelStudySpec(
         model_name="regression_logistique",
         title="Regression Logistique",
-        objective="Etablir la baseline probabiliste principale.",
+        objective="Établir le modèle probabiliste de référence.",
         untuned_variants=(
             UntunedVariantSpec(name="default", kind="simple"),
             UntunedVariantSpec(name="scaled_only", kind="pipeline_no_pca"),
@@ -57,7 +57,7 @@ def _spec_svm() -> ModelStudySpec:
     return ModelStudySpec(
         model_name="svm",
         title="SVM RBF",
-        objective="Mesurer la valeur ajoutee d'un noyau RBF.",
+        objective="Mesurer la valeur ajoutée d'un noyau RBF.",
         untuned_variants=(
             UntunedVariantSpec(name="default", kind="simple"),
             UntunedVariantSpec(name="scaled_only", kind="pipeline_no_pca"),
@@ -77,7 +77,7 @@ def _spec_foret_aleatoire() -> ModelStudySpec:
     return ModelStudySpec(
         model_name="foret_aleatoire",
         title="Foret Aleatoire",
-        objective="Quantifier la robustesse d'un ensemble d'arbres sans preprocessing.",
+        objective="Quantifier la robustesse d'un ensemble d'arbres sans prétraitement.",
         untuned_variants=(
             UntunedVariantSpec(name="default", kind="simple"),
             UntunedVariantSpec(
@@ -103,7 +103,7 @@ def _spec_arbre_decision() -> ModelStudySpec:
     return ModelStudySpec(
         model_name="arbre_decision",
         title="Arbre de Decision",
-        objective="Documenter le compromis performance/complexite d'un arbre unique.",
+        objective="Documenter le compromis performance/complexité d'un arbre unique.",
         untuned_variants=(
             UntunedVariantSpec(name="default", kind="simple"),
             UntunedVariantSpec(
@@ -130,7 +130,10 @@ def _spec_mlp() -> ModelStudySpec:
     return ModelStudySpec(
         model_name="mlp",
         title="MLP",
-        objective="Tester la sensibilite d'un reseau dense au preprocessing et au tuning.",
+        objective=(
+            "Tester la sensibilité d'un réseau dense au prétraitement et à "
+            "l'ajustement."
+        ),
         untuned_variants=(
             UntunedVariantSpec(name="default", kind="simple"),
             UntunedVariantSpec(name="scaled_only", kind="pipeline_no_pca"),
@@ -161,8 +164,8 @@ ALL_MODEL_NAMES: list[str] = list(MODEL_STUDY_SPECS.keys())
 
 
 def obtenir_model_study_spec(model_name: str) -> ModelStudySpec:
-    """Retourne la spec d'etude pour un modele."""
+    """Retourne la spécification d'étude pour un modèle."""
     key = model_name.lower()
     if key not in MODEL_STUDY_SPECS:
-        raise KeyError(f"Spec d'etude inconnue: {model_name}")
+        raise KeyError(f"Spécification d'étude inconnue: {model_name}")
     return MODEL_STUDY_SPECS[key]

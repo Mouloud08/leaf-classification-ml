@@ -1,24 +1,22 @@
-"""Graphiques de matrice de confusion et paires confondues."""
+"""Graphiques de matrice de confusion et paires fréquemment confondues."""
 
 from __future__ import annotations
 
 import matplotlib.pyplot as plt
-from matplotlib.colors import PowerNorm
-from matplotlib.ticker import MaxNLocator
 import pandas as pd
 import seaborn as sns
-
-from .comparison import _format_label
+from matplotlib.colors import PowerNorm
+from matplotlib.ticker import MaxNLocator
 
 
 def tracer_top_confusions(
     tableau_confusions: pd.DataFrame,
     top_n: int = 10,
-    titre: str = "Top Confusions",
+    titre: str = "Confusions dominantes",
 ) -> plt.Axes:
-    """Plot the most frequent confusion pairs."""
+    """Trace les paires de classes le plus souvent confondues."""
     if tableau_confusions.empty:
-        raise ValueError("There are no confusions to plot.")
+        raise ValueError("Aucune confusion n'est disponible pour le tracé.")
 
     donnees = (
         tableau_confusions.sort_values(by="nombre_erreurs", ascending=False)
@@ -39,8 +37,8 @@ def tracer_top_confusions(
         ax=axe,
     )
     axe.set_title(f"{titre} (Top {top_n})")
-    axe.set_xlabel("Number of Errors", fontweight="bold")
-    axe.set_ylabel("Confusion Pair (True -> Predicted)", fontweight="bold")
+    axe.set_xlabel("Nombre d'erreurs", fontweight="bold")
+    axe.set_ylabel("Paire de confusion (vraie -> prédite)", fontweight="bold")
     axe.xaxis.set_major_locator(MaxNLocator(integer=True))
     sns.despine(ax=axe)
     figure.tight_layout()
@@ -49,7 +47,7 @@ def tracer_top_confusions(
 
 def tracer_matrice_confusion(
     tableau_confusion: pd.DataFrame,
-    titre: str = "Normalized Confusion Matrix",
+    titre: str = "Matrice de confusion normalisée",
     annot: bool = False,
     cmap: str | None = None,
     intervalle_ticks: int | None = None,
@@ -57,7 +55,7 @@ def tracer_matrice_confusion(
 ) -> plt.Axes:
     """Trace une heatmap de matrice de confusion."""
     if tableau_confusion.empty:
-        raise ValueError("The confusion matrix is empty.")
+        raise ValueError("La matrice de confusion est vide.")
 
     valeurs = tableau_confusion.to_numpy(dtype=float)
     taille = len(tableau_confusion.index)
@@ -89,18 +87,27 @@ def tracer_matrice_confusion(
         ax=axe,
     )
     axe.set_title(titre)
-    axe.set_xlabel("Predicted Class", fontweight="bold")
-    axe.set_ylabel("True Class", fontweight="bold")
+    axe.set_xlabel("Classe prédite", fontweight="bold")
+    axe.set_ylabel("Classe vraie", fontweight="bold")
     labels_x = list(tableau_confusion.columns)
     labels_y = list(tableau_confusion.index)
     if intervalle_ticks is None:
         intervalle_ticks = max(1, taille // 20)
 
     if taille > 25:
-        positions_x = [index + 0.5 for index in range(0, len(labels_x), intervalle_ticks)]
-        positions_y = [index + 0.5 for index in range(0, len(labels_y), intervalle_ticks)]
+        positions_x = [
+            index + 0.5 for index in range(0, len(labels_x), intervalle_ticks)
+        ]
+        positions_y = [
+            index + 0.5 for index in range(0, len(labels_y), intervalle_ticks)
+        ]
         axe.set_xticks(positions_x)
-        axe.set_xticklabels(labels_x[::intervalle_ticks], rotation=rotation_x, ha="right", fontsize=8)
+        axe.set_xticklabels(
+            labels_x[::intervalle_ticks],
+            rotation=rotation_x,
+            ha="right",
+            fontsize=8,
+        )
         axe.set_yticks(positions_y)
         axe.set_yticklabels(labels_y[::intervalle_ticks], fontsize=8)
     else:

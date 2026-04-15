@@ -5,7 +5,8 @@ necessaires aux plots specifiques. Les plots eux-memes sont dans
 src/plots/specifiques/.
 
 NOTE METHODOLOGIQUE — Les fonctions qui appellent ``model.fit(X, y)``
-sur le sous-ensemble de developpement disponible sont des diagnostics *exploratoires* (visualisation
+sur le sous-ensemble de developpement disponible sont des diagnostics
+*exploratoires* (visualisation
 de la structure du modele : coefficients, importance, loss curve, etc.).
 Elles ne servent PAS a l'evaluation de la performance generalisable —
 celle-ci est assuree par ``evaluer_modele_cv`` et
@@ -32,7 +33,6 @@ from sklearn.model_selection import (
 )
 
 from ..config import CV_N_JOBS, N_SPLITS, RANDOM_SEED
-
 
 # ---------------------------------------------------------------------------
 # Arbre de decision
@@ -185,7 +185,7 @@ def importance_oob_foret(
     Ce diagnostic suit l'esprit de l'importance de Breiman pour les forets :
     chaque arbre est evalue sur ses observations out-of-bag, puis on mesure la
     baisse de F1-macro apres permutation d'une feature dans cet echantillon OOB.
-    Le resultat reste exploratoire, mais il evite le biais du refit in-sample
+    Le resultat reste exploratoire, mais il evite le biais du réapprentissage in-sample
     complet qui rendait la lecture de la foret peu informative.
     """
     modele = clone(estimateur)
@@ -226,7 +226,9 @@ def importance_oob_foret(
         for indice_feature in range(X_oob.shape[1]):
             for _ in range(n_repeats):
                 X_permute = X_oob.copy()
-                X_permute[:, indice_feature] = rng.permutation(X_permute[:, indice_feature])
+                X_permute[:, indice_feature] = rng.permutation(
+                    X_permute[:, indice_feature]
+                )
                 score_permute = f1_score(
                     y_oob,
                     arbre.predict(X_permute),
@@ -266,7 +268,9 @@ def loss_curve_mlp(
     y: np.ndarray,
     best_params: dict[str, Any] | None = None,
 ) -> pd.DataFrame:
-    """Retourne la loss curve d'un MLP apres refit avec les meilleurs hyperparametres.
+    """Retourne la courbe de perte d'un MLP après réapprentissage.
+
+    Le modèle réappris utilise les meilleurs hyperparamètres.
 
     Option A (scientifique) : le modele est entraine sur la totalite des donnees
     en utilisant les hyperparametres identifies par le grid search exploratoire.
@@ -356,7 +360,9 @@ def coefficients_absolus(
     """Top des coefficients absolus moyens sur toutes les classes."""
     modele = clone(estimateur)
     modele.fit(X, y)
-    estimateur_appris = modele.named_steps["modele"] if hasattr(modele, "named_steps") else modele
+    estimateur_appris = (
+        modele.named_steps["modele"] if hasattr(modele, "named_steps") else modele
+    )
     coef_abs_mean = np.abs(estimateur_appris.coef_).mean(axis=0)
     df = pd.DataFrame(
         {"feature": X.columns, "coef_abs_mean": coef_abs_mean}

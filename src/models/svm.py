@@ -1,4 +1,4 @@
-"""Modele SVM RBF."""
+"""Modèle SVM RBF."""
 
 from __future__ import annotations
 
@@ -13,8 +13,14 @@ class ModeleSVM(ModeleBase):
     nom = "svm"
     nom_affiche = "SVM RBF"
     famille = "noyau"
-    description = "Modele a noyau non lineaire potentiellement tres performant sur ce dataset."
-    hypothese = "Le SVM RBF devrait mieux separer les zones ou les classes se chevauchent."
+    description = (
+        "Modèle à noyau non linéaire potentiellement très performant sur ce "
+        "jeu de données."
+    )
+    hypothese = (
+        "Le SVM RBF devrait mieux séparer les zones où les classes se "
+        "chevauchent."
+    )
     utiliser_pca_par_defaut = True
     necessite_scaling = True
     supports_probabilities = True

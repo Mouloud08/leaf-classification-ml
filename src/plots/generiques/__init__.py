@@ -1,4 +1,4 @@
-"""Plots generiques — comparaison, confusion, courbes, tuning."""
+"""Graphiques génériques : comparaison, confusion, courbes et ajustement."""
 
 from .comparison import (
     tracer_barres_comparaison,

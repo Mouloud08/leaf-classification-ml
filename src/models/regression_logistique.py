@@ -1,4 +1,4 @@
-"""Modele Regression Logistique."""
+"""Modèle Régression Logistique."""
 
 from __future__ import annotations
 
@@ -11,10 +11,13 @@ from .base import ModeleBase
 
 class ModeleRegressionLogistique(ModeleBase):
     nom = "regression_logistique"
-    nom_affiche = "Regression logistique"
-    famille = "lineaire"
-    description = "Modele lineaire probabiliste robuste pour la multiclassification."
-    hypothese = "La regularisation et le scaling devraient nettement ameliorer le score."
+    nom_affiche = "Régression logistique"
+    famille = "linéaire"
+    description = "Modèle linéaire probabiliste robuste pour la multiclassification."
+    hypothese = (
+        "La régularisation et la mise à l'échelle devraient nettement "
+        "améliorer le score."
+    )
     utiliser_pca_par_defaut = True
     necessite_scaling = True
     supports_probabilities = True

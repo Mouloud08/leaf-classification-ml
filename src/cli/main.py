@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 
 from ..config import RESULTS_DIR
+from ..data import charger_donnees_modelisation
 from ..experiments import (
     ALL_MODEL_NAMES,
     StudySpec,
@@ -21,7 +22,6 @@ from ..experiments import (
     generer_manifeste,
     selectionner_meilleure_variante_untuned,
 )
-from ..data import charger_donnees_modelisation
 
 logger = logging.getLogger("src")
 
@@ -49,7 +49,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--models",
         nargs="+",
         metavar="MODEL",
-        help="Modeles a executer (ex: perceptron svm mlp).",
+        help="Modèles à exécuter (ex : perceptron svm mlp).",
     )
     group.add_argument(
         "--all",
@@ -121,8 +121,8 @@ def main(argv: list[str] | None = None) -> int:
     # Valider les noms de modeles
     unknown = set(models) - set(ALL_MODEL_NAMES)
     if unknown:
-        logger.error("Modeles inconnus: %s", ", ".join(unknown))
-        logger.info("Modeles disponibles: %s", ", ".join(ALL_MODEL_NAMES))
+        logger.error("Modèles inconnus : %s", ", ".join(unknown))
+        logger.info("Modèles disponibles : %s", ", ".join(ALL_MODEL_NAMES))
         return 1
 
     study = StudySpec(
@@ -171,7 +171,9 @@ def main(argv: list[str] | None = None) -> int:
                 continue
 
             untuned_dicts = [r.to_dict() for r in result.untuned_results]
-            tuned_dict = result.tuning_result.to_dict() if result.tuning_result else None
+            tuned_dict = (
+                result.tuning_result.to_dict() if result.tuning_result else None
+            )
 
             generer_figures_generiques(
                 result.model_name,
@@ -191,7 +193,7 @@ def main(argv: list[str] | None = None) -> int:
     # Rapport global
     logger.info("Generation du rapport global...")
     generer_comparaison_globale(resultats, study)
-    manifeste = generer_manifeste(study, resultats)
+    generer_manifeste(study, resultats)
 
     # Resume console
     print("\n" + "=" * 60)
@@ -206,13 +208,15 @@ def main(argv: list[str] | None = None) -> int:
             best_f1 = f"{max(r.val_f1_macro_mean for r in result.untuned_results):.4f}"
         print(f"  {result.model_name:25s} {status:10s} best_f1={best_f1}")
         if result.figures:
-            n_figs = len(result.figures.core_generated) + len(result.figures.advanced_generated)
+            n_figs = len(result.figures.core_generated) + len(
+                result.figures.advanced_generated
+            )
             print(f"    -> {n_figs} figures generees")
             if result.figures.errors:
                 for fig, err in result.figures.errors.items():
                     print(f"    -> ERREUR figure {fig}: {err}")
     print("=" * 60)
-    print(f"Resultats dans: {study.output_root}")
+    print(f"Résultats dans : {study.output_root}")
 
     return 0
 

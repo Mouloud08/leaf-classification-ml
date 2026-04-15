@@ -1,4 +1,4 @@
-"""Scientific integrity checks for canonical artifacts."""
+"""Contrôles d'intégrité scientifique pour les artefacts canoniques."""
 
 from __future__ import annotations
 
@@ -10,8 +10,8 @@ import pandas as pd
 from sklearn.metrics import accuracy_score, f1_score
 
 from ..config import RESULTS_DIR
-from .paths import model_paths
 from .io import charger_predictions
+from .paths import model_paths
 
 _METRIC_TOLERANCE = 1e-12
 
@@ -19,8 +19,11 @@ _METRIC_TOLERANCE = 1e-12
 def _load_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
-def recompute_metrics_from_predictions(predictions_df: pd.DataFrame) -> dict[str, float]:
-    """Recompute report metrics from a standardized OOF prediction table."""
+
+def recompute_metrics_from_predictions(
+    predictions_df: pd.DataFrame,
+) -> dict[str, float]:
+    """Recalcule les métriques du rapport depuis un tableau OOF standardisé."""
     y_true = predictions_df["y_true"].to_numpy()
     y_pred = predictions_df["y_pred"].to_numpy()
     return {
@@ -33,7 +36,7 @@ def verifier_integrite_artefacts_modele(
     model_name: str,
     root: Path | None = None,
 ) -> dict[str, Any]:
-    """Check tuned canonical artifacts for a model."""
+    """Vérifie les artefacts canoniques ``tuned`` d'un modèle."""
     results_root = root or RESULTS_DIR
     paths = model_paths(model_name, root=results_root)
 
@@ -50,10 +53,10 @@ def verifier_integrite_artefacts_modele(
 
     if not canonical_metrics_path.exists():
         status = "missing_canonical_artifacts"
-        issues.append("canonical tuned metrics missing")
+        issues.append("métriques canoniques tuned manquantes")
     if not canonical_predictions_path.exists():
         status = "missing_canonical_artifacts"
-        issues.append("canonical tuned predictions missing")
+        issues.append("prédictions canoniques tuned manquantes")
 
     if canonical_metrics_path.exists() and canonical_predictions_path.exists():
         canonical_metrics = _load_json(canonical_metrics_path)
@@ -70,7 +73,8 @@ def verifier_integrite_artefacts_modele(
         if not metrics_match_predictions:
             status = "canonical_metric_mismatch"
             issues.append(
-                "canonical tuned metrics do not match metrics recomputed from canonical tuned predictions"
+                "les métriques canoniques tuned ne correspondent pas aux métriques "
+                "recalculées depuis les prédictions canoniques tuned"
             )
 
     return {
@@ -93,7 +97,7 @@ def canonical_artifact_completeness(
     modeles: list[str] | tuple[str, ...] | set[str],
     root: Path | None = None,
 ) -> pd.DataFrame:
-    """Summarize whether every model has the canonical tuned evidence required for ranking."""
+    """Résume si chaque modèle dispose des preuves canoniques du classement."""
     results_root = root or RESULTS_DIR
     rows: list[dict[str, Any]] = []
     for model_name in modeles:
@@ -115,7 +119,10 @@ def artifact_integrity_table(
     modeles: list[str] | tuple[str, ...] | set[str],
     root: Path | None = None,
 ) -> pd.DataFrame:
-    """Build a tabular summary of tuned artifact integrity for multiple models."""
+    """Construit un tableau synthèse d'intégrité des artefacts ``tuned``."""
     return pd.DataFrame(
-        [verifier_integrite_artefacts_modele(model_name, root=root) for model_name in modeles]
+        [
+            verifier_integrite_artefacts_modele(model_name, root=root)
+            for model_name in modeles
+        ]
     ).sort_values("modele").reset_index(drop=True)

@@ -1,4 +1,4 @@
-"""Modele Arbre de Decision."""
+"""Modèle Arbre de Décision."""
 
 from __future__ import annotations
 
@@ -10,15 +10,15 @@ from .base import ModeleBase
 
 class ModeleArbreDecision(ModeleBase):
     nom = "arbre_decision"
-    nom_affiche = "Arbre de decision"
+    nom_affiche = "Arbre de décision"
     famille = "arbre"
     description = (
-        "Modele non lineaire interpretable, fonde sur des coupures "
+        "Modèle non linéaire interprétable, fondé sur des coupures "
         "successives de l'espace des variables."
     )
     hypothese = (
-        "Un arbre unique devrait mieux capturer la non-linearite que les "
-        "baselines lineaires, mais restera plus instable qu'une foret aleatoire."
+        "Un arbre unique devrait mieux capturer la non-linéarité que les "
+        "références linéaires, mais restera plus instable qu'une forêt aléatoire."
     )
     utiliser_pca_par_defaut = False
     necessite_scaling = False

@@ -1,4 +1,4 @@
-"""Plots specifiques pour le Perceptron."""
+"""Graphiques spécifiques pour le perceptron."""
 
 from __future__ import annotations
 
@@ -9,12 +9,12 @@ import seaborn as sns
 
 def tracer_decision_function_histogram(
     donnees: pd.DataFrame,
-    titre: str = "Decision Function Distribution",
+    titre: str = "Distribution de la fonction de décision",
 ) -> plt.Figure:
-    """Trace l'histogramme de la decision function colore par statut de prediction.
+    """Trace l'histogramme de la fonction de décision coloré par statut de prédiction.
 
-    Si la colonne ``correct`` est presente, les predictions correctes sont
-    affichees en vert et les erreurs en rouge — meme convention que
+    Si la colonne ``correct`` est présente, les prédictions correctes sont
+    affichées en vert et les erreurs en rouge — même convention que
     l'histogramme de confiance du MLP.
     """
     fig, ax = plt.subplots(figsize=(10, 6))
@@ -24,7 +24,7 @@ def tracer_decision_function_histogram(
         ax.hist(
             donnees.loc[donnees["correct"], "score"],
             bins=bins, color="#54A24B", alpha=0.75, edgecolor="white",
-            label="Correct",
+            label="Correctes",
         )
         ax.hist(
             donnees.loc[~donnees["correct"], "score"],
@@ -33,11 +33,17 @@ def tracer_decision_function_histogram(
         )
         ax.legend(frameon=False)
     else:
-        ax.hist(donnees["score"], bins=50, color="#4C78A8", alpha=0.75, edgecolor="white")
+        ax.hist(
+            donnees["score"],
+            bins=50,
+            color="#4C78A8",
+            alpha=0.75,
+            edgecolor="white",
+        )
 
     ax.set_title(titre)
-    ax.set_xlabel("Max Decision Function Score", fontweight="bold")
-    ax.set_ylabel("Nombre de predictions", fontweight="bold")
+    ax.set_xlabel("Score maximal de la fonction de décision", fontweight="bold")
+    ax.set_ylabel("Nombre de prédictions", fontweight="bold")
     sns.despine(ax=ax)
     fig.tight_layout()
     return fig
@@ -45,7 +51,7 @@ def tracer_decision_function_histogram(
 
 def tracer_coefficients_perceptron(
     donnees: pd.DataFrame,
-    titre: str = "Top Absolute Coefficients (Perceptron)",
+    titre: str = "Coefficients absolus dominants (Perceptron)",
 ) -> plt.Figure:
     """Trace les coefficients absolus moyens du perceptron."""
     fig, ax = plt.subplots(figsize=(10, 6))
@@ -59,8 +65,8 @@ def tracer_coefficients_perceptron(
         ax=ax,
     )
     ax.set_title(titre)
-    ax.set_xlabel("Mean Absolute Coefficient", fontweight="bold")
-    ax.set_ylabel("Feature", fontweight="bold")
+    ax.set_xlabel("Coefficient absolu moyen", fontweight="bold")
+    ax.set_ylabel("Variable", fontweight="bold")
     sns.despine(ax=ax)
     fig.tight_layout()
     return fig

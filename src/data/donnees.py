@@ -20,7 +20,7 @@ FROZEN_HOLDOUT_TEST_SIZE = 0.2
 
 @dataclass(frozen=True)
 class FrozenModelingSplit:
-    """Sous-ensembles gelees pour la modelisation."""
+    """Sous-ensembles gelés pour la modélisation."""
 
     X_dev: pd.DataFrame
     y_dev: np.ndarray
@@ -84,7 +84,10 @@ def _ecrire_split_gelee(chemin: Path, contenu: dict[str, Any]) -> None:
     )
 
 
-def _subset_dataframe_par_ids(dataframe: pd.DataFrame, ids: list[int | str]) -> pd.DataFrame:
+def _subset_dataframe_par_ids(
+    dataframe: pd.DataFrame,
+    ids: list[int | str],
+) -> pd.DataFrame:
     """Retourne un sous-tableau dans l'ordre exact des IDs fournis."""
     indexe = dataframe.set_index("id", drop=False)
     try:
@@ -112,7 +115,10 @@ def _charger_ou_creer_split_gelee(
         ids_train = set(contenu["train_ids"])
         ids_holdout = set(contenu["holdout_ids"])
         if ids_train & ids_holdout:
-            raise ValueError("Artefact de split invalide: overlap entre train_ids et holdout_ids.")
+            raise ValueError(
+                "Artefact de split invalide: chevauchement entre train_ids "
+                "et holdout_ids."
+            )
         if ids_train | ids_holdout != ids_attendus:
             raise ValueError("Artefact de split incompatible avec le CSV courant.")
         return contenu
@@ -150,7 +156,7 @@ def charger_donnees_modelisation(
     test_size: float = FROZEN_HOLDOUT_TEST_SIZE,
     random_state: int = RANDOM_SEED,
 ) -> FrozenModelingSplit:
-    """Charge les sous-ensembles dev/holdout gelees pour la modelisation."""
+    """Charge les sous-ensembles dev/holdout gelés pour la modélisation."""
     dataframe = _charger_dataframe(csv_path)
     sortie = Path(output_root) if output_root is not None else RESULTS_DIR
     split = _charger_ou_creer_split_gelee(

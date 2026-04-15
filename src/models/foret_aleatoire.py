@@ -1,4 +1,4 @@
-"""Modele Foret Aleatoire."""
+"""Modèle Forêt Aléatoire."""
 
 from __future__ import annotations
 
@@ -10,10 +10,12 @@ from .base import ModeleBase
 
 class ModeleForetAleatoire(ModeleBase):
     nom = "foret_aleatoire"
-    nom_affiche = "Foret aleatoire"
+    nom_affiche = "Forêt aléatoire"
     famille = "ensemble"
-    description = "Ensemble d'arbres capable de capturer des interactions non lineaires."
-    hypothese = "La foret aleatoire devrait etre competitive sans aucun scaling."
+    description = (
+        "Ensemble d'arbres capable de capturer des interactions non linéaires."
+    )
+    hypothese = "La forêt aléatoire devrait être compétitive sans mise à l'échelle."
     utiliser_pca_par_defaut = False
     necessite_scaling = False
     supports_probabilities = True

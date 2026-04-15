@@ -41,7 +41,10 @@ _nb_images/
 *.pdf
 docs/*.html
 docs/rapport_leaf_classification*.md
-docs/rapport_parts_pdf/
+docs/rapport_parts_pdf/**
+!docs/rapport_parts_pdf/
+!docs/rapport_parts_pdf/*.pdf
+docs/rapport_parts_pdf/chrome-profile-*/
 
 # Generated result files
 results/*/metrics/*.json

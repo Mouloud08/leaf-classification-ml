@@ -1,4 +1,4 @@
-"""Modele MLP (Multi-Layer Perceptron)."""
+"""Modèle MLP (Multi-Layer Perceptron)."""
 
 from __future__ import annotations
 
@@ -12,11 +12,11 @@ from .base import ModeleBase
 class ModeleMLP(ModeleBase):
     nom = "mlp"
     nom_affiche = "MLP"
-    famille = "reseau_de_neurones"
-    description = "Reseau dense multicouche adapte aux frontieres tres non lineaires."
+    famille = "réseau_de_neurones"
+    description = "Réseau dense multicouche adapté aux frontières très non linéaires."
     hypothese = (
-        "Le MLP devrait profiter fortement du scaling; "
-        "le gain du tuning doit etre confirme empiriquement."
+        "Le MLP devrait profiter fortement de la mise à l'échelle ; "
+        "le gain de l'ajustement doit être confirmé empiriquement."
     )
     utiliser_pca_par_defaut = True
     necessite_scaling = True

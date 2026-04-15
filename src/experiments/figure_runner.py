@@ -1,4 +1,4 @@
-"""Generation des figures pour un modele apres execution."""
+"""Génération des figures pour un modèle après exécution."""
 
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ from typing import Any
 
 import matplotlib
 import pandas as pd
+
 
 def _is_notebook() -> bool:
     try:
@@ -25,7 +26,6 @@ from ..artifacts import (
 )
 from ..data import charger_donnees_modelisation
 from ..evaluation import (
-    construire_matrice_confusion,
     extraire_top_confusions,
 )
 from ..evaluation.diagnostics_generiques import (
@@ -78,10 +78,10 @@ EXPLORATORY_FIGURES: frozenset[str] = frozenset(
 
 
 def _preparer_diagnostic(model_name: str, X: pd.DataFrame):
-    """Prepare donnees scalees + estimateur pour diagnostics exploratoires.
+    """Prépare les données transformées et l'estimateur des diagnostics exploratoires.
 
-    NOTE: le fit du preprocessing se fait sur X complet. C'est intentionnel —
-    ces diagnostics servent a la visualisation, pas a l'evaluation.
+    NOTE : l'ajustement du prétraitement se fait sur X complet. C'est intentionnel —
+    ces diagnostics servent à la visualisation, pas à l'évaluation.
     """
     pipeline = creer_pipeline(model_name, utiliser_pca=False)
     preprocessing = pipeline[:-1]
@@ -100,7 +100,7 @@ def _save(
     """Sauvegarde et ferme une figure."""
     output_name = f"exploratory__{name}" if exploratory else name
     sauvegarder_figure(fig, output_name, paths, category=category)
-    return f"{name} [exploratory]" if exploratory else name
+    return f"{name} [exploratoire]" if exploratory else name
 
 
 def generer_figures_generiques(
@@ -112,7 +112,7 @@ def generer_figures_generiques(
     label_encoder: Any,
     study: StudySpec,
 ) -> list[str]:
-    """Genere les figures generiques core pour un modele."""
+    """Génère les figures génériques principales pour un modèle."""
     paths = model_paths(model_name, root=study.output_root)
     paths.ensure_dirs()
     generated = []
@@ -127,24 +127,34 @@ def generer_figures_generiques(
     ]
     cols_present = [c for c in cols if c in tab.columns]
     if cols_present:
-        ax = tracer_comparaison_variantes(tab, cols_present, titre=f"{model_name} - Variants")
+        ax = tracer_comparaison_variantes(
+            tab,
+            cols_present,
+            titre=f"{model_name} - Variantes",
+        )
         generated.append(_save(ax.figure, "comparaison_variantes", paths))
 
     # Matrice de confusion
     mat = matrice_confusion_normalisee(y_true, y_pred, label_encoder=label_encoder)
-    ax = tracer_matrice_confusion(mat, titre=f"{model_name} - Confusion Matrix")
+    ax = tracer_matrice_confusion(mat, titre=f"{model_name} - Matrice de confusion")
     generated.append(_save(ax.figure, "matrice_confusion", paths))
 
-    # Top confusions
+    # Confusions dominantes
     top_conf = extraire_top_confusions(y_true, y_pred, label_encoder=label_encoder)
     if not top_conf.empty:
-        ax = tracer_top_confusions(top_conf, titre=f"{model_name} - Top Confusions")
+        ax = tracer_top_confusions(
+            top_conf,
+            titre=f"{model_name} - Confusions dominantes",
+        )
         generated.append(_save(ax.figure, "top_confusions", paths))
 
     # Classes difficiles
     diff = classes_difficiles(y_true, y_pred, label_encoder=label_encoder)
     if not diff.empty:
-        ax = tracer_metrique_par_classe(diff, titre=f"{model_name} - Hardest Classes")
+        ax = tracer_metrique_par_classe(
+            diff,
+            titre=f"{model_name} - Classes les plus difficiles",
+        )
         generated.append(_save(ax.figure, "classes_difficiles", paths))
 
     return generated
@@ -155,7 +165,7 @@ def generer_figures_specifiques(
     study: StudySpec,
     grid_results: pd.DataFrame | None = None,
 ) -> FigureBundleResult:
-    """Genere les figures specifiques pour un modele."""
+    """Génère les figures spécifiques pour un modèle."""
     spec = obtenir_model_study_spec(model_name)
     modele_cls = MODELES[model_name]()
     paths = model_paths(model_name, root=study.output_root)
@@ -165,7 +175,7 @@ def generer_figures_specifiques(
     X, y, label_encoder = split.X_dev, split.y_dev, split.label_encoder
     bundle = FigureBundleResult(model_name=model_name)
 
-    # Determiner quelles figures generer
+    # Déterminer quelles figures générer
     figures_to_generate = list(spec.core_figures)
     if study.figures_mode == "all":
         figures_to_generate.extend(spec.advanced_figures)
@@ -266,7 +276,10 @@ def _dispatch_figure(
         return plots_mlp.tracer_loss_curve(data)
 
     if fig_name == "heatmap_hidden_alpha" and model_name == "mlp":
-        if grid_results is not None and "param_modele__hidden_layer_sizes" in grid_results.columns:
+        if (
+            grid_results is not None
+            and "param_modele__hidden_layer_sizes" in grid_results.columns
+        ):
             return plots_mlp.tracer_heatmap_hidden_alpha(grid_results)
         return None
 

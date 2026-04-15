@@ -1,4 +1,4 @@
-"""Diagnostics generiques produits pour tous les modeles."""
+"""Diagnostics génériques produits pour tous les modèles."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ def tableau_variantes(
     resultats_untuned: list[dict[str, Any]],
     mesures_tuned: dict[str, Any] | None = None,
 ) -> pd.DataFrame:
-    """Construit le tableau recapitulatif des variantes."""
+    """Construit le tableau récapitulatif des variantes."""
     colonnes = [
         "variante",
         "selection_protocol",
@@ -45,7 +45,7 @@ def tableau_variantes(
 
 
 def tableau_gaps(resultats_untuned: list[dict[str, Any]]) -> pd.DataFrame:
-    """Retourne le tableau des generalization gaps des variantes non tunees."""
+    """Retourne le tableau des écarts de généralisation des variantes non tunées."""
     return pd.DataFrame(
         [
             {
@@ -59,7 +59,7 @@ def tableau_gaps(resultats_untuned: list[dict[str, Any]]) -> pd.DataFrame:
 
 
 def tableau_plis_externes(nested_result: dict[str, Any]) -> pd.DataFrame:
-    """Retourne les metriques par pli externe de la nested CV."""
+    """Retourne les métriques par pli externe de la nested CV."""
     return nested_result["outer_fold_metrics"].copy()
 
 
@@ -70,7 +70,12 @@ def top_confusions(
     top_n: int = 10,
 ) -> pd.DataFrame:
     """Extrait les paires de classes les plus confondues."""
-    return extraire_top_confusions(y_vrai, y_pred, label_encoder=label_encoder, top_n=top_n)
+    return extraire_top_confusions(
+        y_vrai,
+        y_pred,
+        label_encoder=label_encoder,
+        top_n=top_n,
+    )
 
 
 def classes_difficiles(
@@ -80,7 +85,7 @@ def classes_difficiles(
     top_n: int = 15,
     metrique: str = "recall",
 ) -> pd.DataFrame:
-    """Retourne les classes avec le plus faible score sur une metrique."""
+    """Retourne les classes avec le plus faible score sur une métrique."""
     tableau = calculer_metriques_par_classe(y_vrai, y_pred, label_encoder=label_encoder)
     return (
         tableau.sort_values(metrique, ascending=True)
@@ -94,7 +99,7 @@ def matrice_confusion_normalisee(
     y_pred: np.ndarray,
     label_encoder: Any | None = None,
 ) -> pd.DataFrame:
-    """Construit la matrice de confusion normalisee."""
+    """Construit la matrice de confusion normalisée."""
     return construire_matrice_confusion(
         y_vrai, y_pred, label_encoder=label_encoder, normalize="true"
     )
@@ -104,7 +109,7 @@ def comparaison_baseline_best_tuned(
     resultats_untuned: list[dict[str, Any]],
     mesures_tuned: dict[str, Any] | None = None,
 ) -> pd.DataFrame:
-    """Compare baseline / meilleure variante untuned / tuned."""
+    """Compare la référence simple, la meilleure variante non tunée et `tuned`."""
     lignes = []
 
     baseline = None

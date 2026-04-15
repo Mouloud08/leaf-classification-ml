@@ -1,11 +1,10 @@
-"""Plots specifiques pour l'arbre de decision."""
+"""Graphiques spécifiques pour l'arbre de décision."""
 
 from __future__ import annotations
 
 from typing import Any
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import seaborn as sns
 from sklearn.tree import plot_tree
@@ -13,12 +12,18 @@ from sklearn.tree import plot_tree
 
 def tracer_validation_curve_max_depth(
     donnees: pd.DataFrame,
-    titre: str = "Validation Curve: max_depth",
+    titre: str = "Courbe de validation : max_depth",
 ) -> plt.Figure:
-    """Trace la validation curve train/val en fonction de max_depth."""
+    """Trace la courbe de validation entraînement/validation selon max_depth."""
     fig, ax = plt.subplots(figsize=(10, 6))
     x = donnees["max_depth"].astype(str)
-    ax.plot(x, donnees["train_mean"], "o-", label="Train F1-Macro", color="#4C78A8")
+    ax.plot(
+        x,
+        donnees["train_mean"],
+        "o-",
+        label="F1-macro entraînement",
+        color="#4C78A8",
+    )
     ax.fill_between(
         x,
         donnees["train_mean"] - donnees["train_std"],
@@ -26,7 +31,7 @@ def tracer_validation_curve_max_depth(
         alpha=0.15,
         color="#4C78A8",
     )
-    ax.plot(x, donnees["val_mean"], "o-", label="Validation F1-Macro", color="#F58518")
+    ax.plot(x, donnees["val_mean"], "o-", label="F1-macro validation", color="#F58518")
     ax.fill_between(
         x,
         donnees["val_mean"] - donnees["val_std"],
@@ -46,9 +51,9 @@ def tracer_arbre_tronque(
     feature_names: list[str],
     class_names: list[str] | None = None,
     max_depth: int = 3,
-    titre: str = "Truncated Decision Tree",
+    titre: str = "Arbre de décision tronqué",
 ) -> plt.Figure:
-    """Trace un arbre tronque pour visualisation."""
+    """Trace un arbre tronqué pour visualisation."""
     fig, ax = plt.subplots(figsize=(20, 10))
     plot_tree(
         estimateur,
@@ -67,11 +72,17 @@ def tracer_arbre_tronque(
 
 def tracer_learning_curve(
     donnees: pd.DataFrame,
-    titre: str = "Learning Curve (Decision Tree)",
+    titre: str = "Courbe d'apprentissage (arbre de décision)",
 ) -> plt.Figure:
-    """Trace la learning curve."""
+    """Trace la courbe d'apprentissage."""
     fig, ax = plt.subplots(figsize=(10, 6))
-    ax.plot(donnees["train_size"], donnees["train_mean"], "o-", label="Train", color="#4C78A8")
+    ax.plot(
+        donnees["train_size"],
+        donnees["train_mean"],
+        "o-",
+        label="Entraînement",
+        color="#4C78A8",
+    )
     ax.fill_between(
         donnees["train_size"],
         donnees["train_mean"] - donnees["train_std"],
@@ -79,7 +90,13 @@ def tracer_learning_curve(
         alpha=0.15,
         color="#4C78A8",
     )
-    ax.plot(donnees["train_size"], donnees["val_mean"], "o-", label="Validation", color="#F58518")
+    ax.plot(
+        donnees["train_size"],
+        donnees["val_mean"],
+        "o-",
+        label="Validation",
+        color="#F58518",
+    )
     ax.fill_between(
         donnees["train_size"],
         donnees["val_mean"] - donnees["val_std"],
@@ -88,7 +105,7 @@ def tracer_learning_curve(
         color="#F58518",
     )
     ax.set_title(titre)
-    ax.set_xlabel("Training Set Size", fontweight="bold")
+    ax.set_xlabel("Taille du jeu d'entraînement", fontweight="bold")
     ax.set_ylabel("F1-Macro", fontweight="bold")
     ax.legend(frameon=False)
     sns.despine(ax=ax)
