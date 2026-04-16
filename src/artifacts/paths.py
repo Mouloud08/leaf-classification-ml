@@ -48,7 +48,11 @@ class ModelArtifactPaths:
         return self.tuning_dir / "grid_search.csv"
 
     def figure_file(self, name: str, category: str = "core") -> Path:
-        base = self.figures_core_dir if category == "core" else self.figures_advanced_dir
+        base = (
+            self.figures_core_dir
+            if category == "core"
+            else self.figures_advanced_dir
+        )
         return base / f"{name}.png"
 
     def ensure_dirs(self) -> None:

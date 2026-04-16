@@ -12,7 +12,7 @@ from sklearn.tree import plot_tree
 
 def tracer_validation_curve_max_depth(
     donnees: pd.DataFrame,
-    titre: str = "Courbe de validation : max_depth",
+    titre: str = "Courbe de validation : profondeur maximale",
 ) -> plt.Figure:
     """Trace la courbe de validation entraînement/validation selon max_depth."""
     fig, ax = plt.subplots(figsize=(10, 6))
@@ -40,7 +40,7 @@ def tracer_validation_curve_max_depth(
         color="#F58518",
     )
     ax.set_title(titre)
-    ax.set_xlabel("max_depth", fontweight="bold")
+    ax.set_xlabel("Profondeur maximale", fontweight="bold")
     ax.set_ylabel("F1-Macro", fontweight="bold")
     ax.legend(frameon=False)
     sns.despine(ax=ax)

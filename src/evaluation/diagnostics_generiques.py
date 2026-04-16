@@ -45,7 +45,7 @@ def tableau_variantes(
 
 
 def tableau_gaps(resultats_untuned: list[dict[str, Any]]) -> pd.DataFrame:
-    """Retourne le tableau des écarts de généralisation des variantes non tunées."""
+    """Retourne le tableau des écarts de généralisation des variantes exploratoires."""
     return pd.DataFrame(
         [
             {
@@ -59,7 +59,7 @@ def tableau_gaps(resultats_untuned: list[dict[str, Any]]) -> pd.DataFrame:
 
 
 def tableau_plis_externes(nested_result: dict[str, Any]) -> pd.DataFrame:
-    """Retourne les métriques par pli externe de la nested CV."""
+    """Retourne les métriques par pli externe de la validation croisée imbriquée."""
     return nested_result["outer_fold_metrics"].copy()
 
 
@@ -85,7 +85,7 @@ def classes_difficiles(
     top_n: int = 15,
     metrique: str = "recall",
 ) -> pd.DataFrame:
-    """Retourne les classes avec le plus faible score sur une métrique."""
+    """Retourne les classes avec la plus faible performance sur une métrique."""
     tableau = calculer_metriques_par_classe(y_vrai, y_pred, label_encoder=label_encoder)
     return (
         tableau.sort_values(metrique, ascending=True)
@@ -109,7 +109,10 @@ def comparaison_baseline_best_tuned(
     resultats_untuned: list[dict[str, Any]],
     mesures_tuned: dict[str, Any] | None = None,
 ) -> pd.DataFrame:
-    """Compare la référence simple, la meilleure variante non tunée et `tuned`."""
+    """Compare la variante de référence, la meilleure variante exploratoire.
+
+    Inclut aussi la variante ajustée.
+    """
     lignes = []
 
     baseline = None

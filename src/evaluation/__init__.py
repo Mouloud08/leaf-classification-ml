@@ -1,14 +1,27 @@
-"""Package d'evaluation — metriques pures, validation croisee, diagnostics."""
+"""Package d'évaluation : métriques pures, validation croisée et diagnostics."""
 
+from .diagnostics_generiques import (  # noqa: F401
+    classes_difficiles,
+    comparaison_baseline_best_tuned,
+    matrice_confusion_normalisee,
+    tableau_gaps,
+    tableau_plis_externes,
+    tableau_variantes,
+    top_confusions,
+)
 from .evaluateur import (  # noqa: F401
     ModelEvaluator,
     comparer_variantes,
     evaluer_dummy_classifier,
-    evaluer_modele_holdout,
     evaluer_modele_cv,
+    evaluer_modele_holdout,
     evaluer_modele_tuned_nested_cv,
     predictions_oof,
     probabilites_oof,
+)
+from .learning_curves import (  # noqa: F401
+    calculer_courbe_apprentissage,
+    compute_learning_curve,
 )
 from .metriques import (  # noqa: F401
     CHANCE_LEVEL,
@@ -25,16 +38,6 @@ from .metriques import (  # noqa: F401
     extraire_top_confusions,
     resumer_metriques_par_classe,
 )
-from .diagnostics_generiques import (  # noqa: F401
-    classes_difficiles,
-    comparaison_baseline_best_tuned,
-    matrice_confusion_normalisee,
-    tableau_gaps,
-    tableau_plis_externes,
-    tableau_variantes,
-    top_confusions,
-)
-from .learning_curves import compute_learning_curve  # noqa: F401
 from .sanity_checks import (  # noqa: F401
     verifier_bruit_aleatoire,
     verifier_overfit_petit_echantillon,
@@ -43,6 +46,7 @@ from .sanity_checks import (  # noqa: F401
 __all__ = [
     "CHANCE_LEVEL",
     "calculer_brier_score_multiclasse",
+    "calculer_courbe_apprentissage",
     "ModelEvaluator",
     "calculer_metriques",
     "calculer_metriques_par_classe",

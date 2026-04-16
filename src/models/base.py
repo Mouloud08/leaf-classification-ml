@@ -14,7 +14,7 @@ from ..config import PCA_EXPLAINED_VARIANCE, RANDOM_SEED
 
 
 class ModeleBase(ABC):
-    """Interface OOP commune pour tous les modèles du projet."""
+    """Interface orientée objet commune pour tous les modèles du projet."""
 
     nom: str
     nom_affiche: str

@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass, field
 from typing import Any
 
 
 @dataclass(frozen=True)
 class UntunedVariantResult:
-    """Resultat d'une variante non tunee."""
+    """Résultat d'une variante non ajustée."""
 
     variante: str
     selection_protocol: str
@@ -51,7 +50,10 @@ class UntunedVariantResult:
 
 @dataclass(frozen=True)
 class TuningRunResult:
-    """Resultat complet du tuning exploratoire + nested CV confirmatoire."""
+    """Résultat complet du tuning exploratoire.
+
+    Inclut aussi la validation imbriquée confirmatoire.
+    """
 
     val_accuracy_mean: float
     val_accuracy_std: float

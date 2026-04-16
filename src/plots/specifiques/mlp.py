@@ -11,10 +11,10 @@ def tracer_loss_curve(
     donnees: pd.DataFrame,
     titre: str = "Courbe de perte du MLP",
 ) -> plt.Figure:
-    """Trace la courbe de perte et, si disponible, le score de validation interne.
+    """Trace la courbe de perte et, si disponible, la performance de validation interne.
 
     Si ``donnees`` contient une colonne ``val_score`` non-NaN, un second axe
-    y (droite) affiche le score de validation de l'early stopping par iteration.
+    y (droite) affiche la performance de validation de l'arrêt anticipé par itération.
     Une ligne verticale indique l'itération de convergence (dernier point).
     """
     has_val = (
@@ -48,10 +48,10 @@ def tracer_loss_curve(
             color="#F58518",
             linewidth=1.8,
             linestyle="--",
-            label="Exactitude de validation (holdout d'early stopping)",
+            label="Exactitude de validation (jeu d'arrêt anticipé)",
         )
         ax2.set_ylabel(
-            "Exactitude de validation\n(holdout d'early stopping — 10 % du train)",
+            "Exactitude de validation\n(jeu d'arrêt anticipé — 10 % du train)",
             color="#F58518",
             fontweight="bold",
         )

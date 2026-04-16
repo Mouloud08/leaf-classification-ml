@@ -35,8 +35,8 @@ from ..evaluation.diagnostics_generiques import (
 )
 from ..evaluation.diagnostics_specifiques import (
     analyse_support_vectors,
+    calculer_courbe_apprentissage,
     coefficients_absolus,
-    compute_learning_curve,
     decision_function_histogram,
     importance_oob_foret,
     loss_curve_mlp,
@@ -253,9 +253,9 @@ def _dispatch_figure(
     if fig_name == "learning_curve" and model_name in ("arbre_decision", "svm", "mlp"):
         if model_name == "mlp":
             X_prep, est = _preparer_diagnostic(model_name, X)
-            data = compute_learning_curve(est, X_prep, y)
+            data = calculer_courbe_apprentissage(est, X_prep, y)
             return plots_mlp.tracer_learning_curve_mlp(data)
-        data = compute_learning_curve(estimateur, X, y)
+        data = calculer_courbe_apprentissage(estimateur, X, y)
         if model_name == "arbre_decision":
             return plots_arbre.tracer_learning_curve(data)
         return plots_svm.tracer_learning_curve_svm(data)

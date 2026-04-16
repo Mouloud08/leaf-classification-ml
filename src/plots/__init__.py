@@ -1,12 +1,13 @@
-"""Package de visualisation — generiques et specifiques."""
+"""Package de visualisation : graphiques génériques et spécifiques."""
 
-# Re-export des plots generiques depuis les deux emplacements
-# (ancien: fichiers plats, nouveau: sous-package generiques/)
+# Ré-export des graphiques génériques depuis les deux emplacements
+# (ancien : fichiers à plat, nouveau : sous-package generiques/)
 from .generiques import (
     tracer_barres_comparaison,
-    tracer_corroboration_holdout_global,
     tracer_comparaison_variantes,
     tracer_comparaison_variantes_rapport,
+    tracer_corroboration_globale,
+    tracer_corroboration_holdout_global,
     tracer_courbes_precision_rappel_ovr,
     tracer_courbes_roc_ovr,
     tracer_heatmap_tuning,
@@ -21,6 +22,7 @@ from .generiques import (
 
 __all__ = [
     "tracer_barres_comparaison",
+    "tracer_corroboration_globale",
     "tracer_corroboration_holdout_global",
     "tracer_comparaison_variantes",
     "tracer_comparaison_variantes_rapport",

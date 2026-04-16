@@ -29,6 +29,16 @@ class FrozenModelingSplit:
     label_encoder: LabelEncoder
     metadata: dict[str, Any]
 
+    @property
+    def X_corroboration(self) -> pd.DataFrame:
+        """Alias français de compatibilité pour le sous-ensemble de corroboration."""
+        return self.X_holdout
+
+    @property
+    def y_corroboration(self) -> np.ndarray:
+        """Alias français de compatibilité pour les labels de corroboration."""
+        return self.y_holdout
+
 
 def _resoudre_csv(csv_path: str | Path | None = None) -> Path:
     """Retourne le chemin absolu du CSV d'entrainement."""
@@ -156,7 +166,7 @@ def charger_donnees_modelisation(
     test_size: float = FROZEN_HOLDOUT_TEST_SIZE,
     random_state: int = RANDOM_SEED,
 ) -> FrozenModelingSplit:
-    """Charge les sous-ensembles dev/holdout gelés pour la modélisation."""
+    """Charge les sous-ensembles gelés de développement et de corroboration."""
     dataframe = _charger_dataframe(csv_path)
     sortie = Path(output_root) if output_root is not None else RESULTS_DIR
     split = _charger_ou_creer_split_gelee(

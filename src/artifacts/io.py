@@ -96,7 +96,7 @@ def sauvegarder_resultats_grid_search(
 
 
 def charger_resultats_grid_search(chemin: Path) -> pd.DataFrame:
-    """Charge un fichier de resultats de grid search."""
+    """Charge un fichier de résultats de recherche sur grille."""
     return pd.read_csv(chemin, encoding="utf-8")
 
 

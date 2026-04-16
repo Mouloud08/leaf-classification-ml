@@ -1,4 +1,4 @@
-"""Utilitaires partages pour les runners batch, CLI et notebooks."""
+"""Utilitaires partagés pour les exécutions batch, la CLI et les notebooks."""
 
 from __future__ import annotations
 
@@ -76,9 +76,8 @@ def preparer_tuning_modele(
 ) -> tuple[Any, dict[str, list[Any]]]:
     """Construit l'estimateur et la grille de tuning d'un modele."""
     if spec.tuning_uses_pipeline:
-        return creer_pipeline(spec.model_name, utiliser_pca=True), obtenir_grille_tuning(
-            spec.model_name
-        )
+        estimateur = creer_pipeline(spec.model_name, utiliser_pca=True)
+        return estimateur, obtenir_grille_tuning(spec.model_name)
     return creer_estimateur(spec.model_name), obtenir_grille_tuning(
         spec.model_name,
         prefixer_modele=False,
@@ -93,7 +92,7 @@ def executer_grid_search_exploratoire(
     random_seed: int,
     n_jobs: int = CV_N_JOBS,
 ) -> tuple[GridSearchCV, pd.DataFrame, float]:
-    """Execute le grid search exploratoire partage par notebooks et runner."""
+    """Exécute la recherche sur grille exploratoire partagée par notebooks et runner."""
     estimateur_grid, grille_tuning = preparer_tuning_modele(spec)
     cv_tuning = creer_cv(n_splits=n_splits, random_seed=random_seed)
 
@@ -128,7 +127,7 @@ def construire_tuning_run_result(
     secondary_holdout: dict[str, Any] | None = None,
     descriptive_holdout_all_variants: list[dict[str, Any]] | None = None,
 ) -> TuningRunResult:
-    """Assemble le resultat confirme d'un tuning a partir des artefacts bruts."""
+    """Assemble le résultat confirmé d'un tuning à partir des artefacts bruts."""
     mesures_nested = nested_tuned["metrics"]
     return TuningRunResult(
         val_accuracy_mean=mesures_nested["val_accuracy_mean"],
@@ -160,7 +159,7 @@ def selectionner_meilleure_variante_untuned(
     spec: ModelStudySpec,
     untuned_results: list[UntunedVariantResult],
 ) -> UntunedVariantSpec:
-    """Retourne la specification de la meilleure variante non tunee."""
+    """Retourne la spécification de la meilleure variante non ajustée."""
     meilleure_variante = max(
         untuned_results,
         key=lambda item: (

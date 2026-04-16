@@ -36,7 +36,7 @@ def verifier_integrite_artefacts_modele(
     model_name: str,
     root: Path | None = None,
 ) -> dict[str, Any]:
-    """Vérifie les artefacts canoniques ``tuned`` d'un modèle."""
+    """Vérifie les artefacts canoniques de la variante ajustée d'un modèle."""
     results_root = root or RESULTS_DIR
     paths = model_paths(model_name, root=results_root)
 
@@ -53,10 +53,10 @@ def verifier_integrite_artefacts_modele(
 
     if not canonical_metrics_path.exists():
         status = "missing_canonical_artifacts"
-        issues.append("métriques canoniques tuned manquantes")
+        issues.append("métriques canoniques de la variante ajustée manquantes")
     if not canonical_predictions_path.exists():
         status = "missing_canonical_artifacts"
-        issues.append("prédictions canoniques tuned manquantes")
+        issues.append("prédictions canoniques de la variante ajustée manquantes")
 
     if canonical_metrics_path.exists() and canonical_predictions_path.exists():
         canonical_metrics = _load_json(canonical_metrics_path)
@@ -73,8 +73,9 @@ def verifier_integrite_artefacts_modele(
         if not metrics_match_predictions:
             status = "canonical_metric_mismatch"
             issues.append(
-                "les métriques canoniques tuned ne correspondent pas aux métriques "
-                "recalculées depuis les prédictions canoniques tuned"
+                "les métriques canoniques de la variante ajustée ne correspondent "
+                "pas aux métriques recalculées depuis les prédictions canoniques "
+                "de la variante ajustée"
             )
 
     return {
@@ -119,7 +120,7 @@ def artifact_integrity_table(
     modeles: list[str] | tuple[str, ...] | set[str],
     root: Path | None = None,
 ) -> pd.DataFrame:
-    """Construit un tableau synthèse d'intégrité des artefacts ``tuned``."""
+    """Construit un tableau de synthèse d'intégrité des artefacts ajustés."""
     return pd.DataFrame(
         [
             verifier_integrite_artefacts_modele(model_name, root=root)

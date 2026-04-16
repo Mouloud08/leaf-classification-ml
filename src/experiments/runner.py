@@ -1,4 +1,4 @@
-"""Runner principal — execute l'etude pour un ou plusieurs modeles."""
+"""Orchestrateur principal de l'étude pour un ou plusieurs modèles."""
 
 from __future__ import annotations
 
@@ -44,7 +44,10 @@ def _charger_json(chemin) -> dict[str, Any]:
     return json.loads(chemin.read_text(encoding="utf-8"))
 
 
-def _charger_resultat_untuned(paths, variante: UntunedVariantSpec) -> UntunedVariantResult:
+def _charger_resultat_untuned(
+    paths,
+    variante: UntunedVariantSpec,
+) -> UntunedVariantResult:
     contenu = _charger_json(paths.metrics_file(variante.name))
     return UntunedVariantResult(
         variante=contenu["variante"],
@@ -155,7 +158,7 @@ def charger_predictions_tuned_si_disponibles(
     model_name: str,
     study: StudySpec,
 ) -> pd.DataFrame | None:
-    """Charge les predictions tuned si elles existent deja sur disque."""
+    """Charge les prédictions de la variante ajustée si elles existent déjà."""
     paths = model_paths(model_name, root=study.output_root)
     chemin = paths.predictions_file("tuned")
     if not chemin.exists():
@@ -169,12 +172,12 @@ def executer_variantes_untuned(
     y: Any,
     study: StudySpec,
 ) -> list[UntunedVariantResult]:
-    """Evalue toutes les variantes non tunees d'un modele."""
+    """Évalue toutes les variantes non ajustées d'un modèle."""
     paths = model_paths(spec.model_name, root=study.output_root)
     resultats: list[UntunedVariantResult] = []
 
     for variante in spec.untuned_variants:
-        logger.info("  Variante: %s", variante.name)
+        logger.info("  Variante évaluée : %s", variante.name)
         estimateur = construire_estimateur_variante(spec.model_name, variante)
         mesures = ajouter_gaps(evaluer_modele_cv(estimateur, X, y))
         selection_protocol = "simple_cv"
@@ -223,7 +226,7 @@ def executer_tuning(
     split_metadata: dict[str, Any],
     study: StudySpec,
 ) -> TuningRunResult:
-    """Execute le tuning exploratoire et la nested CV confirmatoire."""
+    """Exécute le tuning exploratoire et la validation croisée imbriquée."""
     bundle = executer_tuning_bundle(
         spec,
         X,
@@ -250,7 +253,7 @@ def executer_tuning_bundle(
     split_metadata: dict[str, Any],
     study: StudySpec,
 ) -> dict[str, Any]:
-    """Execute the shared tuning workflow and return notebook-friendly outputs."""
+    """Exécute le workflow de tuning partagé et retourne un bundle exploitable."""
     paths = model_paths(spec.model_name, root=study.output_root)
 
     logger.info("  Tuning exploratoire...")
@@ -263,7 +266,7 @@ def executer_tuning_bundle(
     )
     sauvegarder_resultats_grid_search(spec.model_name, resultats_grid, paths=paths)
 
-    logger.info("  Nested CV confirmatoire...")
+    logger.info("  Validation croisée imbriquée confirmatoire...")
     estimateur_grid, grille_tuning = preparer_tuning_modele(spec)
     nested_tuned = evaluer_modele_tuned_nested_cv(
         estimateur_ou_pipeline=estimateur_grid,
@@ -452,7 +455,7 @@ def executer_modele(
     model_name: str,
     study: StudySpec,
 ) -> StudyRunResult:
-    """Execute l'etude complete pour un modele."""
+    """Exécute l'étude complète pour un modèle."""
     spec = obtenir_model_study_spec(model_name)
     logger.info("=== %s ===", spec.title)
 
@@ -468,8 +471,8 @@ def executer_modele(
     y_holdout = split.y_holdout
     split_metadata = split.metadata
 
-    # Variantes non tunees
-    logger.info("Variantes non tunees...")
+    # Variantes non ajustées
+    logger.info("Variantes non ajustées...")
     untuned_results = executer_variantes_untuned(spec, X, y, study)
 
     # Tuning
@@ -496,7 +499,7 @@ def executer_modele(
 
 
 def executer_etude(study: StudySpec) -> list[StudyRunResult]:
-    """Execute l'etude complete pour tous les modeles specifies."""
+    """Exécute l'étude complète pour tous les modèles spécifiés."""
     resultats: list[StudyRunResult] = []
     for model_name in study.models:
         try:

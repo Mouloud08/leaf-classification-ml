@@ -1,3 +1,3 @@
-"""Plots specifiques par famille de modele."""
+"""Graphiques spécifiques par famille de modèle."""
 
 __all__: list[str] = []

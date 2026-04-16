@@ -1,4 +1,4 @@
-"""Configuration centrale du projet Leaf Classification."""
+"""Configuration centrale du projet de classification des feuilles."""
 
 from __future__ import annotations
 

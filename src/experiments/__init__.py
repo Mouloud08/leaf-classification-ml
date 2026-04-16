@@ -7,7 +7,11 @@ from .model_specs import (
     obtenir_model_study_spec,
 )
 from .report_bundle import generer_comparaison_globale, generer_manifeste
-from .runner import charger_predictions_tuned_si_disponibles, executer_etude, executer_modele
+from .runner import (
+    charger_predictions_tuned_si_disponibles,
+    executer_etude,
+    executer_modele,
+)
 from .shared import (
     construire_estimateur_variante,
     creer_cv,

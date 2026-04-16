@@ -9,9 +9,9 @@ import seaborn as sns
 
 def tracer_oob_vs_n_estimators(
     donnees: pd.DataFrame,
-    titre: str = "Score OOB selon le nombre d'arbres",
+    titre: str = "Performance OOB selon le nombre d'arbres",
 ) -> plt.Figure:
-    """Trace le score OOB en fonction du nombre d'estimateurs."""
+    """Trace la performance OOB en fonction du nombre d'estimateurs."""
     fig, ax = plt.subplots(figsize=(10, 6))
     ax.plot(
         donnees["n_estimators"],
@@ -22,7 +22,7 @@ def tracer_oob_vs_n_estimators(
     )
     ax.set_title(titre)
     ax.set_xlabel("Nombre d'arbres", fontweight="bold")
-    ax.set_ylabel("Score OOB", fontweight="bold")
+    ax.set_ylabel("Performance OOB", fontweight="bold")
     sns.despine(ax=ax)
     fig.tight_layout()
     return fig

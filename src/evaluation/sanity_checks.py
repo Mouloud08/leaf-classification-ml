@@ -1,9 +1,10 @@
 """Contrôles élémentaires pour valider le pipeline expérimental.
 
-Regle 5 des bonnes pratiques ML :
-- DummyClassifier comme référence simple (déjà dans evaluateur.py)
-- Test de bruit aleatoire : remplacer X par du bruit, verifier ~chance
-- Test d'overfit petit echantillon : 5 samples, verifier loss -> 0
+Règle 5 des bonnes pratiques en apprentissage automatique :
+- ``DummyClassifier`` comme référence simple
+- test de bruit aléatoire : remplacer ``X`` par du bruit, vérifier ~hasard
+- test de surapprentissage sur petit échantillon : vérifier que la perte tend
+  vers 0
 """
 
 from __future__ import annotations
@@ -27,11 +28,11 @@ def verifier_bruit_aleatoire(
     n_features: int = 192,
     random_state: int = RANDOM_SEED,
 ) -> dict[str, Any]:
-    """Remplace les features par du bruit uniforme et evalue.
+    """Remplace les variables par du bruit uniforme et évalue.
 
-    Un modele sain doit obtenir une accuracy proche de 1/n_classes.
-    Si l'accuracy depasse significativement le hasard, il y a
-    probablement une fuite de donnees.
+    Un modèle sain doit obtenir une exactitude proche de 1 / n_classes.
+    Si l'exactitude dépasse significativement le hasard, il y a probablement
+    une fuite de données.
     """
     rng = np.random.RandomState(random_state)
     X_bruit = pd.DataFrame(
@@ -54,10 +55,10 @@ def verifier_overfit_petit_echantillon(
     max_iter: int = 2000,
     random_state: int = RANDOM_SEED,
 ) -> dict[str, Any]:
-    """Entraine un MLP sur un micro-echantillon et verifie que la loss converge.
+    """Entraîne un MLP sur un micro-échantillon et vérifie que la perte converge.
 
-    Si le MLP ne peut pas overfitter 10 exemples, quelque chose est
-    fondamentalement casse dans le pipeline d'entrainement.
+    Si le MLP ne peut pas surapprendre 10 exemples, quelque chose est
+    fondamentalement cassé dans le pipeline d'entraînement.
     """
     rng = np.random.RandomState(random_state)
     X_mini = pd.DataFrame(

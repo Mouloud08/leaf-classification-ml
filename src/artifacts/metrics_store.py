@@ -28,7 +28,10 @@ def _ecrire_json(chemin: Path, contenu: dict[str, Any]) -> Path:
 
 
 def _iter_metric_files(metrics_dir: Path) -> list[Path]:
-    """Return metric JSON files from either canonical or explicit flat directories."""
+    """Retourne les fichiers JSON de métriques.
+
+    Les fichiers peuvent provenir des dossiers canoniques ou explicites à plat.
+    """
     if not metrics_dir.exists():
         return []
 

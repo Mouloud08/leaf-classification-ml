@@ -1,19 +1,19 @@
-"""Diagnostics specifiques a chaque famille de modele.
+"""Diagnostics spécifiques à chaque famille de modèles.
 
-Chaque fonction retourne les donnees brutes (DataFrames, arrays)
-necessaires aux plots specifiques. Les plots eux-memes sont dans
-src/plots/specifiques/.
+Chaque fonction retourne les données brutes (DataFrames, tableaux)
+nécessaires aux graphiques spécifiques. Les graphiques eux-mêmes sont dans
+``src/plots/specifiques/``.
 
-NOTE METHODOLOGIQUE — Les fonctions qui appellent ``model.fit(X, y)``
-sur le sous-ensemble de developpement disponible sont des diagnostics
-*exploratoires* (visualisation
-de la structure du modele : coefficients, importance, loss curve, etc.).
-Elles ne servent PAS a l'evaluation de la performance generalisable —
-celle-ci est assuree par ``evaluer_modele_cv`` et
+Note méthodologique : les fonctions qui appellent ``model.fit(X, y)``
+sur le sous-ensemble de développement disponible sont des diagnostics
+exploratoires de structure du modèle : coefficients, importance,
+courbe de perte, etc. Elles ne servent pas à l'évaluation de la
+performance généralisable, assurée par ``evaluer_modele_cv`` et
 ``evaluer_modele_tuned_nested_cv`` dans ``evaluateur.py``.
-Les fonctions qui evaluent la performance (``validation_curve_max_depth``,
-``regularization_path``, ``compute_learning_curve``) utilisent
-correctement la validation croisee stratifiee.
+Les fonctions qui évaluent la performance
+(``validation_curve_max_depth``, ``regularization_path``,
+``calculer_courbe_apprentissage``) utilisent correctement la validation
+croisée stratifiée.
 """
 
 from __future__ import annotations
@@ -45,12 +45,12 @@ def validation_curve_max_depth(
     y: np.ndarray,
     param_range: list[int | None] | None = None,
 ) -> pd.DataFrame:
-    """Validation curve pour max_depth d'un arbre de decision."""
+    """Courbe de validation pour ``max_depth`` d'un arbre de décision."""
     if param_range is None:
         param_range = [2, 5, 10, 15, 20, 30, None]
 
-    # validation_curve ne supporte pas None dans param_range,
-    # on le traite separement
+    # ``validation_curve`` ne supporte pas ``None`` dans ``param_range``.
+    # On le traite séparément.
     range_sans_none = [v for v in param_range if v is not None]
     has_none = None in param_range
 
@@ -117,7 +117,7 @@ def oob_vs_n_estimators(
     y: np.ndarray,
     n_values: list[int] | None = None,
 ) -> pd.DataFrame:
-    """Score OOB en fonction du nombre d'arbres."""
+    """Performance OOB en fonction du nombre d'arbres."""
     if n_values is None:
         n_values = [50, 100, 200, 400, 600, 800]
 
@@ -141,10 +141,10 @@ def importance_avec_dispersion(
     y: np.ndarray,
     n_repeats: int = 10,
 ) -> pd.DataFrame:
-    """Permutation importance avec dispersion inter-repetitions.
+    """Importance par permutation avec dispersion inter-répétitions.
 
-    Pour la foret aleatoire, on privilegie une lecture OOB afin de rester sur
-    un diagnostic hors apprentissage plus coherent avec la litterature.
+    Pour la forêt aléatoire, on privilégie une lecture OOB afin de rester sur
+    un diagnostic hors apprentissage plus cohérent avec la littérature.
     """
     nom_modele = getattr(estimateur, "__class__", type(estimateur)).__name__.lower()
     if "randomforest" in nom_modele:
@@ -182,11 +182,12 @@ def importance_oob_foret(
 ) -> pd.DataFrame:
     """Calcule une importance par permutation fondee sur les observations OOB.
 
-    Ce diagnostic suit l'esprit de l'importance de Breiman pour les forets :
+    Ce diagnostic suit l'esprit de l'importance de Breiman pour les forêts :
     chaque arbre est evalue sur ses observations out-of-bag, puis on mesure la
     baisse de F1-macro apres permutation d'une feature dans cet echantillon OOB.
-    Le resultat reste exploratoire, mais il evite le biais du réapprentissage in-sample
-    complet qui rendait la lecture de la foret peu informative.
+    Le résultat reste exploratoire, mais il évite le biais du
+    réapprentissage in-sample complet qui rendait la lecture de la forêt
+    peu informative.
     """
     modele = clone(estimateur)
     modele.fit(X, y)
@@ -272,20 +273,22 @@ def loss_curve_mlp(
 
     Le modèle réappris utilise les meilleurs hyperparamètres.
 
-    Option A (scientifique) : le modele est entraine sur la totalite des donnees
-    en utilisant les hyperparametres identifies par le grid search exploratoire.
-    Ce fit sert uniquement au diagnostic de convergence — les metriques de
-    performance proviennent de la nested CV.
+    Option A (scientifique) : le modèle est entraîné sur la totalité des
+    données en utilisant les hyperparamètres identifiés par la recherche sur
+    grille exploratoire. Cet ajustement sert uniquement au diagnostic de
+    convergence ; les métriques de performance proviennent de la validation
+    croisée imbriquée.
 
-    ``estimateur`` peut etre un ``MLPClassifier`` brut ou un pipeline complet
-    dont la derniere etape s'appelle ``modele``.
+    ``estimateur`` peut être un ``MLPClassifier`` brut ou un pipeline complet
+    dont la dernière étape s'appelle ``modele``.
 
-    Si ``best_params`` est fourni, ces hyperparametres remplacent les valeurs
-    par defaut de l'estimateur ou du pipeline. Les cles prefixees de type
-    ``modele__alpha`` sont donc supportees.
+    Si ``best_params`` est fourni, ces hyperparamètres remplacent les valeurs
+    par défaut de l'estimateur ou du pipeline. Les clés préfixées de type
+    ``modele__alpha`` sont donc supportées.
 
-    La colonne ``val_score`` contient le score de validation interne par
-    iteration (holdout early-stopping de sklearn, 10% du jeu d'entrainement).
+    La colonne ``val_score`` contient la performance de validation interne par
+    itération sur l'échantillon interne d'arrêt anticipé de sklearn
+    (10 % du jeu d'entraînement).
     """
     modele = clone(estimateur)
     if best_params:
@@ -326,7 +329,7 @@ def regularization_path(
     y: np.ndarray,
     C_values: list[float] | None = None,
 ) -> pd.DataFrame:
-    """Score en fonction de la force de regularisation C."""
+    """Score en fonction de la force de régularisation ``C``."""
     if C_values is None:
         C_values = [0.001, 0.01, 0.1, 1.0, 10.0, 100.0]
 
@@ -406,16 +409,17 @@ def decision_function_histogram(
     X: pd.DataFrame,
     y: np.ndarray,
 ) -> pd.DataFrame:
-    """Histogramme de la decision_function pour le perceptron.
+    """Histogramme de la fonction de décision pour le perceptron.
 
-    Retourne le score maximum par echantillon, la classe predite et
-    un flag correct/incorrect pour permettre une coloration par statut
-    de prediction (analogue a l'histogramme de confiance du MLP).
+    Retourne la valeur maximale de la fonction de décision par échantillon, la
+    classe prédite et
+    un indicateur correct/incorrect pour permettre une coloration par statut
+    de prédiction, analogue à l'histogramme de confiance du MLP.
     """
     modele = clone(estimateur)
     modele.fit(X, y)
     if not hasattr(modele, "decision_function"):
-        raise AttributeError("Le modele n'expose pas decision_function.")
+        raise AttributeError("Le modèle n'expose pas de fonction de décision.")
     scores = modele.decision_function(X)
     if scores.ndim == 1:
         y_pred = (scores >= 0).astype(int)
@@ -425,7 +429,7 @@ def decision_function_histogram(
             "y_pred": y_pred,
             "correct": y_pred == y,
         })
-    # Multiclasse: prendre le max score et la classe predite
+    # Multiclasse : prendre le score maximal et la classe prédite.
     max_scores = scores.max(axis=1)
     y_pred = modele.predict(X)
     return pd.DataFrame({
@@ -437,21 +441,21 @@ def decision_function_histogram(
 
 
 # ---------------------------------------------------------------------------
-# Generique: learning curve
+# Générique : courbe d'apprentissage
 # ---------------------------------------------------------------------------
 
 
-def compute_learning_curve(
+def calculer_courbe_apprentissage(
     estimateur: Any,
     X: pd.DataFrame,
     y: np.ndarray,
     train_sizes: list[float] | None = None,
 ) -> pd.DataFrame:
-    """Calcule la learning curve generique."""
+    """Calcule la courbe d'apprentissage générique."""
     if train_sizes is None:
-        # On evite les tres petites fractions d'entrainement pour ce dataset:
+        # On évite les très petites fractions d'entraînement pour ce jeu :
         # avec 99 classes et peu d'exemples par classe, elles deviennent peu
-        # interpretables et peuvent declencher des warnings trompeurs.
+        # interprétables et peuvent déclencher des avertissements trompeurs.
         train_sizes = [0.4, 0.6, 0.8, 1.0]
 
     train_sizes_abs, train_scores, val_scores = learning_curve(
@@ -476,3 +480,6 @@ def compute_learning_curve(
             }
         )
     return pd.DataFrame(lignes)
+
+
+compute_learning_curve = calculer_courbe_apprentissage

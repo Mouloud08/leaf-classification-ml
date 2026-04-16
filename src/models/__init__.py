@@ -1,4 +1,4 @@
-"""Package OOP des modeles de classification."""
+"""Package orienté objet des modèles de classification."""
 
 from .arbre_decision import ModeleArbreDecision
 from .base import ModeleBase

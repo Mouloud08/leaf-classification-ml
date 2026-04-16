@@ -95,11 +95,11 @@ def tracer_barres_comparaison(
     return axe
 
 
-def tracer_corroboration_holdout_global(
+def tracer_corroboration_globale(
     tableau: pd.DataFrame,
-    titre: str = "Corroboration secondaire sur holdout",
+    titre: str = "Corroboration secondaire sur le jeu de corroboration",
 ) -> plt.Axes:
-    """Compare la référence et la variante tuned sur holdout pour chaque modèle."""
+    """Compare la référence et la variante ajustée sur le jeu de corroboration."""
     if tableau.empty:
         raise ValueError("Le tableau de résultats est vide.")
 
@@ -120,8 +120,8 @@ def tracer_corroboration_holdout_global(
     )
     donnees["serie"] = donnees["serie"].map(
         {
-            "holdout_reference_f1": "Référence holdout",
-            "holdout_tuned_f1": "Tuned holdout",
+            "holdout_reference_f1": "Référence de corroboration",
+            "holdout_tuned_f1": "Variante ajustée",
         }
     )
 
@@ -133,14 +133,14 @@ def tracer_corroboration_holdout_global(
         hue="serie",
         order=ordre_modeles,
         palette={
-            "Référence holdout": "#4C78A8",
-            "Tuned holdout": "#F58518",
+            "Référence de corroboration": "#4C78A8",
+            "Variante ajustée": "#F58518",
         },
         ax=axe,
     )
     axe.set_title(titre)
     axe.set_xlabel("Modèle", fontweight="bold")
-    axe.set_ylabel("F1-macro sur holdout", fontweight="bold")
+    axe.set_ylabel("F1-macro sur le jeu de corroboration", fontweight="bold")
     axe.set_xticks(axe.get_xticks())
     axe.set_xticklabels(axe.get_xticklabels(), rotation=45, ha="right")
 
@@ -156,6 +156,9 @@ def tracer_corroboration_holdout_global(
     sns.despine(ax=axe)
     figure.tight_layout()
     return axe
+
+
+tracer_corroboration_holdout_global = tracer_corroboration_globale
 
 
 def tracer_comparaison_variantes(
@@ -213,7 +216,7 @@ def tracer_comparaison_variantes(
     )
     axe.set_title(titre)
     axe.set_xlabel("Variante")
-    axe.set_ylabel("Score")
+    axe.set_ylabel("Performance")
     min_val = donnees["score"].min()
     lower = min_val * 1.15 if min_val < 0 else 0
     axe.set_ylim(lower, 1.0)
@@ -233,7 +236,7 @@ def tracer_comparaison_variantes_rapport(
     tableau: pd.DataFrame,
     titre: str = "Comparaison finale des variantes",
 ) -> plt.Axes:
-    """Trace une comparaison finale par modèle incluant la variante ``tuned``.
+    """Trace une comparaison finale par modèle incluant la variante ajustée.
 
     Le graphique conserve la logique visuelle simple des notebooks d'origine :
     des barres groupées par variante, une barre par métrique, sans surcharge.
@@ -278,7 +281,7 @@ def tracer_comparaison_variantes_rapport(
 
     axe.set_title(titre)
     axe.set_xlabel("Variante")
-    axe.set_ylabel("Score moyen")
+    axe.set_ylabel("Performance moyenne")
     axe.set_ylim(0.0, 1.0)
     sns.move_legend(
         axe,

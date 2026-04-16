@@ -102,7 +102,7 @@ def _spec_arbre_decision() -> ModelStudySpec:
     m = ModeleArbreDecision()
     return ModelStudySpec(
         model_name="arbre_decision",
-        title="Arbre de Decision",
+        title="Arbre de décision",
         objective="Documenter le compromis performance/complexité d'un arbre unique.",
         untuned_variants=(
             UntunedVariantSpec(name="default", kind="simple"),

@@ -11,7 +11,7 @@ def tracer_regularization_path(
     donnees: pd.DataFrame,
     titre: str = "Chemin de régularisation (C)",
 ) -> plt.Figure:
-    """Trace le score en fonction de C."""
+    """Trace la performance en fonction de C."""
     fig, ax = plt.subplots(figsize=(10, 6))
     ax.semilogx(
         donnees["C"],

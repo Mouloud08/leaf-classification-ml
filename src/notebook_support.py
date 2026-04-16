@@ -198,93 +198,182 @@ _NOTEBOOK_DISPLAY_SPECS: dict[str, _NotebookDisplaySpec] = {
 # ---------------------------------------------------------------------------
 
 @dataclass(frozen=True)
-class NotebookModelSpec:
+class SpecificationModeleNotebook:
     """Configuration complète d'un notebook pour un classifieur donné."""
 
-    model_name: str
-    title: str
-    objective: str
-    experiment_design: tuple[str, ...]
-    expected_signal: tuple[str, ...]
-    untuned_variants: tuple[UntunedVariantSpec, ...]
-    tuning_uses_pipeline: bool
-    supports_probabilities: bool = False
-    tuning_heatmap_axes: tuple[str, str] | None = None
-    tuning_facet_column: str | None = None
-    exploratory_diagnostics: tuple[str, ...] = ()
+    nom_modele: str
+    titre: str
+    objectif: str
+    design_experimental: tuple[str, ...]
+    signal_attendu: tuple[str, ...]
+    variantes_non_tunees: tuple[UntunedVariantSpec, ...]
+    tuning_avec_pipeline: bool
+    probabilites_disponibles: bool = False
+    axes_heatmap_tuning: tuple[str, str] | None = None
+    colonne_facette_tuning: str | None = None
+    diagnostics_exploratoires: tuple[str, ...] = ()
+
+    @property
+    def model_name(self) -> str:
+        return self.nom_modele
+
+    @property
+    def title(self) -> str:
+        return self.titre
+
+    @property
+    def objective(self) -> str:
+        return self.objectif
+
+    @property
+    def experiment_design(self) -> tuple[str, ...]:
+        return self.design_experimental
+
+    @property
+    def expected_signal(self) -> tuple[str, ...]:
+        return self.signal_attendu
+
+    @property
+    def untuned_variants(self) -> tuple[UntunedVariantSpec, ...]:
+        return self.variantes_non_tunees
+
+    @property
+    def tuning_uses_pipeline(self) -> bool:
+        return self.tuning_avec_pipeline
+
+    @property
+    def supports_probabilities(self) -> bool:
+        return self.probabilites_disponibles
+
+    @property
+    def tuning_heatmap_axes(self) -> tuple[str, str] | None:
+        return self.axes_heatmap_tuning
+
+    @property
+    def tuning_facet_column(self) -> str | None:
+        return self.colonne_facette_tuning
+
+    @property
+    def exploratory_diagnostics(self) -> tuple[str, ...]:
+        return self.diagnostics_exploratoires
+
+
+NotebookModelSpec = SpecificationModeleNotebook
 
 
 @dataclass(frozen=True)
-class NotebookContext:
+class ContexteNotebook:
     """Contexte d'exécution partagé entre les cellules d'un notebook."""
 
-    spec: NotebookModelSpec
-    definition: dict[str, Any]
-    output_root: Path
+    specification: SpecificationModeleNotebook
+    definition_modele: dict[str, Any]
+    racine_sortie: Path
     X: pd.DataFrame
     y: Any
-    X_holdout: pd.DataFrame
-    y_holdout: Any
+    X_corroboration: pd.DataFrame
+    y_corroboration: Any
     label_encoder: Any
-    split_metadata: dict[str, Any]
-    cv_eval: StratifiedKFold    # affichage seulement (n_splits) ; les évaluateurs créent leur propre CV
-    cv_tuning: StratifiedKFold  # CV externe utilisé par le workflow confirmatoire
-    timing_policy: str = TIMING_POLICY
+    metadonnees_split: dict[str, Any]
+    cv_evaluation: StratifiedKFold
+    cv_tuning: StratifiedKFold
+    politique_temps: str = TIMING_POLICY
+
+    @property
+    def spec(self) -> SpecificationModeleNotebook:
+        return self.specification
+
+    @property
+    def definition(self) -> dict[str, Any]:
+        return self.definition_modele
+
+    @property
+    def output_root(self) -> Path:
+        return self.racine_sortie
+
+    @property
+    def X_holdout(self) -> pd.DataFrame:
+        return self.X_corroboration
+
+    @property
+    def y_holdout(self) -> Any:
+        return self.y_corroboration
+
+    @property
+    def split_metadata(self) -> dict[str, Any]:
+        return self.metadonnees_split
+
+    @property
+    def cv_eval(self) -> StratifiedKFold:
+        return self.cv_evaluation
+
+    @property
+    def timing_policy(self) -> str:
+        return self.politique_temps
 
 
-def obtenir_notebook_model_spec(model_name: str) -> NotebookModelSpec:
+NotebookContext = ContexteNotebook
+
+
+def obtenir_specification_modele_notebook(model_name: str) -> SpecificationModeleNotebook:
     """Retourne la configuration partagée de notebook pour un modèle."""
     key = model_name.lower()
     if key not in _NOTEBOOK_DISPLAY_SPECS:
         raise KeyError(f"Configuration notebook inconnue: {model_name}")
     display = _NOTEBOOK_DISPLAY_SPECS[key]
     study_spec = obtenir_model_study_spec(key)
-    return NotebookModelSpec(
-        model_name=study_spec.model_name,
-        title=display.title,
-        objective=display.objective,
-        experiment_design=display.experiment_design,
-        expected_signal=display.expected_signal,
-        untuned_variants=study_spec.untuned_variants,
-        tuning_uses_pipeline=study_spec.tuning_uses_pipeline,
-        supports_probabilities=study_spec.supports_probabilities,
-        tuning_heatmap_axes=study_spec.tuning_heatmap_axes,
-        tuning_facet_column=study_spec.tuning_facet_column,
-        exploratory_diagnostics=display.exploratory_diagnostics,
+    return SpecificationModeleNotebook(
+        nom_modele=study_spec.model_name,
+        titre=display.title,
+        objectif=display.objective,
+        design_experimental=display.experiment_design,
+        signal_attendu=display.expected_signal,
+        variantes_non_tunees=study_spec.untuned_variants,
+        tuning_avec_pipeline=study_spec.tuning_uses_pipeline,
+        probabilites_disponibles=study_spec.supports_probabilities,
+        axes_heatmap_tuning=study_spec.tuning_heatmap_axes,
+        colonne_facette_tuning=study_spec.tuning_facet_column,
+        diagnostics_exploratoires=display.exploratory_diagnostics,
     )
 
 
 # Dictionnaire public calculé, rétrocompatible avec les scripts et notebooks
 # qui itèrent sur NOTEBOOK_MODEL_SPECS.
-NOTEBOOK_MODEL_SPECS: dict[str, NotebookModelSpec] = {
-    key: obtenir_notebook_model_spec(key) for key in _NOTEBOOK_DISPLAY_SPECS
+SPECIFICATIONS_MODELES_NOTEBOOK: dict[str, SpecificationModeleNotebook] = {
+    key: obtenir_specification_modele_notebook(key)
+    for key in _NOTEBOOK_DISPLAY_SPECS
 }
 
+NOTEBOOK_MODEL_SPECS = SPECIFICATIONS_MODELES_NOTEBOOK
+obtenir_notebook_model_spec = obtenir_specification_modele_notebook
 
-def creer_notebook_context(
+
+def creer_contexte_notebook(
     model_name: str,
     *,
     output_root: str | Path | None = None,
-) -> NotebookContext:
+) -> ContexteNotebook:
     """Construit le contexte d'exécution partagé d'un notebook classifieur."""
-    spec = obtenir_notebook_model_spec(model_name)
+    spec = obtenir_specification_modele_notebook(model_name)
     definition = MODELES[model_name.lower()]().definition()
     racine_sortie = Path(output_root) if output_root is not None else RESULTS_DIR
     split = charger_donnees_modelisation(output_root=racine_sortie)
     cv = creer_cv(n_splits=N_SPLITS, random_seed=RANDOM_SEED)
-    return NotebookContext(
-        spec=spec,
-        definition=definition,
-        output_root=racine_sortie,
+    return ContexteNotebook(
+        specification=spec,
+        definition_modele=definition,
+        racine_sortie=racine_sortie,
         X=split.X_dev,
         y=split.y_dev,
-        X_holdout=split.X_holdout,
-        y_holdout=split.y_holdout,
+        X_corroboration=split.X_corroboration,
+        y_corroboration=split.y_corroboration,
         label_encoder=split.label_encoder,
-        split_metadata=split.metadata,
-        cv_eval=cv,
+        metadonnees_split=split.metadata,
+        cv_evaluation=cv,
         cv_tuning=cv,
     )
+
+
+creer_notebook_context = creer_contexte_notebook
 
 
 # ---------------------------------------------------------------------------
@@ -292,7 +381,7 @@ def creer_notebook_context(
 # ---------------------------------------------------------------------------
 
 def evaluer_variantes_untuned(
-    contexte: NotebookContext,
+    contexte: ContexteNotebook,
 ) -> list[UntunedVariantResult]:
     """Évalue et persiste toutes les variantes non tunées du notebook."""
     from .experiments.runner import executer_variantes_untuned as _run_untuned
@@ -307,7 +396,7 @@ def evaluer_variantes_untuned(
 
 
 def executer_tuning_confirmatoire(
-    contexte: NotebookContext,
+    contexte: ContexteNotebook,
     resultats_untuned: list[UntunedVariantResult] | None = None,
 ) -> dict[str, Any]:
     """Exécute le workflow partagé de tuning confirmatoire d'un notebook."""
@@ -352,10 +441,11 @@ def charger_ou_generer_predictions_variante(
 ) -> pd.DataFrame:
     """Retourne un tableau standard de prédictions pour une variante.
 
-    Les prédictions confirmatoires ``tuned`` sont chargées depuis les artefacts
-    canoniques. Les variantes non tunées sont recalculées en OOF avec le
-    protocole partagé de CV simple afin que les notebooks puissent comparer les
-    matrices de confusion sur toutes les variantes.
+    Les prédictions confirmatoires de la variante ajustée sont chargées depuis
+    les artefacts canoniques. Les variantes non ajustées sont recalculées en
+    prédictions hors pli avec le protocole partagé de validation croisée simple
+    afin que les notebooks puissent comparer les matrices de confusion sur
+    toutes les variantes.
     """
     racine = Path(root) if root is not None else None
     try:
@@ -399,10 +489,10 @@ def construire_tableau_variantes(
     )
 
 
-def construire_tableau_holdout_secondaire(
+def construire_tableau_corroboration_secondaire(
     mesures_tuned: dict[str, Any],
 ) -> pd.DataFrame:
-    """Construit un tableau compact `tuned` vs reference sur holdout."""
+    """Construit un tableau compact variante ajustée vs référence de corroboration."""
     secondary_holdout = mesures_tuned.get("secondary_holdout", {})
     if not isinstance(secondary_holdout, dict) or not secondary_holdout.get("enabled"):
         return pd.DataFrame()
@@ -431,10 +521,13 @@ def construire_tableau_holdout_secondaire(
     return tableau
 
 
-def construire_tableau_holdout_descriptif_variantes(
+construire_tableau_holdout_secondaire = construire_tableau_corroboration_secondaire
+
+
+def construire_tableau_corroboration_descriptive_variantes(
     mesures_tuned: dict[str, Any],
 ) -> pd.DataFrame:
-    """Retourne toutes les variantes publiées sur holdout à titre descriptif."""
+    """Retourne toutes les variantes publiées pour la corroboration descriptive."""
     lignes = mesures_tuned.get("descriptive_holdout_all_variants", [])
     if not isinstance(lignes, list) or not lignes:
         return pd.DataFrame()
@@ -454,6 +547,11 @@ def construire_tableau_holdout_descriptif_variantes(
         tableau["f1_macro_holdout"] - reference_f1
     )
     return ordonner_tableau_variantes(tableau)
+
+
+construire_tableau_holdout_descriptif_variantes = (
+    construire_tableau_corroboration_descriptive_variantes
+)
 
 
 def ordonner_tableau_variantes(tableau: pd.DataFrame) -> pd.DataFrame:
@@ -525,7 +623,6 @@ def construire_tableau_variantes_rapport(tableau: pd.DataFrame) -> pd.DataFrame:
         columns={
             "val_f1_macro_mean": "f1_macro",
             "val_accuracy_mean": "accuracy",
-            "evaluation_stage": "evaluation_stage",
         }
     )
     return retour
@@ -721,11 +818,11 @@ def construire_tableau_plis_tuned_global(
     return pd.DataFrame(lignes)
 
 
-def construire_tableau_holdout_global(
+def construire_tableau_corroboration_globale(
     modeles: list[str] | tuple[str, ...],
     root: Path | None = None,
 ) -> pd.DataFrame:
-    """Agrège les corroborations holdout disponibles pour les modèles éligibles."""
+    """Agrège les corroborations disponibles pour les modèles éligibles."""
     lignes: list[dict[str, Any]] = []
     for nom_modele in modeles:
         chemin = Path(root or RESULTS_DIR) / nom_modele / "metrics" / "tuned.json"
@@ -749,6 +846,9 @@ def construire_tableau_holdout_global(
             }
         )
     return pd.DataFrame(lignes)
+
+
+construire_tableau_holdout_global = construire_tableau_corroboration_globale
 
 
 def construire_tableau_complementarite_erreurs(
@@ -789,7 +889,7 @@ def construire_tableau_complementarite_erreurs(
 
 
 def executer_verifications_validite(
-    contexte: NotebookContext,
+    contexte: ContexteNotebook,
 ) -> dict[str, Any]:
     """Exécute les vérifications standards de validité scientifique d'un notebook."""
     study_spec = obtenir_model_study_spec(contexte.spec.model_name)
@@ -811,8 +911,8 @@ def executer_verifications_validite(
     note = (
         "Les variantes non tunées restent exploratoires ; les figures réapprises "
         "sur le sous-ensemble de développement (80 %) aussi. Les prédictions "
-        "OOF de la variante tuned sont des diagnostics descriptifs "
-        "confirmatoires, mais seul le score tuned en nested CV sert au "
+        "hors pli de la variante ajustée sont des diagnostics descriptifs "
+        "confirmatoires, mais seule la performance de la variante ajustée en validation croisée imbriquée sert au "
         "classement final inter-modèles."
     )
 

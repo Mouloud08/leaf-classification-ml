@@ -1,4 +1,4 @@
-"""Specification globale d'une etude et d'un modele dans l'etude."""
+"""Spécification globale d'une étude et d'un modèle dans l'étude."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ from ..config import (
 
 @dataclass(frozen=True)
 class UntunedVariantSpec:
-    """Description d'une variante non tunee."""
+    """Description d'une variante non ajustée."""
 
     name: str
     kind: str  # "simple", "pipeline_no_pca", "pipeline_with_pca"
@@ -27,7 +27,7 @@ class UntunedVariantSpec:
 
 @dataclass(frozen=True)
 class ModelStudySpec:
-    """Definition executable d'un modele dans l'etude."""
+    """Définition exécutable d'un modèle dans l'étude."""
 
     model_name: str
     title: str
@@ -44,7 +44,7 @@ class ModelStudySpec:
 
 @dataclass(frozen=True)
 class StudySpec:
-    """Parametres globaux de l'etude."""
+    """Paramètres globaux de l'étude."""
 
     models: list[str]
     output_root: Path = RESULTS_DIR

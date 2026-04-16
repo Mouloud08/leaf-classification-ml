@@ -18,7 +18,7 @@ from .schema import (
 
 
 class MetricsArtifactValidationError(ValueError):
-    """Raised when saved metrics artifacts do not match the report-safe schema."""
+    """Levée quand des artefacts de métriques ne respectent pas le schéma sûr."""
 
 
 STAGE_MAP: dict[str, str] = {
@@ -107,26 +107,34 @@ def valider_enregistrement_mesures(
         erreurs.append(
             _prefixer(
                 source,
-                "une variante tuned doit utiliser selection_protocol='nested_cv'",
+                "une variante ajustée doit utiliser selection_protocol='nested_cv'",
             )
         )
 
     if protocole == "nested_cv":
         if "inner_splits" not in enregistrement:
             erreurs.append(
-                _prefixer(source, "inner_splits manquant pour un artefact nested_cv")
+                _prefixer(
+                    source,
+                    "inner_splits manquant pour un artefact de validation "
+                    "croisée imbriquée",
+                )
             )
         for champ in NESTED_CV_INVALID_FIELDS:
             if not _is_nan_like(enregistrement.get(champ)):
                 erreurs.append(
                     _prefixer(
                         source,
-                        f"{champ} doit etre NaN/null pour un artefact nested_cv",
+                        f"{champ} doit etre NaN/null pour un artefact de "
+                        "validation croisée imbriquée",
                     )
                 )
     elif "n_splits" not in enregistrement:
         erreurs.append(
-            _prefixer(source, "n_splits manquant pour un artefact simple_cv")
+            _prefixer(
+                source,
+                "n_splits manquant pour un artefact de validation croisée simple",
+            )
         )
 
     return erreurs
@@ -145,7 +153,10 @@ def valider_artefacts_mesures(
 
 
 def normaliser_stades(df: pd.DataFrame) -> pd.DataFrame:
-    """Ajoute une colonne 'stade' (baseline / improved_untuned / tuned)."""
+    """Ajoute une colonne `stade`.
+
+    Les valeurs cibles sont `baseline`, `improved_untuned` et `tuned`.
+    """
     if df.empty:
         return df.copy()
     resultat = df.copy()

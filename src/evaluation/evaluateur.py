@@ -1,4 +1,4 @@
-"""Evaluation par validation croisee et predictions out-of-fold."""
+"""Évaluation par validation croisée et prédictions out-of-fold."""
 
 from __future__ import annotations
 
@@ -10,7 +10,12 @@ import pandas as pd
 from sklearn.base import clone
 from sklearn.dummy import DummyClassifier
 from sklearn.metrics import accuracy_score, f1_score
-from sklearn.model_selection import GridSearchCV, StratifiedKFold, cross_val_predict, cross_validate
+from sklearn.model_selection import (
+    GridSearchCV,
+    StratifiedKFold,
+    cross_val_predict,
+    cross_validate,
+)
 
 from ..config import CV_N_JOBS, N_SPLITS, RANDOM_SEED
 from .metriques import (
@@ -21,7 +26,10 @@ from .metriques import (
 )
 
 
-def _creer_cv(n_splits: int = N_SPLITS, random_state: int = RANDOM_SEED) -> StratifiedKFold:
+def _creer_cv(
+    n_splits: int = N_SPLITS,
+    random_state: int = RANDOM_SEED,
+) -> StratifiedKFold:
     return StratifiedKFold(
         n_splits=n_splits,
         shuffle=True,
@@ -268,7 +276,10 @@ def evaluer_modele_tuned_nested_cv(
         y_train = y[train_idx]
         y_test = y[test_idx]
 
-        inner_cv = _creer_cv(n_splits=inner_splits, random_state=random_state + index_pli)
+        inner_cv = _creer_cv(
+            n_splits=inner_splits,
+            random_state=random_state + index_pli,
+        )
         grille = GridSearchCV(
             estimator=clone(estimateur_ou_pipeline),
             param_grid=param_grid,
@@ -294,7 +305,9 @@ def evaluer_modele_tuned_nested_cv(
             {
                 "fold": index_pli,
                 "train_accuracy": float(accuracy_score(y_train, y_pred_train)),
-                "train_f1_macro": float(f1_score(y_train, y_pred_train, average="macro")),
+                "train_f1_macro": float(
+                    f1_score(y_train, y_pred_train, average="macro")
+                ),
                 "val_accuracy": float(accuracy_score(y_test, y_pred_test)),
                 "val_f1_macro": float(f1_score(y_test, y_pred_test, average="macro")),
                 "fit_time": float(fit_time),
@@ -315,9 +328,10 @@ def evaluer_modele_tuned_nested_cv(
                 )
             except AttributeError:
                 import warnings
+
                 warnings.warn(
-                    f"predict_proba non disponible sur le fold {index_pli} — "
-                    "les probabilites OOF ne seront pas retournees.",
+                    f"predict_proba non disponible sur le pli {index_pli} : "
+                    "les probabilités OOF ne seront pas retournées.",
                     RuntimeWarning,
                     stacklevel=2,
                 )
@@ -330,9 +344,10 @@ def evaluer_modele_tuned_nested_cv(
         "val_accuracy_std": float(tableau_plis["val_accuracy"].std(ddof=1)),
         "val_f1_macro_mean": float(tableau_plis["val_f1_macro"].mean()),
         "val_f1_macro_std": float(tableau_plis["val_f1_macro"].std(ddof=1)),
-        # Train scores and generalization gaps are not scientifically valid
-        # for nested CV tuned results.  Per-fold train scores remain available
-        # in ``outer_fold_metrics`` for diagnostic purposes.
+        # Les scores d'entraînement et les écarts de généralisation ne sont pas
+        # scientifiquement interprétables pour une validation croisée
+        # imbriquée confirmatoire.
+        # Les métriques par pli restent disponibles dans ``outer_fold_metrics``.
         "train_accuracy_mean": float("nan"),
         "train_f1_macro_mean": float("nan"),
         "generalization_gap_accuracy": float("nan"),
@@ -378,7 +393,7 @@ def evaluer_modele_holdout(
     y_holdout: np.ndarray,
     label_encoder: Any | None = None,
 ) -> dict[str, Any]:
-    """Fit sur le dev et evalue une seule fois sur le holdout."""
+    """Ajuste sur le jeu de développement et évalue sur la corroboration."""
     labels, noms_classes = _obtenir_labels_et_noms(y_dev, label_encoder=label_encoder)
     modele = clone(estimateur)
     debut_total = perf_counter()
@@ -442,16 +457,22 @@ def evaluer_dummy_classifier(
     n_splits: int = N_SPLITS,
     random_state: int = RANDOM_SEED,
 ) -> dict[str, Any]:
-    """Evalue un DummyClassifier avec la meme CV stratifiee que les autres modeles."""
+    """Évalue un DummyClassifier avec la même CV stratifiée que les autres modèles."""
     dummy = DummyClassifier(strategy=strategie, random_state=random_state)
-    mesures = evaluer_modele_cv(dummy, X, y, n_splits=n_splits, random_state=random_state)
+    mesures = evaluer_modele_cv(
+        dummy,
+        X,
+        y,
+        n_splits=n_splits,
+        random_state=random_state,
+    )
     mesures["modele"] = "dummy"
     mesures["variante"] = strategie
     return mesures
 
 
 class ModelEvaluator:
-    """Facade de compatibilite pour l'ancien code du projet."""
+    """Façade de compatibilité pour l'ancien code du projet."""
 
     @staticmethod
     def calculer_metriques(y_vrai: np.ndarray, y_pred: np.ndarray) -> dict[str, float]:
@@ -463,7 +484,11 @@ class ModelEvaluator:
         y_pred: np.ndarray,
         label_encoder: Any | None = None,
     ) -> pd.DataFrame:
-        return calculer_metriques_par_classe(y_vrai, y_pred, label_encoder=label_encoder)
+        return calculer_metriques_par_classe(
+            y_vrai,
+            y_pred,
+            label_encoder=label_encoder,
+        )
 
     @staticmethod
     def evaluer_modele_tuned_nested_cv(
@@ -520,5 +545,7 @@ class ModelEvaluator:
         )
 
     @staticmethod
-    def tracer_comparaison_modeles(resultats: dict[str, dict[str, float]]) -> pd.DataFrame:
+    def tracer_comparaison_modeles(
+        resultats: dict[str, dict[str, float]],
+    ) -> pd.DataFrame:
         return ModelEvaluator.comparer_modeles(resultats)

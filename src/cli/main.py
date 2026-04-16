@@ -1,4 +1,4 @@
-"""Point d'entree principal : python -m src.cli.main"""
+"""Point d'entrée principal : ``python -m src.cli.main``."""
 
 from __future__ import annotations
 
@@ -27,7 +27,7 @@ logger = logging.getLogger("src")
 
 
 def _parse_advanced_figures(values: list[str] | None) -> dict[str, list[str]]:
-    """Parse --advanced-figures mlp:tsne svm:learning_curve."""
+    """Analyse les options `--advanced-figures` de type `modele:figure`."""
     result: dict[str, list[str]] = {}
     if not values:
         return result
@@ -42,7 +42,7 @@ def _parse_advanced_figures(values: list[str] | None) -> dict[str, list[str]]:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="python -m src.cli.main",
-        description="Execute l'etude complète de classification Leaf.",
+        description="Exécute l'étude complète de classification Leaf.",
     )
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument(
@@ -55,52 +55,55 @@ def build_parser() -> argparse.ArgumentParser:
         "--all",
         action="store_true",
         dest="all_models",
-        help="Executer tous les modeles.",
+        help="Exécuter tous les modèles.",
     )
 
     parser.add_argument(
         "--figures",
         choices=["core", "all", "none"],
         default="core",
-        help="Mode de generation des figures (default: core).",
+        help="Mode de génération des figures (`core` par défaut).",
     )
     parser.add_argument(
         "--advanced-figures",
         nargs="*",
         metavar="MODEL:FIGURE",
-        help="Figures avancees specifiques (ex: mlp:tsne svm:learning_curve).",
+        help=(
+            "Figures avancées spécifiques par modèle "
+            "(ex. : mlp:tsne svm:courbe_apprentissage)."
+        ),
     )
     parser.add_argument(
         "--skip-existing",
         action="store_true",
-        help="Ne pas re-executer les modeles deja presents.",
+        help="Ne pas réexécuter les modèles déjà présents.",
     )
     parser.add_argument(
         "--force",
         action="store_true",
-        help="Forcer la re-execution de tout.",
+        help="Forcer la réexécution complète.",
     )
     parser.add_argument(
         "--no-tuning",
         action="store_true",
-        help="Sauter le tuning.",
+        help="Sauter l'ajustement.",
     )
     parser.add_argument(
         "--no-figures",
         action="store_true",
-        help="Ne generer aucune figure.",
+        help="Ne générer aucune figure.",
     )
     parser.add_argument(
         "--output-root",
         type=Path,
         default=RESULTS_DIR,
-        help="Racine de sortie des resultats.",
+        help="Racine de sortie des résultats.",
     )
     parser.add_argument(
         "--verbose",
         "-v",
         action="store_true",
-        help="Afficher les logs detailles.",
+        help="Afficher les journaux détaillés.",
     )
     return parser
 
@@ -118,7 +121,7 @@ def main(argv: list[str] | None = None) -> int:
 
     models = ALL_MODEL_NAMES if args.all_models else [m.lower() for m in args.models]
 
-    # Valider les noms de modeles
+    # Valider les noms de modèles
     unknown = set(models) - set(ALL_MODEL_NAMES)
     if unknown:
         logger.error("Modèles inconnus : %s", ", ".join(unknown))
@@ -136,12 +139,16 @@ def main(argv: list[str] | None = None) -> int:
         no_figures=args.no_figures,
     )
 
-    logger.info("Debut de l'etude — %d modele(s): %s", len(models), ", ".join(models))
+    logger.info(
+        "Début de l'étude — %d modèle(s) : %s",
+        len(models),
+        ", ".join(models),
+    )
 
-    # Execution des modeles
+    # Exécution des modèles
     resultats = executer_etude(study)
 
-    # Generation des figures
+    # Génération des figures
     if not study.no_figures and study.figures_mode != "none":
         split = charger_donnees_modelisation(output_root=study.output_root)
         X, y, label_encoder = split.X_dev, split.y_dev, split.label_encoder
@@ -150,7 +157,7 @@ def main(argv: list[str] | None = None) -> int:
                 continue
             logger.info("Figures pour %s...", result.model_name)
 
-            # Reconstituer les predictions pour les figures generiques
+            # Reconstituer les prédictions pour les figures génériques
             pred_df = charger_predictions_tuned_si_disponibles(result.model_name, study)
             if pred_df is not None:
                 y_pred = pred_df["y_pred"].to_numpy()
@@ -191,13 +198,13 @@ def main(argv: list[str] | None = None) -> int:
             )
 
     # Rapport global
-    logger.info("Generation du rapport global...")
+    logger.info("Génération du rapport global...")
     generer_comparaison_globale(resultats, study)
     generer_manifeste(study, resultats)
 
-    # Resume console
+    # Résumé console
     print("\n" + "=" * 60)
-    print("RESUME DE L'ETUDE")
+    print("RÉSUMÉ DE L'ÉTUDE")
     print("=" * 60)
     for result in resultats:
         status = "OK" if result.success else f"ERREUR: {result.error}"
@@ -211,7 +218,7 @@ def main(argv: list[str] | None = None) -> int:
             n_figs = len(result.figures.core_generated) + len(
                 result.figures.advanced_generated
             )
-            print(f"    -> {n_figs} figures generees")
+            print(f"    -> {n_figs} figures générées")
             if result.figures.errors:
                 for fig, err in result.figures.errors.items():
                     print(f"    -> ERREUR figure {fig}: {err}")

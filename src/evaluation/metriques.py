@@ -1,4 +1,4 @@
-"""Fonctions pures de calcul de metriques (pas de CV, pas d'I/O)."""
+"""Fonctions pures de calcul de métriques, sans CV ni I/O."""
 
 from __future__ import annotations
 
@@ -54,7 +54,11 @@ def calculer_metriques_par_classe(
     label_encoder: Any | None = None,
 ) -> pd.DataFrame:
     """Calcule les metriques one-vs-rest pour chaque classe."""
-    labels, noms_classes = _obtenir_labels_et_noms(y_vrai, y_pred=y_pred, label_encoder=label_encoder)
+    labels, noms_classes = _obtenir_labels_et_noms(
+        y_vrai,
+        y_pred=y_pred,
+        label_encoder=label_encoder,
+    )
     precision, recall, f1, support = precision_recall_fscore_support(
         y_vrai,
         y_pred,
@@ -72,9 +76,16 @@ def calculer_metriques_par_classe(
         faux_positifs = float(matrice[:, index].sum() - vrais_positifs)
         vrais_negatifs = float(total - vrais_positifs - faux_negatifs - faux_positifs)
 
-        specificite = vrais_negatifs / (vrais_negatifs + faux_positifs) if (vrais_negatifs + faux_positifs) else 0.0
-        fnr = faux_negatifs / (faux_negatifs + vrais_positifs) if (faux_negatifs + vrais_positifs) else 0.0
-        fpr = faux_positifs / (faux_positifs + vrais_negatifs) if (faux_positifs + vrais_negatifs) else 0.0
+        denominateur_specificite = vrais_negatifs + faux_positifs
+        denominateur_fnr = faux_negatifs + vrais_positifs
+        denominateur_fpr = faux_positifs + vrais_negatifs
+        specificite = (
+            vrais_negatifs / denominateur_specificite
+            if denominateur_specificite
+            else 0.0
+        )
+        fnr = faux_negatifs / denominateur_fnr if denominateur_fnr else 0.0
+        fpr = faux_positifs / denominateur_fpr if denominateur_fpr else 0.0
 
         enregistrements.append(
             {
@@ -109,7 +120,11 @@ def construire_matrice_confusion(
     normalize: str | None = "true",
 ) -> pd.DataFrame:
     """Construit une matrice de confusion lisible, brute ou normalisee."""
-    labels, noms_classes = _obtenir_labels_et_noms(y_vrai, y_pred=y_pred, label_encoder=label_encoder)
+    labels, noms_classes = _obtenir_labels_et_noms(
+        y_vrai,
+        y_pred=y_pred,
+        label_encoder=label_encoder,
+    )
     matrice = confusion_matrix(
         y_vrai,
         y_pred,
@@ -127,7 +142,9 @@ def extraire_scores_probabilites(
 ) -> tuple[np.ndarray, np.ndarray, list[str]]:
     """Extrait les labels vrais, le score multiclasses et les noms de colonnes proba."""
     colonnes_proba = [
-        colonne for colonne in tableau_probabilites.columns if colonne.startswith("proba__")
+        colonne
+        for colonne in tableau_probabilites.columns
+        if colonne.startswith("proba__")
     ]
     if not colonnes_proba:
         raise ValueError("Le tableau doit contenir au moins une colonne 'proba__*'.")
@@ -148,7 +165,9 @@ def _inferer_labels_depuis_tableau_probabilites(
     y_vrai = tableau_probabilites["y_true"].to_numpy()
     labels = np.unique(y_vrai)
     colonnes_proba = [
-        colonne for colonne in tableau_probabilites.columns if colonne.startswith("proba__")
+        colonne
+        for colonne in tableau_probabilites.columns
+        if colonne.startswith("proba__")
     ]
     if len(labels) == len(colonnes_proba):
         return labels
@@ -175,15 +194,25 @@ def calculer_top_k_accuracies(
     return resultats
 
 
-def calculer_statistiques_confiance(tableau_probabilites: pd.DataFrame) -> dict[str, float]:
-    """Retourne des indicateurs simples de confiance predictive."""
+def calculer_statistiques_confiance(
+    tableau_probabilites: pd.DataFrame,
+) -> dict[str, float]:
+    """Retourne des indicateurs simples de confiance prédictive."""
     y_vrai, scores, _ = extraire_scores_probabilites(tableau_probabilites)
     labels = _inferer_labels_depuis_tableau_probabilites(tableau_probabilites)
     max_proba = scores.max(axis=1)
     y_pred = labels[scores.argmax(axis=1)]
     correct = y_pred == y_vrai
 
-    confiance_moyenne_erreurs = float(max_proba[~correct].mean()) if (~correct).any() else 0.0
+    confiance_moyenne_erreurs = (
+        float(max_proba[~correct].mean()) if (~correct).any() else 0.0
+    )
+    proportion_erreurs_confiantes = (
+        float((max_proba[~correct] > 0.5).mean()) if (~correct).any() else 0.0
+    )
+    proportion_erreurs_peu_confiantes = (
+        float((max_proba[~correct] < 0.3).mean()) if (~correct).any() else 0.0
+    )
 
     return {
         "confiance_moyenne": float(max_proba.mean()),
@@ -191,17 +220,17 @@ def calculer_statistiques_confiance(tableau_probabilites: pd.DataFrame) -> dict[
         "confiance_moyenne_erreurs": confiance_moyenne_erreurs,
         # Alias historique conserve pour compatibilite avec les notebooks.
         "confiance_erreurs": confiance_moyenne_erreurs,
-        "proportion_erreurs_confiance_sup_0_5": float((max_proba[~correct] > 0.5).mean()) if (~correct).any() else 0.0,
-        "proportion_erreurs_confiance_inf_0_3": float((max_proba[~correct] < 0.3).mean()) if (~correct).any() else 0.0,
+        "proportion_erreurs_confiance_sup_0_5": proportion_erreurs_confiantes,
+        "proportion_erreurs_confiance_inf_0_3": proportion_erreurs_peu_confiantes,
     }
 
 
 def calculer_brier_score_multiclasse(tableau_probabilites: pd.DataFrame) -> float:
-    """Calcule le Brier score multiclasse a partir des probabilites OOF.
+    """Calcule le score de Brier multiclasse à partir des probabilités OOF.
 
-    Le Brier score mesure la qualite de calibration : plus il est bas,
-    meilleures sont les probabilites.  On utilise la decomposition
-    one-vs-all standard : mean(sum((p_k - y_k)^2)).
+    Le score de Brier mesure la qualité de calibration : plus il est bas,
+    meilleures sont les probabilités. On utilise la décomposition
+    un-contre-tous standard : mean(sum((p_k - y_k)^2)).
     """
     y_vrai, scores, _ = extraire_scores_probabilites(tableau_probabilites)
     labels = _inferer_labels_depuis_tableau_probabilites(tableau_probabilites)
@@ -217,14 +246,14 @@ def calculer_reliability_curve(
     n_bins: int = 10,
     strategy: str = "quantile",
 ) -> pd.DataFrame:
-    """Construit les points du reliability diagram a partir de la confiance max."""
+    """Construit les points du diagramme de fiabilité à partir de la confiance max."""
     y_vrai, scores, _ = extraire_scores_probabilites(tableau_probabilites)
     labels = _inferer_labels_depuis_tableau_probabilites(tableau_probabilites)
     max_proba = scores.max(axis=1)
     y_pred = labels[scores.argmax(axis=1)]
     correct = (y_pred == y_vrai).astype(int)
     if strategy not in {"uniform", "quantile"}:
-        raise ValueError("strategy must be either 'uniform' or 'quantile'")
+        raise ValueError("La stratégie doit être 'uniform' ou 'quantile'.")
     fraction_positifs, moyenne_predite = calibration_curve(
         correct,
         max_proba,
@@ -257,10 +286,13 @@ def calculer_points_roc_ovr(tableau_probabilites: pd.DataFrame) -> dict[str, Any
         tprs_classes.append(np.interp(grille_fpr, fpr_classe, tpr_classe))
 
     if not tprs_classes:
-        raise ValueError("Impossible de calculer la courbe ROC macro sans classes positives.")
+        raise ValueError(
+            "Impossible de calculer la courbe ROC macro sans classes positives."
+        )
 
     tpr_macro = np.mean(tprs_classes, axis=0)
-    # Macro AUC = mean of per-class AUCs (not AUC of the averaged curve)
+    # L'AUC macro est la moyenne des AUC par classe, pas celle de la courbe
+    # moyenne interpolée.
     aucs_par_classe = [auc(grille_fpr, tpr) for tpr in tprs_classes]
     auc_macro = float(np.mean(aucs_par_classe))
     return {
@@ -274,13 +306,18 @@ def calculer_points_roc_ovr(tableau_probabilites: pd.DataFrame) -> dict[str, Any
     }
 
 
-def calculer_points_precision_rappel_ovr(tableau_probabilites: pd.DataFrame) -> dict[str, Any]:
+def calculer_points_precision_rappel_ovr(
+    tableau_probabilites: pd.DataFrame,
+) -> dict[str, Any]:
     """Calcule les courbes precision-rappel micro et macro en one-vs-rest."""
     y_vrai, scores, colonnes_proba = extraire_scores_probabilites(tableau_probabilites)
     classes = _inferer_labels_depuis_tableau_probabilites(tableau_probabilites)
     y_bin = label_binarize(y_vrai, classes=classes)
 
-    precision_micro, rappel_micro, _ = precision_recall_curve(y_bin.ravel(), scores.ravel())
+    precision_micro, rappel_micro, _ = precision_recall_curve(
+        y_bin.ravel(),
+        scores.ravel(),
+    )
     ap_micro = average_precision_score(y_bin, scores, average="micro")
 
     grille_rappel = np.linspace(0.0, 1.0, 200)
