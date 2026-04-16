@@ -95,6 +95,69 @@ def tracer_barres_comparaison(
     return axe
 
 
+def tracer_corroboration_holdout_global(
+    tableau: pd.DataFrame,
+    titre: str = "Corroboration secondaire sur holdout",
+) -> plt.Axes:
+    """Compare la référence et la variante tuned sur holdout pour chaque modèle."""
+    if tableau.empty:
+        raise ValueError("Le tableau de résultats est vide.")
+
+    donnees = tableau.copy()
+    ordre_modeles = (
+        donnees.sort_values(
+            ["nested_cv_f1", "holdout_tuned_f1"],
+            ascending=False,
+        )["modele"]
+        .astype(str)
+        .tolist()
+    )
+    donnees = donnees.melt(
+        id_vars=["modele"],
+        value_vars=["holdout_reference_f1", "holdout_tuned_f1"],
+        var_name="serie",
+        value_name="score",
+    )
+    donnees["serie"] = donnees["serie"].map(
+        {
+            "holdout_reference_f1": "Référence holdout",
+            "holdout_tuned_f1": "Tuned holdout",
+        }
+    )
+
+    figure, axe = plt.subplots(figsize=(10.8, 6.2))
+    sns.barplot(
+        data=donnees,
+        x="modele",
+        y="score",
+        hue="serie",
+        order=ordre_modeles,
+        palette={
+            "Référence holdout": "#4C78A8",
+            "Tuned holdout": "#F58518",
+        },
+        ax=axe,
+    )
+    axe.set_title(titre)
+    axe.set_xlabel("Modèle", fontweight="bold")
+    axe.set_ylabel("F1-macro sur holdout", fontweight="bold")
+    axe.set_xticks(axe.get_xticks())
+    axe.set_xticklabels(axe.get_xticklabels(), rotation=45, ha="right")
+
+    axe.set_ylim(0.1, 1.0)
+
+    sns.move_legend(
+        axe,
+        "upper left",
+        bbox_to_anchor=(1.02, 1),
+        frameon=False,
+        title="Série",
+    )
+    sns.despine(ax=axe)
+    figure.tight_layout()
+    return axe
+
+
 def tracer_comparaison_variantes(
     tableau: pd.DataFrame,
     colonnes_metriques: list[str],

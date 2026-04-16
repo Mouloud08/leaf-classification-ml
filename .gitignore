@@ -39,6 +39,8 @@ _nb_images/
 *.jpeg
 *.svg
 *.pdf
+*.md
+!README.md
 docs/*.html
 docs/rapport_leaf_classification*.md
 docs/rapport_parts_pdf/**
