@@ -431,6 +431,31 @@ def construire_tableau_holdout_secondaire(
     return tableau
 
 
+def construire_tableau_holdout_descriptif_variantes(
+    mesures_tuned: dict[str, Any],
+) -> pd.DataFrame:
+    """Retourne toutes les variantes publiées sur holdout à titre descriptif."""
+    lignes = mesures_tuned.get("descriptive_holdout_all_variants", [])
+    if not isinstance(lignes, list) or not lignes:
+        return pd.DataFrame()
+
+    tableau = pd.DataFrame(lignes).rename(
+        columns={
+            "f1_macro": "f1_macro_holdout",
+            "accuracy": "accuracy_holdout",
+        }
+    )
+    if tableau.empty or "variante" not in tableau.columns:
+        return pd.DataFrame()
+
+    reference_rows = tableau.loc[tableau["role"] == "reference", "f1_macro_holdout"]
+    reference_f1 = float(reference_rows.iloc[0]) if not reference_rows.empty else np.nan
+    tableau["delta_f1_vs_reference"] = (
+        tableau["f1_macro_holdout"] - reference_f1
+    )
+    return ordonner_tableau_variantes(tableau)
+
+
 def ordonner_tableau_variantes(tableau: pd.DataFrame) -> pd.DataFrame:
     """Ordonne les variantes de façon stable et lisible pour le rapport."""
     if tableau.empty or "variante" not in tableau.columns:

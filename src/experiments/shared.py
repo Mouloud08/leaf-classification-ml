@@ -126,6 +126,7 @@ def construire_tuning_run_result(
     timing_policy: str,
     exploratory_tuning_seconds: float,
     secondary_holdout: dict[str, Any] | None = None,
+    descriptive_holdout_all_variants: list[dict[str, Any]] | None = None,
 ) -> TuningRunResult:
     """Assemble le resultat confirme d'un tuning a partir des artefacts bruts."""
     mesures_nested = nested_tuned["metrics"]
@@ -151,6 +152,7 @@ def construire_tuning_run_result(
         fit_time_mean=mesures_nested["fit_time_mean"],
         score_time_mean=mesures_nested["score_time_mean"],
         secondary_holdout=secondary_holdout or {},
+        descriptive_holdout_all_variants=descriptive_holdout_all_variants or [],
     )
 
 

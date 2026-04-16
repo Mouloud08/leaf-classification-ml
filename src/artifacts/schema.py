@@ -70,6 +70,7 @@ class TuningRunResult:
     fit_time_mean: float = 0.0
     score_time_mean: float = 0.0
     secondary_holdout: dict[str, Any] = field(default_factory=dict)
+    descriptive_holdout_all_variants: list[dict[str, Any]] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         result: dict[str, Any] = {
@@ -97,6 +98,10 @@ class TuningRunResult:
         }
         if self.secondary_holdout:
             result["secondary_holdout"] = self.secondary_holdout
+        if self.descriptive_holdout_all_variants:
+            result["descriptive_holdout_all_variants"] = (
+                self.descriptive_holdout_all_variants
+            )
         return result
 
 

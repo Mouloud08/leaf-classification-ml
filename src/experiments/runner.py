@@ -90,6 +90,9 @@ def _charger_resultat_tuning(paths) -> TuningRunResult | None:
         fit_time_mean=contenu.get("fit_time_mean", 0.0),
         score_time_mean=contenu.get("score_time_mean", 0.0),
         secondary_holdout=contenu.get("secondary_holdout", {}),
+        descriptive_holdout_all_variants=contenu.get(
+            "descriptive_holdout_all_variants", []
+        ),
     )
 
 
@@ -282,6 +285,7 @@ def executer_tuning_bundle(
     )
 
     secondary_holdout_summary: dict[str, Any] | None = None
+    descriptive_holdout_all_variants: list[dict[str, Any]] = []
     if spec.secondary_holdout_enabled:
         reference_variant_spec = selectionner_meilleure_variante_untuned(
             spec,
@@ -307,6 +311,25 @@ def executer_tuning_bundle(
             y_holdout=y_holdout,
             label_encoder=label_encoder,
         )
+        holdout_par_variante: dict[str, dict[str, Any]] = {
+            reference_variant_spec.name: holdout_reference,
+        }
+        for variante in spec.untuned_variants:
+            if variante.name in holdout_par_variante:
+                continue
+            estimateur_variante = construire_estimateur_variante(
+                spec.model_name,
+                variante,
+            )
+            holdout_par_variante[variante.name] = evaluer_modele_holdout(
+                estimateur_variante,
+                X_dev=X,
+                y_dev=y,
+                X_holdout=X_holdout,
+                y_holdout=y_holdout,
+                label_encoder=label_encoder,
+            )
+
         secondary_holdout_summary = {
             "enabled": True,
             "reference_variant": reference_variant_spec.name,
@@ -327,12 +350,34 @@ def executer_tuning_bundle(
                 "accuracy": holdout_reference["metrics"]["accuracy"],
             },
         }
+        for variante in spec.untuned_variants:
+            resultat_variante = holdout_par_variante[variante.name]
+            role = "reference" if variante.name == reference_variant_spec.name else (
+                "baseline" if variante.name == "default" else "untuned"
+            )
+            descriptive_holdout_all_variants.append(
+                {
+                    "variante": variante.name,
+                    "f1_macro": resultat_variante["metrics"]["f1_macro"],
+                    "accuracy": resultat_variante["metrics"]["accuracy"],
+                    "role": role,
+                }
+            )
+        descriptive_holdout_all_variants.append(
+            {
+                "variante": "tuned",
+                "f1_macro": holdout_tuned["metrics"]["f1_macro"],
+                "accuracy": holdout_tuned["metrics"]["accuracy"],
+                "role": "tuned",
+            }
+        )
         tuning_result = construire_tuning_run_result(
             nested_tuned=nested_tuned,
             grid=grid,
             timing_policy=TIMING_POLICY,
             exploratory_tuning_seconds=temps_tuning,
             secondary_holdout=secondary_holdout_summary,
+            descriptive_holdout_all_variants=descriptive_holdout_all_variants,
         )
         sauvegarder_predictions(
             spec.model_name,
@@ -340,12 +385,14 @@ def executer_tuning_bundle(
             holdout_tuned["predictions"],
             paths=paths,
         )
-        sauvegarder_predictions(
-            spec.model_name,
-            f"{reference_variant_spec.name}_holdout",
-            holdout_reference["predictions"],
-            paths=paths,
-        )
+        for variante in spec.untuned_variants:
+            resultat_variante = holdout_par_variante[variante.name]
+            sauvegarder_predictions(
+                spec.model_name,
+                f"{variante.name}_holdout",
+                resultat_variante["predictions"],
+                paths=paths,
+            )
         if holdout_tuned["probabilities"] is not None:
             sauvegarder_probabilites_oof(
                 spec.model_name,
@@ -353,13 +400,15 @@ def executer_tuning_bundle(
                 holdout_tuned["probabilities"],
                 paths=paths,
             )
-        if holdout_reference["probabilities"] is not None:
-            sauvegarder_probabilites_oof(
-                spec.model_name,
-                f"{reference_variant_spec.name}_holdout",
-                holdout_reference["probabilities"],
-                paths=paths,
-            )
+        for variante in spec.untuned_variants:
+            resultat_variante = holdout_par_variante[variante.name]
+            if resultat_variante["probabilities"] is not None:
+                sauvegarder_probabilites_oof(
+                    spec.model_name,
+                    f"{variante.name}_holdout",
+                    resultat_variante["probabilities"],
+                    paths=paths,
+                )
 
     metrics_path = sauvegarder_mesures(
         spec.model_name,
