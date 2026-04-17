@@ -1,16 +1,13 @@
 # Projet IFT712 - Leaf Classification
 
-Étude de classification multiclasse sur le dataset **Kaggle Leaf Classification** dans le cadre du cours **IFT712 - Techniques d'apprentissage**.
+Projet de classification multiclasse sur le dataset **Kaggle Leaf Classification** dans le cadre du cours **IFT712 - Techniques d'apprentissage**.
 
-Le dépôt est organisé comme un projet reproductible :
-- le code exécutable et réutilisable vit dans `src/` ;
-- les artefacts canoniques sont écrits dans `results/` ;
-- les notebooks servent à l'analyse, à l'interprétation et à la rédaction ;
-- le rapport final est produit à partir des artefacts canoniques, puis publié en Markdown/HTML/PDF et en LaTeX.
+L'objectif du dépôt est de comparer plusieurs familles de modèles supervisés sur un même protocole expérimental, puis de documenter leurs performances, leurs erreurs et leurs compromis dans des notebooks d'analyse.
 
-## Objectif
+## Ce que fait le projet
 
-Comparer six familles de modèles dans un cadre méthodologique strict :
+Le projet étudie six modèles :
+
 - `perceptron`
 - `regression_logistique`
 - `svm`
@@ -18,21 +15,42 @@ Comparer six familles de modèles dans un cadre méthodologique strict :
 - `arbre_decision`
 - `mlp`
 
-Le protocole distingue explicitement :
-- l'exploration des variantes non tunées ;
-- l'estimation confirmatoire des variantes `tuned` en validation croisée imbriquée ;
-- la corroboration secondaire sur un split gelé, qui ne redéfinit jamais le classement principal.
+Pour chacun, on retrouve généralement :
 
-## Fonctionnalités
+- une ou plusieurs variantes exploratoires ;
+- une version ajustée (`tuned`) évaluée plus rigoureusement ;
+- des métriques, prédictions, figures et tableaux d'analyse ;
+- une comparaison finale avec les autres modèles.
 
-- CLI unifiée pour exécuter un ou plusieurs modèles.
-- Layout canonique des résultats dans `results/<modele>/...`.
-- Notebooks dédiés par modèle et notebook global de synthèse.
-- Génération des figures et des sorties de comparaison globale.
-- Vérification non destructive de la cohérence des artefacts et des notebooks.
-- Pipeline de rapport en Markdown/HTML/PDF et publication LaTeX.
+Le dépôt est organisé pour séparer :
 
-## Structure du dépôt
+- le **code réutilisable** dans `src/` ;
+- les **artefacts produits** dans `results/` ;
+- les **notebooks d'analyse** dans `notebooks/`.
+
+## Point d'entrée principal : les notebooks
+
+Les notebooks sont le moyen principal pour comprendre, relancer et présenter le projet.  
+Ce sont eux qu'une personne découvrant le dépôt devrait ouvrir en priorité.
+
+Ordre recommandé :
+
+1. `01_Exploratory_Data_Analysis.ipynb`
+2. `02_Modele_Perceptron.ipynb`
+3. `03_Modele_Regression_Logistique.ipynb`
+4. `04_Modele_SVM.ipynb`
+5. `05_Modele_Foret_Aleatoire.ipynb`
+6. `06_Modele_Arbre_Decision.ipynb`
+7. `07_Modele_MLP.ipynb`
+8. `08_Comparaison_Globale.ipynb`
+
+En pratique :
+
+- `01` sert à comprendre le dataset ;
+- `02` à `07` détaillent l'étude de chaque modèle ;
+- `08` rassemble la comparaison globale et les conclusions quantitatives.
+
+## Architecture du dépôt
 
 ```text
 Projet_Session_IFT712/
@@ -50,17 +68,11 @@ Projet_Session_IFT712/
 │   └── 08_Comparaison_Globale.ipynb
 ├── results/
 │   ├── global/
-│   │   └── comparison/
 │   └── <modele>/
-│       ├── figures/
 │       ├── metrics/
 │       ├── predictions/
-│       └── tuning/
-├── scripts/
-│   ├── build_report_pdf.py
-│   ├── normalize_report_artifacts.py
-│   ├── recompute_report_artifacts.py
-│   └── report_readiness_check.py
+│       ├── tuning/
+│       └── figures/
 ├── src/
 │   ├── artifacts/
 │   ├── cli/
@@ -73,25 +85,24 @@ Projet_Session_IFT712/
 │   ├── notebook_support.py
 │   └── __init__.py
 ├── docs/
-│   ├── figures/
-│   ├── rapport_parts/
-│   └── IFT712_Rapport/
-├── models/                  # artefacts legacy
+│   └── rapport_parts/
 ├── requirements.txt
 └── README.md
 ```
 
-## Prérequis
+### Rôle des dossiers principaux
 
-- Python 3.x
-- `pip`
-- le fichier `train.csv` placé dans `data/raw/`
-
-Pour la génération du PDF LaTeX final, un moteur LaTeX local est nécessaire, par exemple **MiKTeX** sur Windows.
+- `data/raw/` : données d'entrée, en particulier `train.csv`.
+- `notebooks/` : analyses principales du projet.
+- `results/` : sorties générées par le pipeline expérimental.
+- `src/data/` : chargement et préparation des données.
+- `src/models/` : définitions des modèles.
+- `src/evaluation/` : métriques, validation croisée, évaluation.
+- `src/experiments/` : orchestration des variantes, tuning et exécutions complètes.
+- `src/artifacts/` : lecture, écriture et validation des artefacts dans `results/`.
+- `src/notebook_support.py` : helpers utilisés par les notebooks.
 
 ## Installation
-
-### Environnement virtuel
 
 PowerShell :
 
@@ -101,200 +112,106 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-Si tu n'utilises pas PowerShell, adapte simplement la commande d'activation de l'environnement.
+Puis placer le fichier `train.csv` dans :
 
-## Démarrage rapide
-
-1. Placer `train.csv` dans `data/raw/`.
-2. Installer les dépendances.
-3. Exécuter l'étude complète.
-4. Ouvrir les notebooks si tu veux régénérer l'analyse narrative.
-5. Vérifier la cohérence du rapport.
-
-Commande minimale :
-
-```powershell
-python -m src.cli.main --all
+```text
+data/raw/train.csv
 ```
 
-Puis :
+## Utilisation des notebooks
+
+Une fois l'environnement prêt :
 
 ```powershell
 jupyter notebook
-python scripts\report_readiness_check.py
 ```
 
-## Utilisation de la CLI
+Les notebooks constituent le workflow principal pour explorer et présenter le projet.
 
-Point d'entrée principal :
+Ils ne sont pas indépendants du reste du code :
+
+- les notebooks modèles `02` à `07` s'appuient sur les mêmes briques expérimentales que la CLI ;
+- le notebook `08_Comparaison_Globale.ipynb` relit principalement les artefacts déjà produits dans `results/` ;
+- les figures, tableaux et métriques importants doivent donc rester cohérents avec ce qui est généré par le pipeline canonique.
+
+Autrement dit :
+
+- la **CLI** sert surtout à produire ou régénérer proprement les artefacts ;
+- les **notebooks** servent surtout à analyser, interpréter et présenter ces résultats ;
+- `results/` joue le rôle de base commune entre les deux.
+
+## CLI
+
+La CLI sert à exécuter le pipeline expérimental sans passer notebook par notebook.  
+Elle est utile pour régénérer proprement les résultats dans `results/`.
+
+Point d'entrée :
 
 ```powershell
 python -m src.cli.main --help
 ```
 
-Exemples utiles :
-
-### Exécuter toute l'étude
+### Commande la plus importante
 
 ```powershell
-python -m src.cli.main --all --figures core
+python -m src.cli.main --all
 ```
 
-### Exécuter seulement certains modèles
+Cette commande lance l'étude sur tous les modèles définis par le projet.  
+Elle exécute les variantes, le tuning lorsque prévu, puis régénère les résultats dans `results/`.
+
+### Exemples utiles
+
+Exécuter tous les modèles :
 
 ```powershell
-python -m src.cli.main --models regression_logistique svm mlp --figures core
+python -m src.cli.main --all
 ```
 
-### Régénérer en forçant la réexécution
+Exécuter seulement certains modèles :
 
 ```powershell
-python -m src.cli.main --all --force --figures all --verbose
+python -m src.cli.main --models regression_logistique svm mlp
 ```
 
-### Réutiliser les résultats déjà présents
+Réutiliser les résultats déjà présents :
 
 ```powershell
 python -m src.cli.main --all --skip-existing
 ```
 
-### Désactiver le tuning ou les figures
+Forcer une réexécution complète :
+
+```powershell
+python -m src.cli.main --all --force
+```
+
+Désactiver le tuning ou les figures :
 
 ```powershell
 python -m src.cli.main --models perceptron svm --no-tuning --no-figures
 ```
 
-## Workflow recommandé
+## Relation entre CLI et notebooks
 
-### 1. Génération des artefacts canoniques
+La CLI et les notebooks sont conçus pour fonctionner ensemble.
 
-Utiliser la CLI pour peupler ou mettre à jour `results/`.
+- la CLI exécute l'étude de manière batch et écrit les sorties dans `results/` ;
+- les notebooks utilisent ce même socle de code et ces mêmes artefacts pour construire l'analyse ;
+- certains notebooks peuvent rejouer une partie du workflow modèle par modèle, mais ils restent alignés sur la même architecture expérimentale ;
+- la comparaison globale doit être lue à partir des artefacts canoniques de `results/`.
 
-Cette étape est la base reproductible du projet. Les notebooks et le rapport doivent s'appuyer sur ces artefacts, et non recalculer ou recopier manuellement des valeurs importantes.
+Le chemin recommandé est donc :
 
-### 2. Analyse notebook
+1. régénérer `results/` avec la CLI si nécessaire ;
+2. ouvrir les notebooks dans l'ordre `01` à `08` ;
+3. utiliser les notebooks pour l'analyse détaillée et la présentation finale.
 
-Ordre recommandé :
+## Résumé rapide
 
-1. `01_Exploratory_Data_Analysis.ipynb`
-2. `02` à `07` pour les analyses par modèle
-3. `08_Comparaison_Globale.ipynb`
+Si quelqu'un reprend le projet, le chemin le plus naturel est :
 
-Les notebooks ne constituent pas la source de vérité principale des métriques. Ils lisent et interprètent les artefacts canoniques produits dans `results/`.
-
-### 3. Rapport
-
-Les sections du rapport en Markdown sont éditées dans :
-
-```text
-docs/rapport_parts/
-```
-
-Le build Markdown/HTML/PDF s'appuie sur :
-
-```powershell
-python scripts\build_report_pdf.py
-```
-
-Le livrable LaTeX se trouve dans :
-
-```text
-docs/IFT712_Rapport/rapport/main.tex
-```
-
-## Source de vérité et conventions
-
-### Artefacts canoniques
-
-La source de vérité scientifique du dépôt est :
-
-- `results/<modele>/...`
-- `results/global/...`
-
-En particulier :
-
-- les métriques confirmatoires finales vivent dans `results/<modele>/metrics/tuned.json`
-- les prédictions servant aux analyses d'erreurs vivent dans `results/<modele>/predictions/`
-- les sorties de comparaison globale vivent dans `results/global/comparison/`
-
-### Ce qui ne doit plus servir de source primaire
-
-- `results/metrics/` plat, conservé seulement comme reliquat de migration
-- les anciens artefacts sous `models/`
-- les PDF, HTML et Markdown fusionnés déjà générés dans `docs/`
-
-### Statut méthodologique
-
-- les variantes non `tuned` sont **exploratoires**
-- la variante `tuned` en `nested_cv` porte l'argument **confirmatoire**
-- `secondary_holdout` est une **corroboration secondaire uniquement**
-
-Le split gelé ne doit jamais être utilisé pour redéfinir le classement principal des modèles.
-
-## Vérification et qualité
-
-### Vérification de préparation du rapport
-
-```powershell
-python scripts\report_readiness_check.py
-```
-
-Ce script vérifie notamment :
-- la présence et la cohérence des artefacts `tuned`
-- la structure attendue des notebooks du rapport
-- l'absence de certains tokens ou headings interdits
-
-### Tests
-
-```powershell
-pytest -q
-```
-
-Si tu veux cibler les tests les plus liés au pipeline de rapport :
-
-```powershell
-pytest tests\test_report_readiness.py tests\test_experiments.py tests\test_methodology_helpers.py -q
-```
-
-## Rapport et artefacts générés
-
-### À éditer manuellement
-
-- `docs/rapport_parts/*.md`
-- `docs/IFT712_Rapport/rapport/main.tex`
-
-### À considérer comme générés
-
-- `docs/rapport_parts_pdf/`
-- `docs/rapport_leaf_classification*.md`
-- `docs/rapport_leaf_classification*.html`
-- `docs/rapport_leaf_classification*.pdf`
-- une grande partie de `docs/figures/` lorsqu'elle est régénérée à partir des artefacts canoniques
-
-Autrement dit : on édite les sources, pas les exports.
-
-## Notes importantes
-
-- L'EDA historique est conservé et réutilisé.
-- Les notebooks s'appuient sur les réexports exposés par `src/__init__.py` et `src/artifacts/__init__.py` pour garder des imports stables.
-- Les figures `exploratory__` restent descriptives et ne servent pas de preuve confirmatoire.
-- Le dépôt contient à la fois un pipeline de rapport Markdown et une publication LaTeX finale ; dans les deux cas, les chiffres importants doivent venir des artefacts canoniques de `results/`.
-
-## Résumé opérationnel
-
-Si tu veux juste refaire tourner le projet proprement :
-
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-python -m src.cli.main --all --figures core
-python scripts\report_readiness_check.py
-jupyter notebook
-```
-
-Si tu veux juste reconstruire le rapport Markdown :
-
-```powershell
-python scripts\build_report_pdf.py
-```
+1. installer l'environnement ;
+2. placer `train.csv` dans `data/raw/` ;
+3. lancer la CLI si besoin pour régénérer `results/` ;
+4. ouvrir les notebooks et suivre l'analyse dans l'ordre `01` à `08`.
