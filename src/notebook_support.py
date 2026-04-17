@@ -8,6 +8,7 @@ cellule par cellule.
 
 from __future__ import annotations
 
+import base64
 import json
 from dataclasses import dataclass
 from pathlib import Path
@@ -44,6 +45,7 @@ from .evaluation.sanity_checks import verifier_bruit_aleatoire
 from .experiments.model_specs import obtenir_model_study_spec
 from .experiments.shared import (
     construire_estimateur_variante,
+    calculer_metriques_complementarite_erreurs,
     creer_cv,
     preparer_tuning_modele,
 )
@@ -515,6 +517,11 @@ def construire_tableau_corroboration_secondaire(
             },
         ]
     )
+    tableau["corroboration_scope"] = secondary_holdout.get(
+        "corroboration_scope", "corroboration_only"
+    )
+    tableau["ranking_eligible"] = bool(secondary_holdout.get("ranking_eligible", False))
+    tableau["origin"] = secondary_holdout.get("origin", "exploratory_refit")
     tableau["delta_f1_vs_reference"] = (
         tableau["f1_macro_holdout"] - float(reference.get("f1_macro", np.nan))
     )
@@ -858,34 +865,73 @@ def construire_tableau_complementarite_erreurs(
     lignes: list[dict[str, Any]] = []
     modeles = list(predictions_par_modele.keys())
     for index_a, modele_a in enumerate(modeles):
-        pred_a = predictions_par_modele[modele_a]
-        vrai_a = pred_a["y_true"].to_numpy()
-        correct_a = pred_a["y_pred"].to_numpy() == vrai_a
-
         for modele_b in modeles[index_a + 1 :]:
-            pred_b = predictions_par_modele[modele_b]
-            vrai_b = pred_b["y_true"].to_numpy()
-            if not np.array_equal(vrai_a, vrai_b):
-                raise ValueError(
-                    "Les tableaux de prédictions doivent partager le même "
-                    "ordre de vérité terrain."
-                )
-            correct_b = pred_b["y_pred"].to_numpy() == vrai_b
-            erreurs_a = ~correct_a
-            erreurs_b = ~correct_b
-            desaccord = pred_a["y_pred"].to_numpy() != pred_b["y_pred"].to_numpy()
-            lignes.append(
-                {
-                    "modele_a": modele_a,
-                    "modele_b": modele_b,
-                    "disagreement_rate": float(desaccord.mean()),
-                    "error_overlap_rate": float((erreurs_a & erreurs_b).mean()),
-                    "corriges_par_a_seul": int((correct_a & erreurs_b).sum()),
-                    "corriges_par_b_seul": int((correct_b & erreurs_a).sum()),
-                }
+            metriques = calculer_metriques_complementarite_erreurs(
+                predictions_par_modele[modele_a],
+                predictions_par_modele[modele_b],
             )
+            lignes.append({"modele_a": modele_a, "modele_b": modele_b, **metriques})
 
     return pd.DataFrame(lignes)
+
+
+def extraire_images_notebook(
+    notebook_path: str | Path,
+    output_dir: str | Path | None = None,
+    prefix: str | None = None,
+    formats: tuple[str, ...] = ("image/png", "image/jpeg", "image/svg+xml"),
+) -> list[Path]:
+    """Extrait les images déjà embarquées dans un notebook Jupyter.
+
+    La fonction lit les sorties persistées dans le fichier ``.ipynb`` et écrit
+    chaque image trouvée sur disque. Elle n'exécute pas le notebook et ne peut
+    donc pas recréer des figures absentes des sorties sauvegardées.
+    """
+
+    notebook = Path(notebook_path)
+    contenu = json.loads(notebook.read_text(encoding="utf-8"))
+    dossier_sortie = Path(output_dir) if output_dir is not None else notebook.with_suffix("")
+    dossier_sortie.mkdir(parents=True, exist_ok=True)
+
+    extensions = {
+        "image/png": "png",
+        "image/jpeg": "jpg",
+        "image/svg+xml": "svg",
+    }
+
+    def _normaliser_payload(payload: Any) -> str:
+        if isinstance(payload, list):
+            return "".join(str(fragment) for fragment in payload)
+        return str(payload)
+
+    chemins: list[Path] = []
+    nom_prefixe = prefix or notebook.stem
+
+    for index_cellule, cellule in enumerate(contenu.get("cells", []), start=1):
+        for index_sortie, sortie in enumerate(cellule.get("outputs", []), start=1):
+            donnees = sortie.get("data")
+            if not isinstance(donnees, dict):
+                continue
+            for mime in formats:
+                if mime not in donnees:
+                    continue
+
+                extension = extensions[mime]
+                chemin = (
+                    dossier_sortie
+                    / f"{nom_prefixe}_cell{index_cellule:03d}_out{index_sortie:02d}.{extension}"
+                )
+                payload = _normaliser_payload(donnees[mime])
+
+                if mime == "image/svg+xml":
+                    chemin.write_text(payload, encoding="utf-8")
+                else:
+                    chemin.write_bytes(base64.b64decode(payload))
+
+                chemins.append(chemin)
+                break
+
+    return chemins
 
 
 def executer_verifications_validite(

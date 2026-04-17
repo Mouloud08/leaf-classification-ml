@@ -12,7 +12,11 @@ from .schema import (
     METRICS_SCHEMA_VERSION,
     NESTED_CV_INVALID_FIELDS,
     REQUIRED_METRIC_KEYS,
+    SECONDARY_HOLDOUT_CORROBORATION_SCOPE,
+    SECONDARY_HOLDOUT_ORIGIN_EXPLORATORY_REFIT,
     VALID_EVALUATION_STAGES,
+    VALID_SECONDARY_HOLDOUT_CORROBORATION_SCOPES,
+    VALID_SECONDARY_HOLDOUT_ORIGINS,
     VALID_SELECTION_PROTOCOLS,
 )
 
@@ -55,6 +59,58 @@ def _is_nan_like(valeur: Any) -> bool:
 
 def _prefixer(source: str | None, message: str) -> str:
     return f"{source}: {message}" if source else message
+
+
+def _valider_secondary_holdout(
+    secondary_holdout: dict[str, Any],
+    source: str | None = None,
+) -> list[str]:
+    """Valide la metadata de corroboration secondaire confirmatoire."""
+    erreurs: list[str] = []
+    if not secondary_holdout.get("enabled"):
+        erreurs.append(
+            _prefixer(
+                source,
+                "secondary_holdout.enabled doit etre True pour un artefact tuned",
+            )
+        )
+        return erreurs
+
+    if str(secondary_holdout.get("corroboration_scope", "")).strip() not in VALID_SECONDARY_HOLDOUT_CORROBORATION_SCOPES:
+        erreurs.append(
+            _prefixer(
+                source,
+                "secondary_holdout.corroboration_scope doit valoir "
+                f"'{SECONDARY_HOLDOUT_CORROBORATION_SCOPE}'",
+            )
+        )
+
+    if secondary_holdout.get("ranking_eligible") is not False:
+        erreurs.append(
+            _prefixer(
+                source,
+                "secondary_holdout.ranking_eligible doit etre False",
+            )
+        )
+
+    if str(secondary_holdout.get("origin", "")).strip() not in VALID_SECONDARY_HOLDOUT_ORIGINS:
+        erreurs.append(
+            _prefixer(
+                source,
+                "secondary_holdout.origin doit valoir "
+                f"'{SECONDARY_HOLDOUT_ORIGIN_EXPLORATORY_REFIT}'",
+            )
+        )
+
+    if not str(secondary_holdout.get("reference_variant", "")).strip():
+        erreurs.append(
+            _prefixer(
+                source,
+                "secondary_holdout.reference_variant est obligatoire pour la corroboration",
+            )
+        )
+
+    return erreurs
 
 
 def valider_enregistrement_mesures(
@@ -110,6 +166,25 @@ def valider_enregistrement_mesures(
                 "une variante ajustée doit utiliser selection_protocol='nested_cv'",
             )
         )
+
+    secondary_holdout = enregistrement.get("secondary_holdout")
+    if secondary_holdout is not None:
+        if not isinstance(secondary_holdout, dict):
+            erreurs.append(
+                _prefixer(
+                    source,
+                    "secondary_holdout doit etre un dictionnaire",
+                )
+            )
+        elif variante != "tuned" or protocole != "nested_cv":
+            erreurs.append(
+                _prefixer(
+                    source,
+                    "secondary_holdout est reserve aux artefacts tuned en nested_cv",
+                )
+            )
+        else:
+            erreurs.extend(_valider_secondary_holdout(secondary_holdout, source=source))
 
     if protocole == "nested_cv":
         if "inner_splits" not in enregistrement:
@@ -169,6 +244,16 @@ def normaliser_stades(df: pd.DataFrame) -> pd.DataFrame:
     else:
         resultat["stade"] = "autre"
     return resultat
+
+
+def filtrer_legacy(df: pd.DataFrame) -> pd.DataFrame:
+    """Facade de compatibilite pour l'ancien pipeline `resultats`.
+
+    Avec le layout canonique actuel, `charger_tableau_mesures_valides` ne charge
+    deja que des artefacts compatibles. La fonction reste donc volontairement
+    conservative et renvoie simplement une copie du tableau.
+    """
+    return df.copy()
 
 
 def normaliser_mesures_pour_schema(

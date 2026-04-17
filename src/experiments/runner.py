@@ -30,6 +30,7 @@ from .model_specs import obtenir_model_study_spec
 from .shared import (
     ajouter_gaps,
     construire_estimateur_variante,
+    construire_secondary_holdout_metadata,
     construire_tuning_run_result,
     executer_grid_search_exploratoire,
     preparer_tuning_modele,
@@ -333,26 +334,13 @@ def executer_tuning_bundle(
                 label_encoder=label_encoder,
             )
 
-        secondary_holdout_summary = {
-            "enabled": True,
-            "reference_variant": reference_variant_spec.name,
-            "split_artifact": split_metadata.get("split_artifact"),
-            "n_dev": int(split_metadata.get("n_dev", len(y))),
-            "n_holdout": int(split_metadata.get("n_holdout", len(y_holdout))),
-            "tuned": {
-                "f1_macro": holdout_tuned["metrics"]["f1_macro"],
-                "accuracy": holdout_tuned["metrics"]["accuracy"],
-                "best_params": {
-                    k: str(v) if hasattr(v, "get_params") else v
-                    for k, v in grid.best_params_.items()
-                },
-            },
-            "reference": {
-                "variant": reference_variant_spec.name,
-                "f1_macro": holdout_reference["metrics"]["f1_macro"],
-                "accuracy": holdout_reference["metrics"]["accuracy"],
-            },
-        }
+        secondary_holdout_summary = construire_secondary_holdout_metadata(
+            reference_variant=reference_variant_spec.name,
+            split_metadata=split_metadata,
+            tuned_metrics=holdout_tuned["metrics"],
+            reference_metrics=holdout_reference["metrics"],
+            best_params=grid.best_params_,
+        )
         for variante in spec.untuned_variants:
             resultat_variante = holdout_par_variante[variante.name]
             role = "reference" if variante.name == reference_variant_spec.name else (
@@ -469,7 +457,9 @@ def executer_modele(
     label_encoder = split.label_encoder
     X_holdout = split.X_holdout
     y_holdout = split.y_holdout
-    split_metadata = split.metadata
+    split_metadata = dict(split.metadata)
+    split_metadata.setdefault("n_dev", len(y))
+    split_metadata.setdefault("n_holdout", len(y_holdout))
 
     # Variantes non ajustées
     logger.info("Variantes non ajustées...")

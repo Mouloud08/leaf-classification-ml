@@ -5,11 +5,16 @@ from __future__ import annotations
 from time import perf_counter
 from typing import Any
 
+import numpy as np
 import pandas as pd
 from sklearn.base import clone
 from sklearn.model_selection import GridSearchCV, StratifiedKFold
 
 from ..artifacts import TuningRunResult, UntunedVariantResult
+from ..artifacts.schema import (
+    SECONDARY_HOLDOUT_CORROBORATION_SCOPE,
+    SECONDARY_HOLDOUT_ORIGIN_EXPLORATORY_REFIT,
+)
 from ..config import CV_N_JOBS
 from ..models.pipelines import creer_estimateur, creer_pipeline, obtenir_grille_tuning
 from .study_spec import ModelStudySpec, UntunedVariantSpec
@@ -59,6 +64,82 @@ def ajouter_gaps(mesures: dict[str, Any]) -> dict[str, Any]:
 def normaliser_parametre_pour_json(valeur: Any) -> Any:
     """Rend les meilleurs hyperparametres serialisables."""
     return repr(valeur) if hasattr(valeur, "get_params") else valeur
+
+
+def calculer_metriques_complementarite_erreurs(
+    predictions_a: pd.DataFrame,
+    predictions_b: pd.DataFrame,
+) -> dict[str, Any]:
+    """Calcule des metriques de recouvrement d'erreurs sur des OOF alignes."""
+    y_true_a = predictions_a["y_true"].to_numpy()
+    y_true_b = predictions_b["y_true"].to_numpy()
+    if not np.array_equal(y_true_a, y_true_b):
+        raise ValueError(
+            "Les tableaux de predictions doivent partager le meme ordre de "
+            "verite terrain."
+        )
+
+    y_pred_a = predictions_a["y_pred"].to_numpy()
+    y_pred_b = predictions_b["y_pred"].to_numpy()
+    erreurs_a = set(np.flatnonzero(y_pred_a != y_true_a).tolist())
+    erreurs_b = set(np.flatnonzero(y_pred_b != y_true_b).tolist())
+    erreurs_communes = erreurs_a & erreurs_b
+    erreurs_union = erreurs_a | erreurs_b
+    erreurs_exclusives_a = erreurs_a - erreurs_b
+    erreurs_exclusives_b = erreurs_b - erreurs_a
+    n_observations = len(y_true_a)
+
+    return {
+        "n_observations": int(n_observations),
+        "erreurs_modele_a": int(len(erreurs_a)),
+        "erreurs_modele_b": int(len(erreurs_b)),
+        "erreurs_communes": int(len(erreurs_communes)),
+        "erreurs_union": int(len(erreurs_union)),
+        "error_overlap_rate": (
+            1.0 if not erreurs_union else float(len(erreurs_communes) / len(erreurs_union))
+        ),
+        "shared_error_rate": (
+            0.0 if not n_observations else float(len(erreurs_communes) / n_observations)
+        ),
+        "corriges_par_a_seul": int(len(erreurs_exclusives_b)),
+        "corriges_par_b_seul": int(len(erreurs_exclusives_a)),
+        "disagreement_rate": float(
+            np.mean(y_pred_a != y_pred_b) if n_observations else 0.0
+        ),
+    }
+
+
+def construire_secondary_holdout_metadata(
+    *,
+    reference_variant: str,
+    split_metadata: dict[str, Any],
+    tuned_metrics: dict[str, Any],
+    reference_metrics: dict[str, Any],
+    best_params: dict[str, Any],
+) -> dict[str, Any]:
+    """Construit la metadata canonique du holdout secondaire corroboratif."""
+    return {
+        "enabled": True,
+        "corroboration_scope": SECONDARY_HOLDOUT_CORROBORATION_SCOPE,
+        "ranking_eligible": False,
+        "origin": SECONDARY_HOLDOUT_ORIGIN_EXPLORATORY_REFIT,
+        "reference_variant": reference_variant,
+        "split_artifact": split_metadata.get("split_artifact"),
+        "n_dev": int(split_metadata.get("n_dev", 0)),
+        "n_holdout": int(split_metadata.get("n_holdout", 0)),
+        "tuned": {
+            "f1_macro": tuned_metrics["f1_macro"],
+            "accuracy": tuned_metrics["accuracy"],
+            "best_params": {
+                k: normaliser_parametre_pour_json(v) for k, v in best_params.items()
+            },
+        },
+        "reference": {
+            "variant": reference_variant,
+            "f1_macro": reference_metrics["f1_macro"],
+            "accuracy": reference_metrics["accuracy"],
+        },
+    }
 
 
 def _ordre_simplicite_variante(variante: str) -> int:

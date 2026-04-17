@@ -164,6 +164,17 @@ VALID_EVALUATION_STAGES: frozenset[str] = frozenset(
     {"baseline", "improved_untuned", "tuned", "autre"}
 )
 
+SECONDARY_HOLDOUT_CORROBORATION_SCOPE = "corroboration_only"
+SECONDARY_HOLDOUT_ORIGIN_EXPLORATORY_REFIT = "exploratory_refit"
+
+VALID_SECONDARY_HOLDOUT_CORROBORATION_SCOPES: frozenset[str] = frozenset(
+    {SECONDARY_HOLDOUT_CORROBORATION_SCOPE}
+)
+
+VALID_SECONDARY_HOLDOUT_ORIGINS: frozenset[str] = frozenset(
+    {SECONDARY_HOLDOUT_ORIGIN_EXPLORATORY_REFIT}
+)
+
 NESTED_CV_INVALID_FIELDS: tuple[str, ...] = (
     "train_accuracy_mean",
     "train_f1_macro_mean",
