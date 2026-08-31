@@ -1,98 +1,55 @@
-# Python
+# Python bytecode and packaging
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
 *.egg-info/
+build/
+dist/
+pip-wheel-metadata/
 
-# Jupyter
-.ipynb_checkpoints/
-*.ipynb_checkpoints
-
-# Tests
-tests/
-scripts/
-
-# Virtual environments
-venv/
+# Virtual environments and local configuration
 .venv/
+venv/
 env/
-
-# Environment variables
 .env
 .env.*
 
-# Data — raw inputs (large, not versioned)
-data/raw/*.csv
-data/raw/*.parquet
-data/raw/*.feather
-
-# Model artifacts
-models/*.pkl
-models/**/*.pkl
-results/models/*.pkl
-
-# Generated figures and images
-_nb_images/
-*.png
-*.jpg
-*.jpeg
-*.svg
-*.pdf
-*.md
-!README.md
-docs/*.html
-docs/rapport_parts_pdf/
-docs/rapport_parts_pdf/**
-docs/rapport_leaf_classification*.md
-docs/rapport_parts_pdf/**
-!docs/rapport_parts_pdf/
-!docs/rapport_parts_pdf/*.pdf
-docs/rapport_parts_pdf/chrome-profile-*/
-
-# Generated result files
-results/*/metrics/*.json
-results/*/metrics/*.csv
-results/*/predictions/*.csv
-results/*/tuning/*.csv
-results/metrics/*.json
-results/predictions/*.csv
-results/grid_search/*.csv
-results/figures/**/*.png
-results/figures/**/*.pdf
-results/figures/**/*.svg
-results/*/figures/**/*.png
-results/*/figures/**/*.pdf
-results/*/figures/**/*.svg
-results/global/**/*.json
-results/global/**/*.csv
-results/global/**/*.png
-
-# Claude Code and AI agent files
-.claude/
-.mcp.json
-*.jsonl
-
+# Test, coverage, and lint caches
 .pytest_cache/
-tmp*/
-
-# Python build and tooling artifacts
-build/
-dist/
-htmlcov/
-.coverage
-.coverage.*
-coverage.xml
 .mypy_cache/
 .ruff_cache/
 .tox/
 .nox/
-pip-wheel-metadata/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
 
-# IDE
+# Jupyter
+.ipynb_checkpoints/
+/notebooks/docs/
+
+# Generated experiment artifacts
+/models/
+/results/
+
+# Report drafts and local build tooling. The submitted report is kept in rapport/.
+/docs/
+/scripts/
+/_nb_images/
+/rapport/*
+!/rapport/rapport_leaf_classification_final.pdf
+/DECLARATION_UTILISATION_IA*
+
+# Temporary files
+/tmp*/
+
+# Local AI/tool configuration
+/.claude/
+/.mcp.json
+*.jsonl
+
+# Editors and operating systems
 .vscode/
 .idea/
-
-# OS
 .DS_Store
 Thumbs.db

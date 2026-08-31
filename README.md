@@ -4,6 +4,8 @@ Projet de classification multiclasse sur le dataset **Kaggle Leaf Classification
 
 L'objectif du dépôt est de comparer plusieurs familles de modèles supervisés sur un même protocole expérimental, puis de documenter leurs performances, leurs erreurs et leurs compromis dans des notebooks d'analyse.
 
+Le rapport final remis pour le projet est disponible dans [`rapport/rapport_leaf_classification_final.pdf`](rapport/rapport_leaf_classification_final.pdf).
+
 ## Ce que fait le projet
 
 Le projet étudie six modèles :
@@ -73,6 +75,8 @@ Projet_Session_IFT712/
 │       ├── predictions/
 │       ├── tuning/
 │       └── figures/
+├── rapport/
+│   └── rapport_leaf_classification_final.pdf
 ├── src/
 │   ├── artifacts/
 │   ├── cli/
@@ -84,8 +88,7 @@ Projet_Session_IFT712/
 │   ├── config.py
 │   ├── notebook_support.py
 │   └── __init__.py
-├── docs/
-│   └── rapport_parts/
+├── tests/
 ├── requirements.txt
 └── README.md
 ```
@@ -95,12 +98,14 @@ Projet_Session_IFT712/
 - `data/raw/` : données d'entrée, en particulier `train.csv`.
 - `notebooks/` : analyses principales du projet.
 - `results/` : sorties générées par le pipeline expérimental.
+- `rapport/` : version finale du rapport de projet.
 - `src/data/` : chargement et préparation des données.
 - `src/models/` : définitions des modèles.
 - `src/evaluation/` : métriques, validation croisée, évaluation.
 - `src/experiments/` : orchestration des variantes, tuning et exécutions complètes.
 - `src/artifacts/` : lecture, écriture et validation des artefacts dans `results/`.
 - `src/notebook_support.py` : helpers utilisés par les notebooks.
+- `tests/` : tests automatisés du code, des modèles et des artefacts.
 
 ## Installation
 
@@ -112,10 +117,16 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-Puis placer le fichier `train.csv` dans :
+Le jeu d'entraînement utilisé par le projet est inclus dans :
 
 ```text
 data/raw/train.csv
+```
+
+Pour vérifier l'installation :
+
+```powershell
+python -m pytest -q
 ```
 
 ## Utilisation des notebooks
