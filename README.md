@@ -30,9 +30,6 @@ model-by-model evidence and diagnostics.
 - [Global model comparison notebook](notebooks/08_Comparaison_Globale.ipynb)
 - [Dataset provenance and integrity](data/README.md)
 
-> These reports are revised portfolio editions, not the archived April 2026
-> course submission.
-
 ## What the project covers
 
 The dataset represents each specimen with 64 margin, 64 shape, and 64 texture
