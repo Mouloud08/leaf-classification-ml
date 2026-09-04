@@ -88,9 +88,7 @@ def classes_difficiles(
     """Retourne les classes avec la plus faible performance sur une métrique."""
     tableau = calculer_metriques_par_classe(y_vrai, y_pred, label_encoder=label_encoder)
     return (
-        tableau.sort_values(metrique, ascending=True)
-        .head(top_n)
-        .reset_index(drop=True)
+        tableau.sort_values(metrique, ascending=True).head(top_n).reset_index(drop=True)
     )
 
 

@@ -10,16 +10,19 @@ from sklearn.preprocessing import LabelEncoder
 matplotlib.use("Agg")
 
 from src.evaluation import (  # noqa: E402
-    calculer_reliability_curve,
+    calculer_metriques_par_classe,
     calculer_points_precision_rappel_ovr,
     calculer_points_roc_ovr,
+    calculer_reliability_curve,
     calculer_top_k_accuracies,
-    calculer_metriques_par_classe,
     construire_matrice_confusion,
     evaluer_modele_tuned_nested_cv,
     probabilites_oof,
 )
-from src.evaluation.diagnostics_specifiques import coefficients_absolus, regularization_path  # noqa: E402
+from src.evaluation.diagnostics_specifiques import (  # noqa: E402
+    coefficients_absolus,
+    regularization_path,
+)
 from src.models.pipelines import creer_pipeline  # noqa: E402
 from src.plots import (  # noqa: E402
     tracer_hyperparametre_vs_performance,
@@ -78,9 +81,15 @@ class TestMulticlassAnalysis(unittest.TestCase):
             random_state=42,
         )
 
-        colonnes_proba = [colonne for colonne in tableau.columns if colonne.startswith("proba__")]
+        colonnes_proba = [
+            colonne for colonne in tableau.columns if colonne.startswith("proba__")
+        ]
         self.assertEqual(len(colonnes_proba), 3)
-        self.assertTrue(np.allclose(tableau[colonnes_proba].sum(axis=1).to_numpy(), np.ones(len(tableau))))
+        self.assertTrue(
+            np.allclose(
+                tableau[colonnes_proba].sum(axis=1).to_numpy(), np.ones(len(tableau))
+            )
+        )
         argmax = tableau[colonnes_proba].to_numpy().argmax(axis=1)
         self.assertTrue(np.array_equal(argmax, tableau["y_pred"].to_numpy()))
 
@@ -102,13 +111,41 @@ class TestMulticlassAnalysis(unittest.TestCase):
         self.assertIn("auc_micro", roc)
         self.assertIn("ap_micro", pr)
 
-    def test_reliability_curve_quantile_strategy_handles_compressed_confidence(self) -> None:
+    def test_reliability_curve_quantile_strategy_handles_compressed_confidence(
+        self,
+    ) -> None:
         tableau = pd.DataFrame(
             {
                 "y_true": ["a"] * 6 + ["b"] * 6,
                 "y_pred": ["a", "a", "a", "a", "b", "b", "b", "b", "b", "a", "b", "a"],
-                "proba__a": [0.11, 0.12, 0.12, 0.13, 0.10, 0.09, 0.08, 0.08, 0.07, 0.11, 0.06, 0.10],
-                "proba__b": [0.89, 0.88, 0.88, 0.87, 0.90, 0.91, 0.92, 0.92, 0.93, 0.89, 0.94, 0.90],
+                "proba__a": [
+                    0.11,
+                    0.12,
+                    0.12,
+                    0.13,
+                    0.10,
+                    0.09,
+                    0.08,
+                    0.08,
+                    0.07,
+                    0.11,
+                    0.06,
+                    0.10,
+                ],
+                "proba__b": [
+                    0.89,
+                    0.88,
+                    0.88,
+                    0.87,
+                    0.90,
+                    0.91,
+                    0.92,
+                    0.92,
+                    0.93,
+                    0.89,
+                    0.94,
+                    0.90,
+                ],
             }
         )
 
@@ -226,11 +263,13 @@ class TestMulticlassAnalysis(unittest.TestCase):
         """tracer_heatmap_tuning must raise on duplicate (x, y) pairs by default."""
         from src.plots import tracer_heatmap_tuning
 
-        tableau_doublons = pd.DataFrame({
-            "param_C": [0.1, 0.1, 1.0],
-            "param_gamma": [0.01, 0.01, 0.1],
-            "mean_test_f1_macro": [0.7, 0.8, 0.9],
-        })
+        tableau_doublons = pd.DataFrame(
+            {
+                "param_C": [0.1, 0.1, 1.0],
+                "param_gamma": [0.01, 0.01, 0.1],
+                "mean_test_f1_macro": [0.7, 0.8, 0.9],
+            }
+        )
         with self.assertRaises(ValueError, msg="Duplicate x/y should raise"):
             tracer_heatmap_tuning(
                 tableau_doublons,
@@ -262,7 +301,9 @@ class TestMulticlassAnalysis(unittest.TestCase):
         )
 
         axe_matrice = tracer_matrice_confusion(matrice)
-        axe_classes = tracer_metrique_par_classe(tableau_classes, metrique="recall", top_n=2)
+        axe_classes = tracer_metrique_par_classe(
+            tableau_classes, metrique="recall", top_n=2
+        )
         axe_hyper = tracer_hyperparametre_vs_performance(
             tableau_grid,
             x="param_n_estimators",

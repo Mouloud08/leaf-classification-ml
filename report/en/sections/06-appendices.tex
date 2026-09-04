@@ -1,0 +1,119 @@
+\section{Appendices}
+
+\subsection{Purpose and Use of the Appendices}
+The appendices bring together material that supports reproducibility, methodological auditing, and detailed examination of the artifacts without overloading the main body of the report. They extend the analysis without shifting its inferential basis. The principal conclusions remain grounded in the \texttt{tuned} variants evaluated with \texttt{nested\_cv}; depending on the case, the other information retained here is descriptive, exploratory, or documentary.
+
+\subsection{Detailed Protocol and Canonical Artifacts}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Element} & \textbf{Selected value} \\
+\hline
+Global seed & \texttt{42} \\
+Frozen split & \texttt{80 \%} development / \texttt{20 \%} corroboration \\
+Development set size & \texttt{792} \\
+Corroboration set size & \texttt{198} \\
+Primary cross-validation & \texttt{5} outer folds \\
+Internal tuning & \texttt{3} folds \\
+Variance retained by \texttt{PCA} & \texttt{0.99} \\
+Primary metric & \texttt{Macro-F1} \\
+Secondary metric & \texttt{Accuracy} \\
+CV parallelism & \texttt{CV\_N\_JOBS = 1} \\
+\hline
+\end{tabular}
+\caption{Experimental protocol parameters}
+\end{table}
+
+Preserving a frozen split separate from the development subset maintains a clear distinction between the primary analysis and secondary corroboration. The non-\texttt{tuned} variants are used to explore the effects of preprocessing and model capacity; only the \texttt{tuned} variants form the basis of the inter-model ranking.
+
+\subsection{Detailed Results by Variant}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|l|r|r|r|}
+\hline
+\textbf{Model} & \textbf{Variant} & \textbf{Status} & \textbf{Validation macro-F1} & \textbf{Validation accuracy} & \textbf{Time (s)} \\
+\hline
+\texttt{perceptron} & \texttt{default} & Exploratory & \texttt{0.6979} & \texttt{0.7436} & \texttt{0.62} \\
+\texttt{perceptron} & \texttt{scaled\_only} & Exploratory & \texttt{0.8228} & \texttt{0.8460} & \texttt{0.60} \\
+\texttt{perceptron} & \texttt{scaled\_pca} & Exploratory & \texttt{0.8057} & \texttt{0.8346} & \texttt{0.65} \\
+\texttt{perceptron} & \texttt{tuned} & Confirmatory & \texttt{0.8085} & \texttt{0.8409} & \texttt{29.79} \\
+\texttt{regression\_logistique} & \texttt{default} & Exploratory & \texttt{0.2591} & \texttt{0.3106} & \texttt{1.69} \\
+\texttt{regression\_logistique} & \texttt{scaled\_only} & Exploratory & \texttt{0.9798} & \texttt{0.9861} & \texttt{8.10} \\
+\texttt{regression\_logistique} & \texttt{scaled\_pca} & Exploratory & \texttt{0.9784} & \texttt{0.9848} & \texttt{2.21} \\
+\texttt{regression\_logistique} & \texttt{tuned} & Confirmatory & \texttt{0.9787} & \texttt{0.9848} & \texttt{77.05} \\
+\texttt{svm} & \texttt{default} & Exploratory & \texttt{0.8389} & \texttt{0.8561} & \texttt{2.36} \\
+\texttt{svm} & \texttt{scaled\_only} & Exploratory & \texttt{0.9712} & \texttt{0.9785} & \texttt{2.45} \\
+\texttt{svm} & \texttt{scaled\_pca} & Exploratory & \texttt{0.9712} & \texttt{0.9785} & \texttt{2.50} \\
+\texttt{svm} & \texttt{tuned} & Confirmatory & \texttt{0.9756} & \texttt{0.9823} & \texttt{56.49} \\
+\texttt{foret\_aleatoire} & \texttt{default} & Exploratory & \texttt{0.9764} & \texttt{0.9785} & \texttt{9.16} \\
+\texttt{foret\_aleatoire} & \texttt{restricted\_depth} & Exploratory & \texttt{0.9345} & \texttt{0.9445} & \texttt{5.42} \\
+\texttt{foret\_aleatoire} & \texttt{tuned} & Confirmatory & \texttt{0.9702} & \texttt{0.9747} & \texttt{250.11} \\
+\texttt{arbre\_decision} & \texttt{default} & Exploratory & \texttt{0.5809} & \texttt{0.6174} & \texttt{1.04} \\
+\texttt{arbre\_decision} & \texttt{restricted\_depth} & Exploratory & \texttt{0.1468} & \texttt{0.1529} & \texttt{0.56} \\
+\texttt{arbre\_decision} & \texttt{tuned} & Confirmatory & \texttt{0.4295} & \texttt{0.4610} & \texttt{11.47} \\
+\texttt{mlp} & \texttt{default} & Exploratory & \texttt{0.1642} & \texttt{0.1863} & \texttt{1.97} \\
+\texttt{mlp} & \texttt{scaled\_only} & Exploratory & \texttt{0.9389} & \texttt{0.9482} & \texttt{2.01} \\
+\texttt{mlp} & \texttt{scaled\_pca} & Exploratory & \texttt{0.9323} & \texttt{0.9444} & \texttt{1.97} \\
+\texttt{mlp} & \texttt{tuned} & Confirmatory & \texttt{0.9389} & \texttt{0.9482} & \texttt{38.25} \\
+\hline
+\end{tabular}
+\caption{Validation results by variant}
+\end{table}
+
+This table must be read with due regard for the status of each row. Scores for the exploratory variants document the effects of preprocessing and complexity; they must not be conflated with the confirmatory scores of the \texttt{tuned} variants.
+
+\subsection{Hyperparameters Selected by Outer Fold}
+The stability of fold-level selection provides useful evidence about the robustness of the model families. Some families converge on the same settings in nearly every fold, while others show more pronounced variability, particularly in the use of \texttt{PCA} or the strength of regularization.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|>{\raggedright\arraybackslash}p{10.5cm}|}
+\hline
+\textbf{Model} & \textbf{Patterns observed across the 5 outer folds} \\
+\hline
+\texttt{perceptron} & \texttt{alpha = 0.001}, \texttt{penalty = l1} in every fold; \texttt{PCA} selected once, otherwise \texttt{passthrough} \\
+\hline
+\texttt{regression\_logistique} & \texttt{C} alternates between \texttt{1.0} and \texttt{10.0}; \texttt{PCA} selected in one fold, otherwise \texttt{passthrough} \\
+\hline
+\texttt{svm} & \texttt{C = 10.0} and \texttt{gamma = scale} in every fold; \texttt{PCA} selected once \\
+\hline
+\texttt{foret\_aleatoire} & Nearly perfectly stable settings: \texttt{max\_depth = None}, \texttt{max\_features = sqrt}, \texttt{min\_samples\_leaf = 1}, and \texttt{n\_estimators = 400} in every fold \\
+\hline
+\texttt{arbre\_decision} & \texttt{max\_depth = 20}, \texttt{criterion = gini}, and \texttt{min\_samples\_leaf = 1}; only \texttt{ccp\_alpha} varies, taking \texttt{0.005} in one fold and \texttt{0.0} otherwise \\
+\hline
+\texttt{mlp} & \texttt{hidden\_layer\_sizes = [128]} in every fold; \texttt{alpha = 0.0001} in four folds and \texttt{0.001} in one fold; \texttt{PCA} is never selected \\
+\hline
+\end{tabular}
+\caption{Hyperparameters selected by outer fold}
+\end{table}
+
+The random forest, SVM, and MLP show highly consistent fold-level selection. Logistic regression and the perceptron remain more sensitive to linear regularization and the possible selection of \texttt{PCA}, but this variability does not alter their overall interpretation. For the decision tree, stability in the selected depth does not offset the predictive instability observed in its scores.
+
+\subsection{AI Use Declaration}
+This declaration is provided for documentary transparency. AI assistance was used on a limited basis during the project, but it did not replace scientific decision-making, the execution of experiments, or the final validation of results.
+
+\paragraph{Where AI was used}
+\begin{itemize}
+    \item assistance with structuring Markdown and LaTeX documents;
+    \item occasional assistance with repository cleanup, reorganization, and documentation;
+    \item technical assistance with certain adjustments to code, scripts, and notebooks;
+    \item proposals or initial generation of some code sections, which were subsequently reviewed, modified, tested, and validated by a human before being retained.
+\end{itemize}
+
+\paragraph{Work performed manually}
+\begin{itemize}
+    \item definition of the topic, objectives, and experimental protocol;
+    \item selection of the models, variants, metrics, and evaluation framework;
+    \item execution of the experiments, notebooks, and pipeline;
+    \item review, correction, and validation of the retained code;
+    \item verification of the numerical results, figures, and their consistency;
+    \item selection of the material included in the final report;
+    \item scientific interpretation of the results and final writing validated by a human.
+\end{itemize}
+
+% ==========================================
+% 7. BIBLIOGRAPHY
+% ==========================================

@@ -5,7 +5,6 @@ from __future__ import annotations
 import unittest
 
 import numpy as np
-import pandas as pd
 
 from src.evaluation.diagnostics_generiques import (
     classes_difficiles,
@@ -126,6 +125,7 @@ class TestModelDiagnosticCapabilities(unittest.TestCase):
 
     def test_figure_category(self) -> None:
         from src.models import ModeleMLP
+
         mlp = ModeleMLP()
         self.assertEqual(mlp.figure_category("loss_curve"), "core")
         self.assertEqual(mlp.figure_category("tsne_representations"), "advanced")
@@ -133,6 +133,7 @@ class TestModelDiagnosticCapabilities(unittest.TestCase):
 
     def test_supports_diagnostic(self) -> None:
         from src.models import ModeleSVM
+
         svm = ModeleSVM()
         self.assertTrue(svm.supports_diagnostic("heatmap_C_gamma"))
         self.assertFalse(svm.supports_diagnostic("loss_curve"))

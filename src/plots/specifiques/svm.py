@@ -65,8 +65,10 @@ def tracer_support_vectors_par_classe(
     counts = list(info["n_support_per_class"].values())
     fig, ax = plt.subplots(figsize=(12, 6))
     ax.bar(range(len(classes)), counts, color="#4C78A8", alpha=0.75)
-    ax.set_title(f"{titre} (total : {info['total_support_vectors']}, "
-                 f"ratio : {info['ratio_sv_to_samples']:.2%})")
+    ax.set_title(
+        f"{titre} (total : {info['total_support_vectors']}, "
+        f"ratio : {info['ratio_sv_to_samples']:.2%})"
+    )
     ax.set_xlabel("Classe", fontweight="bold")
     ax.set_ylabel("Nombre de vecteurs de support", fontweight="bold")
     if len(classes) > 30:

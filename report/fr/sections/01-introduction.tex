@@ -1,0 +1,18 @@
+\section{Introduction}
+
+\subsection{Contexte}
+Le projet porte sur le jeu de données \texttt{Leaf Classification} de Kaggle, traité ici comme un problème de classification multiclasses tabulaire. Chaque feuille est décrite par des variables numériques pré-extraites plutôt que par une image brute, ce qui déplace l'enjeu vers la qualité du preprocessing, le choix du modèle et surtout la rigueur du protocole d'évaluation.
+
+La difficulté du problème tient moins à un déséquilibre des classes qu'au rapport entre le nombre d'espèces et le faible nombre d'exemples disponibles pour chacune d'elles. Dans un tel contexte, des écarts de performance modestes peuvent être artificiellement amplifiés si l'on ne sépare pas strictement les étapes exploratoires et l'estimation confirmatoire.
+
+\subsection{Objectif de l'étude}
+L'objectif du rapport est de comparer six familles de modèles scikit-learn dans un cadre scientifiquement défendable: perceptron, régression logistique, SVM RBF, forêt aléatoire, arbre de décision et MLP. L'enjeu n'est pas seulement d'identifier le meilleur score, mais d'établir quels gains restent crédibles après tuning, variabilité inter-plis et vérification secondaire sur un jeu de corroboration gelé.
+
+La lecture du rapport suit donc une logique simple: l'EDA motive les choix de prétraitement, les chapitres modèles distinguent nettement exploration et confirmation, puis la discussion globale confronte les variantes \texttt{tuned} selon leur performance, leur stabilité et leur coût pratique.
+
+\subsection{Organisation du rapport}
+La section 2 présente l'analyse exploratoire des données et le cadre méthodologique retenu pour la suite. La section 3 détaille séparément les six familles de modèles. La section 4 propose la comparaison globale et la discussion scientifique, avant une conclusion brève, les annexes et la bibliographie.
+
+% ==========================================
+% 2. EDA
+% ==========================================

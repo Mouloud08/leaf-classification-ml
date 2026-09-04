@@ -18,8 +18,7 @@ class ModeleSVM(ModeleBase):
         "jeu de données."
     )
     hypothese = (
-        "Le SVM RBF devrait mieux séparer les zones où les classes se "
-        "chevauchent."
+        "Le SVM RBF devrait mieux séparer les zones où les classes se chevauchent."
     )
     utiliser_pca_par_defaut = True
     necessite_scaling = True

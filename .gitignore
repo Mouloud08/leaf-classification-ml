@@ -1,21 +1,21 @@
-# Python bytecode and packaging
+# Python bytecode, packaging, and environments
 __pycache__/
 *.py[cod]
 *.egg-info/
 build/
 dist/
 pip-wheel-metadata/
-
-# Virtual environments and local configuration
 .venv/
 venv/
 env/
 .env
 .env.*
 
-# Test, coverage, and lint caches
+# Tests, coverage, types, and lint caches
 .pytest_cache/
+.cache/
 .mypy_cache/
+.pyright/
 .ruff_cache/
 .tox/
 .nox/
@@ -24,7 +24,7 @@ env/
 coverage.xml
 htmlcov/
 
-# Jupyter
+# Jupyter-generated state
 .ipynb_checkpoints/
 /notebooks/docs/
 
@@ -32,18 +32,35 @@ htmlcov/
 /models/
 /results/
 
-# Report drafts and local build tooling. The submitted report is kept in rapport/.
+# LaTeX report build products (final portfolio PDFs remain tracked)
+/report/build/
+/report/.build/
+/report/**/*.aux
+/report/**/*.bbl
+/report/**/*.bcf
+/report/**/*.blg
+/report/**/*.fdb_latexmk
+/report/**/*.fls
+/report/**/*.lof
+/report/**/*.log
+/report/**/*.lot
+/report/**/*.out
+/report/**/*.run.xml
+/report/**/*.synctex.gz
+/report/**/*.toc
+
+# Legacy report and generated-document paths
+/rapport/
 /docs/
 /scripts/
 /_nb_images/
-/rapport/*
-!/rapport/rapport_leaf_classification_final.pdf
 /DECLARATION_UTILISATION_IA*
 
-# Temporary files
+# Release workspaces and local tooling
 /tmp*/
-
-# Local AI/tool configuration
+/.release/
+/.codex/
+/.agents/
 /.claude/
 /.mcp.json
 *.jsonl
@@ -53,3 +70,6 @@ htmlcov/
 .idea/
 .DS_Store
 Thumbs.db
+Desktop.ini
+*~
+*.swp

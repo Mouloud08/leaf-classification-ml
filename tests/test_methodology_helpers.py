@@ -81,15 +81,9 @@ class TestMethodologyHelpers(unittest.TestCase):
 
     def test_construire_tableau_complementarite_erreurs(self) -> None:
         predictions = {
-            "modele_a": pd.DataFrame(
-                {"y_true": [0, 1, 0, 1], "y_pred": [0, 1, 1, 1]}
-            ),
-            "modele_b": pd.DataFrame(
-                {"y_true": [0, 1, 0, 1], "y_pred": [0, 0, 0, 1]}
-            ),
-            "modele_c": pd.DataFrame(
-                {"y_true": [0, 1, 0, 1], "y_pred": [1, 1, 0, 1]}
-            ),
+            "modele_a": pd.DataFrame({"y_true": [0, 1, 0, 1], "y_pred": [0, 1, 1, 1]}),
+            "modele_b": pd.DataFrame({"y_true": [0, 1, 0, 1], "y_pred": [0, 0, 0, 1]}),
+            "modele_c": pd.DataFrame({"y_true": [0, 1, 0, 1], "y_pred": [1, 1, 0, 1]}),
         }
 
         tableau = construire_tableau_complementarite_erreurs(predictions)

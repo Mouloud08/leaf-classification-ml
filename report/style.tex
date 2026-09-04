@@ -1,0 +1,60 @@
+% Shared visual style for the bilingual portfolio editions.
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{amsmath,amssymb}
+\usepackage[pdfencoding=auto]{hyperref}
+\usepackage{xurl}
+\usepackage{caption}
+\usepackage{array}
+\usepackage{adjustbox}
+\usepackage{tabularx}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  filecolor=magenta,
+  urlcolor=blue,
+  citecolor=black
+}
+
+\renewcommand{\arraystretch}{1.4}
+% Give TeX modest flexibility around long inline model names and metrics.
+% This prevents protruding text without changing the scientific wording.
+\setlength{\emergencystretch}{3em}
+\BeforeBeginEnvironment{tabular}{\begin{adjustbox}{max width=\textwidth}}
+\AfterEndEnvironment{tabular}{\end{adjustbox}}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+
+\newcommand{\makeportfoliotitle}[5]{%
+  \begin{titlepage}
+    \centering
+    \vspace*{1cm}
+    {\scshape\LARGE #1\par}
+    \vspace{0.5cm}
+    {\large IFT712\par}
+    \vspace{2cm}
+    {\scshape\Large #2\par}
+    \vspace{1.5cm}
+    \rule{\linewidth}{0.5mm}\\[0.6cm]
+    {\huge\bfseries #3\par}
+    \vspace{0.4cm}
+    {\Large\itshape #4\par}
+    \rule{\linewidth}{0.5mm}\\[1.5cm]
+    \vspace{1.2cm}
+    {\large Mouloud \textsc{Serir}\par}
+    \vfill
+    {\large #5\par}
+  \end{titlepage}
+}
+
+\newcommand{\portfolioeditionnotice}[1]{%
+  \begin{center}
+    \begin{minipage}{0.9\textwidth}
+      \small\itshape #1
+    \end{minipage}
+  \end{center}
+  \vspace{0.7cm}
+}

@@ -145,8 +145,7 @@ def _charger_resultats_existants(
 ) -> StudyRunResult:
     paths = model_paths(spec.model_name, root=study.output_root)
     untuned_results = [
-        _charger_resultat_untuned(paths, variante)
-        for variante in spec.untuned_variants
+        _charger_resultat_untuned(paths, variante) for variante in spec.untuned_variants
     ]
     tuning_result = None if study.no_tuning else _charger_resultat_tuning(paths)
     return StudyRunResult(
@@ -154,6 +153,7 @@ def _charger_resultats_existants(
         untuned_results=untuned_results,
         tuning_result=tuning_result,
     )
+
 
 def charger_predictions_tuned_si_disponibles(
     model_name: str,
@@ -343,8 +343,10 @@ def executer_tuning_bundle(
         )
         for variante in spec.untuned_variants:
             resultat_variante = holdout_par_variante[variante.name]
-            role = "reference" if variante.name == reference_variant_spec.name else (
-                "baseline" if variante.name == "default" else "untuned"
+            role = (
+                "reference"
+                if variante.name == reference_variant_spec.name
+                else ("baseline" if variante.name == "default" else "untuned")
             )
             descriptive_holdout_all_variants.append(
                 {

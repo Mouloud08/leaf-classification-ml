@@ -36,6 +36,7 @@ STAGE_MAP: dict[str, str] = {
     "tuned": "tuned",
 }
 
+
 def derive_stage(variante: str) -> str:
     return STAGE_MAP.get(str(variante).lower(), "autre")
 
@@ -76,7 +77,10 @@ def _valider_secondary_holdout(
         )
         return erreurs
 
-    if str(secondary_holdout.get("corroboration_scope", "")).strip() not in VALID_SECONDARY_HOLDOUT_CORROBORATION_SCOPES:
+    if (
+        str(secondary_holdout.get("corroboration_scope", "")).strip()
+        not in VALID_SECONDARY_HOLDOUT_CORROBORATION_SCOPES
+    ):
         erreurs.append(
             _prefixer(
                 source,
@@ -93,7 +97,10 @@ def _valider_secondary_holdout(
             )
         )
 
-    if str(secondary_holdout.get("origin", "")).strip() not in VALID_SECONDARY_HOLDOUT_ORIGINS:
+    if (
+        str(secondary_holdout.get("origin", "")).strip()
+        not in VALID_SECONDARY_HOLDOUT_ORIGINS
+    ):
         erreurs.append(
             _prefixer(
                 source,
@@ -129,15 +136,11 @@ def valider_enregistrement_mesures(
 
     protocole = str(enregistrement["selection_protocol"])
     if protocole not in VALID_SELECTION_PROTOCOLS:
-        erreurs.append(
-            _prefixer(source, f"selection_protocol invalide: {protocole}")
-        )
+        erreurs.append(_prefixer(source, f"selection_protocol invalide: {protocole}"))
 
     stade = str(enregistrement["evaluation_stage"])
     if stade not in VALID_EVALUATION_STAGES:
-        erreurs.append(
-            _prefixer(source, f"evaluation_stage invalide: {stade}")
-        )
+        erreurs.append(_prefixer(source, f"evaluation_stage invalide: {stade}"))
 
     variante = str(enregistrement["variante"]).lower()
     stade_attendu = derive_stage(variante)

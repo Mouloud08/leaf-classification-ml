@@ -1,0 +1,13 @@
+\section{Conclusion}
+
+This study compared six model families on the \texttt{Leaf Classification} dataset within a framework that explicitly separates exploration, confirmation, and secondary corroboration. The primary ranking is based on the \texttt{tuned} variants evaluated through nested cross-validation, with \texttt{macro-F1} as the reference metric.
+
+The results confirm a leading pair consisting of logistic regression and the RBF SVM, with a slight average advantage for logistic regression and the random forest close behind. The MLP remains credible without matching this trio, while the perceptron and especially the decision tree lag behind.
+
+From a practical standpoint, logistic regression is the most defensible choice because it combines the highest observed mean score, moderate computational cost, and greater interpretability than the closest nonlinear alternatives. The frozen corroboration set broadly supports this interpretation without redefining it.
+
+This conclusion is nevertheless context-specific: it is based on a single dataset, without independent external validation, and on one nested cross-validation scheme. The most natural extensions are therefore to repeat the evaluation across multiple data splits, test the robustness of the conclusions on external data, and examine in greater depth the residual errors shared by the strongest models.
+
+% ==========================================
+% 6. APPENDICES
+% ==========================================

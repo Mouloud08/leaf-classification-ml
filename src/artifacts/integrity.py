@@ -121,9 +121,13 @@ def artifact_integrity_table(
     root: Path | None = None,
 ) -> pd.DataFrame:
     """Construit un tableau de synthèse d'intégrité des artefacts ajustés."""
-    return pd.DataFrame(
-        [
-            verifier_integrite_artefacts_modele(model_name, root=root)
-            for model_name in modeles
-        ]
-    ).sort_values("modele").reset_index(drop=True)
+    return (
+        pd.DataFrame(
+            [
+                verifier_integrite_artefacts_modele(model_name, root=root)
+                for model_name in modeles
+            ]
+        )
+        .sort_values("modele")
+        .reset_index(drop=True)
+    )

@@ -67,9 +67,7 @@ def tracer_metrique_par_classe(
 
     ascending = ordre == "asc"
     donnees = (
-        tableau_classes.sort_values(metrique, ascending=ascending)
-        .head(top_n)
-        .copy()
+        tableau_classes.sort_values(metrique, ascending=ascending).head(top_n).copy()
     )
 
     figure, axe = plt.subplots(figsize=(11, 6.5))
@@ -99,9 +97,7 @@ def tracer_hyperparametre_vs_performance(
     if tableau_grid.empty:
         raise ValueError("Le tableau de tuning est vide.")
     if x not in tableau_grid.columns or y not in tableau_grid.columns:
-        raise ValueError(
-            "Les colonnes demandées sont absentes du tableau de tuning."
-        )
+        raise ValueError("Les colonnes demandées sont absentes du tableau de tuning.")
 
     donnees = tableau_grid.copy()
     figure, axe = plt.subplots(figsize=(10.8, 5.8))

@@ -144,10 +144,30 @@ class TestReportReadiness(unittest.TestCase):
     def test_construire_tableau_holdout_descriptif_variantes(self) -> None:
         mesures_tuned = {
             "descriptive_holdout_all_variants": [
-                {"variante": "scaled_only", "f1_macro": 0.7, "accuracy": 0.71, "role": "reference"},
-                {"variante": "default", "f1_macro": 0.5, "accuracy": 0.52, "role": "baseline"},
-                {"variante": "scaled_pca", "f1_macro": 0.68, "accuracy": 0.69, "role": "untuned"},
-                {"variante": "tuned", "f1_macro": 0.72, "accuracy": 0.73, "role": "tuned"},
+                {
+                    "variante": "scaled_only",
+                    "f1_macro": 0.7,
+                    "accuracy": 0.71,
+                    "role": "reference",
+                },
+                {
+                    "variante": "default",
+                    "f1_macro": 0.5,
+                    "accuracy": 0.52,
+                    "role": "baseline",
+                },
+                {
+                    "variante": "scaled_pca",
+                    "f1_macro": 0.68,
+                    "accuracy": 0.69,
+                    "role": "untuned",
+                },
+                {
+                    "variante": "tuned",
+                    "f1_macro": 0.72,
+                    "accuracy": 0.73,
+                    "role": "tuned",
+                },
             ]
         }
 
@@ -230,7 +250,9 @@ class TestReportReadiness(unittest.TestCase):
             "n_splits": 5,
         }
         erreurs = valider_artefacts_mesures([artefact])
-        self.assertTrue(any("selection_protocol='nested_cv'" in erreur for erreur in erreurs))
+        self.assertTrue(
+            any("selection_protocol='nested_cv'" in erreur for erreur in erreurs)
+        )
 
     def test_charger_tableau_mesures_valides_rejette_artefact_melange(self) -> None:
         chemin_temp = _workspace_temp_dir()
@@ -279,21 +301,47 @@ class TestReportReadiness(unittest.TestCase):
 
     def test_notebooks_classifier_template_sections(self) -> None:
         for notebook_name in CLASSIFIER_NOTEBOOKS:
-            contenu = json.loads((ROOT / "notebooks" / notebook_name).read_text(encoding="utf-8"))
-            texte = "\n".join("".join(cell.get("source", [])) for cell in contenu["cells"])
+            contenu = json.loads(
+                (ROOT / "notebooks" / notebook_name).read_text(encoding="utf-8")
+            )
+            texte = "\n".join(
+                "".join(cell.get("source", [])) for cell in contenu["cells"]
+            )
             for heading in CLASSIFIER_HEADINGS:
                 self.assertIn(heading, texte, msg=f"{notebook_name} missing {heading}")
-            self.assertNotIn("## Conclusion", texte, msg=f"{notebook_name} should not contain conclusions")
-            self.assertIn("executer_verifications_validite(", texte, msg=f"{notebook_name} missing validity helper")
-            self.assertNotIn("obsolete", texte.lower(), msg=f"{notebook_name} should not mention cleanup internals")
-            self.assertNotIn("model_paths(", texte, msg=f"{notebook_name} should not manipulate artifact paths directly")
+            self.assertNotIn(
+                "## Conclusion",
+                texte,
+                msg=f"{notebook_name} should not contain conclusions",
+            )
+            self.assertIn(
+                "executer_verifications_validite(",
+                texte,
+                msg=f"{notebook_name} missing validity helper",
+            )
+            self.assertNotIn(
+                "obsolete",
+                texte.lower(),
+                msg=f"{notebook_name} should not mention cleanup internals",
+            )
+            self.assertNotIn(
+                "model_paths(",
+                texte,
+                msg=f"{notebook_name} should not manipulate artifact paths directly",
+            )
 
     def test_notebook_comparison_template_sections(self) -> None:
-        contenu = json.loads((ROOT / "notebooks" / "08_Comparaison_Globale.ipynb").read_text(encoding="utf-8"))
+        contenu = json.loads(
+            (ROOT / "notebooks" / "08_Comparaison_Globale.ipynb").read_text(
+                encoding="utf-8"
+            )
+        )
         texte = "\n".join("".join(cell.get("source", [])) for cell in contenu["cells"])
         for heading in COMPARISON_HEADINGS:
             self.assertIn(heading, texte)
-        self.assertIn("## 7. Corroboration secondaire sur le jeu de corroboration", texte)
+        self.assertIn(
+            "## 7. Corroboration secondaire sur le jeu de corroboration", texte
+        )
         self.assertNotIn("## Conclusion", texte)
         self.assertNotIn("src.resultats", texte)
         self.assertNotIn("obsolete", texte.lower())
@@ -301,8 +349,12 @@ class TestReportReadiness(unittest.TestCase):
 
     def test_holdout_section_added_only_to_eligible_notebooks(self) -> None:
         for notebook_name in CLASSIFIER_NOTEBOOKS:
-            contenu = json.loads((ROOT / "notebooks" / notebook_name).read_text(encoding="utf-8"))
-            texte = "\n".join("".join(cell.get("source", [])) for cell in contenu["cells"])
+            contenu = json.loads(
+                (ROOT / "notebooks" / notebook_name).read_text(encoding="utf-8")
+            )
+            texte = "\n".join(
+                "".join(cell.get("source", [])) for cell in contenu["cells"]
+            )
             if notebook_name in HOLDOUT_NOTEBOOKS:
                 self.assertIn(
                     "## 8. Vérification secondaire sur le jeu de corroboration",
@@ -316,30 +368,52 @@ class TestReportReadiness(unittest.TestCase):
 
     def test_holdout_notebooks_include_secondary_plot(self) -> None:
         for notebook_name in HOLDOUT_NOTEBOOKS:
-            contenu = json.loads((ROOT / "notebooks" / notebook_name).read_text(encoding="utf-8"))
-            texte = "\n".join("".join(cell.get("source", [])) for cell in contenu["cells"])
-            self.assertIn("tableau_corroboration = construire_tableau_corroboration_secondaire(", texte)
+            contenu = json.loads(
+                (ROOT / "notebooks" / notebook_name).read_text(encoding="utf-8")
+            )
+            texte = "\n".join(
+                "".join(cell.get("source", [])) for cell in contenu["cells"]
+            )
+            self.assertIn(
+                "tableau_corroboration = construire_tableau_corroboration_secondaire(",
+                texte,
+            )
             self.assertIn("axe_corroboration = tracer_comparaison_variantes(", texte)
             self.assertIn("f1_macro_holdout", texte)
             self.assertIn("accuracy_holdout", texte)
-            self.assertIn("### Lecture descriptive de toutes les variantes sur le jeu de corroboration", texte)
-            self.assertIn("construire_tableau_corroboration_descriptive_variantes", texte)
-            self.assertIn("axe_corroboration_descriptif = tracer_comparaison_variantes(", texte)
+            self.assertIn(
+                "### Lecture descriptive de toutes les variantes sur le jeu de corroboration",
+                texte,
+            )
+            self.assertIn(
+                "construire_tableau_corroboration_descriptive_variantes", texte
+            )
+            self.assertIn(
+                "axe_corroboration_descriptif = tracer_comparaison_variantes(", texte
+            )
             self.assertIn("Ce graphique est purement descriptif.", texte)
 
     def test_notebooks_bootstrap_src_from_notebooks_directory(self) -> None:
         for notebook_name in CLASSIFIER_NOTEBOOKS + ("08_Comparaison_Globale.ipynb",):
-            contenu = json.loads((ROOT / "notebooks" / notebook_name).read_text(encoding="utf-8"))
-            first_code = next(cell for cell in contenu["cells"] if cell["cell_type"] == "code")
+            contenu = json.loads(
+                (ROOT / "notebooks" / notebook_name).read_text(encoding="utf-8")
+            )
+            first_code = next(
+                cell for cell in contenu["cells"] if cell["cell_type"] == "code"
+            )
             texte = "".join(first_code.get("source", []))
             self.assertNotIn("sys.path.insert", texte)
             self.assertNotIn("Path.cwd()", texte)
-            self.assertNotIn("ROOT / \"src\"", texte)
+            self.assertNotIn('ROOT / "src"', texte)
 
     def test_modeling_notebooks_pin_an_output_root(self) -> None:
         for notebook_name in CLASSIFIER_NOTEBOOKS + ("08_Comparaison_Globale.ipynb",):
-            contenu = json.loads((ROOT / "notebooks" / notebook_name).read_text(encoding="utf-8"))
-            texte = "\n".join("".join(cell.get("source", [])) for cell in contenu["cells"])
+            contenu = json.loads(
+                (ROOT / "notebooks" / notebook_name).read_text(encoding="utf-8")
+            )
+            texte = "\n".join(
+                "".join(cell.get("source", [])) for cell in contenu["cells"]
+            )
             self.assertIn("OUTPUT_ROOT = RESULTS_DIR", texte)
 
     def test_notebook_context_smoke_builds_for_all_models(self) -> None:

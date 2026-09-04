@@ -44,8 +44,8 @@ from .evaluation.sanity_checks import verifier_bruit_aleatoire
 # Ré-export des spécifications d'étude depuis ``experiments``
 from .experiments.model_specs import obtenir_model_study_spec
 from .experiments.shared import (
-    construire_estimateur_variante,
     calculer_metriques_complementarite_erreurs,
+    construire_estimateur_variante,
     creer_cv,
     preparer_tuning_modele,
 )
@@ -55,6 +55,7 @@ from .models import MODELES
 # ---------------------------------------------------------------------------
 # Interne : champs d'affichage propres aux notebooks
 # ---------------------------------------------------------------------------
+
 
 @dataclass(frozen=True)
 class _NotebookDisplaySpec:
@@ -199,6 +200,7 @@ _NOTEBOOK_DISPLAY_SPECS: dict[str, _NotebookDisplaySpec] = {
 # Public : spécification fusionnée, contexte et fonctions de recherche
 # ---------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class SpecificationModeleNotebook:
     """Configuration complète d'un notebook pour un classifieur donné."""
@@ -316,7 +318,9 @@ class ContexteNotebook:
 NotebookContext = ContexteNotebook
 
 
-def obtenir_specification_modele_notebook(model_name: str) -> SpecificationModeleNotebook:
+def obtenir_specification_modele_notebook(
+    model_name: str,
+) -> SpecificationModeleNotebook:
     """Retourne la configuration partagée de notebook pour un modèle."""
     key = model_name.lower()
     if key not in _NOTEBOOK_DISPLAY_SPECS:
@@ -341,8 +345,7 @@ def obtenir_specification_modele_notebook(model_name: str) -> SpecificationModel
 # Dictionnaire public calculé, rétrocompatible avec les scripts et notebooks
 # qui itèrent sur NOTEBOOK_MODEL_SPECS.
 SPECIFICATIONS_MODELES_NOTEBOOK: dict[str, SpecificationModeleNotebook] = {
-    key: obtenir_specification_modele_notebook(key)
-    for key in _NOTEBOOK_DISPLAY_SPECS
+    key: obtenir_specification_modele_notebook(key) for key in _NOTEBOOK_DISPLAY_SPECS
 }
 
 NOTEBOOK_MODEL_SPECS = SPECIFICATIONS_MODELES_NOTEBOOK
@@ -381,6 +384,7 @@ creer_notebook_context = creer_contexte_notebook
 # ---------------------------------------------------------------------------
 # Utilitaires d'exécution des notebooks
 # ---------------------------------------------------------------------------
+
 
 def evaluer_variantes_untuned(
     contexte: ContexteNotebook,
@@ -425,11 +429,7 @@ def executer_tuning_confirmatoire(
         split_metadata=contexte.split_metadata,
         study=study,
     )
-    return {
-        key: value
-        for key, value in bundle.items()
-        if key != "tuning_result"
-    }
+    return {key: value for key, value in bundle.items() if key != "tuning_result"}
 
 
 def charger_ou_generer_predictions_variante(
@@ -480,14 +480,17 @@ def charger_ou_generer_predictions_variante(
 # Constructeurs de tableaux pour notebooks
 # ---------------------------------------------------------------------------
 
+
 def construire_tableau_variantes(
     resultats_untuned: list[UntunedVariantResult],
     mesures_tuned: dict[str, Any],
 ) -> pd.DataFrame:
     """Construit le tableau synthèse sûr pour le rapport des variantes."""
     from .evaluation.diagnostics_generiques import tableau_variantes
+
     return tableau_variantes(
-        [r.to_dict() for r in resultats_untuned], mesures_tuned,
+        [r.to_dict() for r in resultats_untuned],
+        mesures_tuned,
     )
 
 
@@ -504,7 +507,9 @@ def construire_tableau_corroboration_secondaire(
     tableau = pd.DataFrame(
         [
             {
-                "variante": reference.get("variant", secondary_holdout.get("reference_variant")),
+                "variante": reference.get(
+                    "variant", secondary_holdout.get("reference_variant")
+                ),
                 "f1_macro_holdout": reference.get("f1_macro"),
                 "accuracy_holdout": reference.get("accuracy"),
                 "role": "reference",
@@ -522,8 +527,8 @@ def construire_tableau_corroboration_secondaire(
     )
     tableau["ranking_eligible"] = bool(secondary_holdout.get("ranking_eligible", False))
     tableau["origin"] = secondary_holdout.get("origin", "exploratory_refit")
-    tableau["delta_f1_vs_reference"] = (
-        tableau["f1_macro_holdout"] - float(reference.get("f1_macro", np.nan))
+    tableau["delta_f1_vs_reference"] = tableau["f1_macro_holdout"] - float(
+        reference.get("f1_macro", np.nan)
     )
     return tableau
 
@@ -550,9 +555,7 @@ def construire_tableau_corroboration_descriptive_variantes(
 
     reference_rows = tableau.loc[tableau["role"] == "reference", "f1_macro_holdout"]
     reference_f1 = float(reference_rows.iloc[0]) if not reference_rows.empty else np.nan
-    tableau["delta_f1_vs_reference"] = (
-        tableau["f1_macro_holdout"] - reference_f1
-    )
+    tableau["delta_f1_vs_reference"] = tableau["f1_macro_holdout"] - reference_f1
     return ordonner_tableau_variantes(tableau)
 
 
@@ -576,8 +579,10 @@ def ordonner_tableau_variantes(tableau: pd.DataFrame) -> pd.DataFrame:
     return (
         tableau.copy()
         .assign(
-            _ordre=lambda df: df["variante"].astype("string").map(
-                lambda v: ordre_variantes.get(str(v), 50)
+            _ordre=lambda df: (
+                df["variante"]
+                .astype("string")
+                .map(lambda v: ordre_variantes.get(str(v), 50))
             )
         )
         .sort_values(["_ordre", "variante"])
@@ -599,9 +604,7 @@ def charger_tableau_variantes_modele(
         lignes.append({"variante": chemin.stem, **contenu})
     tableau = pd.DataFrame(lignes)
     if tableau.empty:
-        raise FileNotFoundError(
-            f"Aucune métrique canonique trouvée pour {nom_modele}."
-        )
+        raise FileNotFoundError(f"Aucune métrique canonique trouvée pour {nom_modele}.")
     return ordonner_tableau_variantes(tableau)
 
 
@@ -610,7 +613,9 @@ def construire_tableau_variantes_rapport(tableau: pd.DataFrame) -> pd.DataFrame:
     if tableau.empty:
         return tableau.copy()
 
-    statut = tableau.get("evaluation_stage", pd.Series(index=tableau.index, dtype="object")).map(
+    statut = tableau.get(
+        "evaluation_stage", pd.Series(index=tableau.index, dtype="object")
+    ).map(
         {
             "baseline": "exploratoire",
             "improved_untuned": "exploratoire",
@@ -665,7 +670,9 @@ def construire_resume_confusions_variantes(
         .drop_duplicates(subset=["variante", "evaluation_stage"])
         .assign(
             variante=variantes_str,
-            _ordre=lambda df: df["variante"].map(lambda v: ordre_variantes.get(str(v), 50)),
+            _ordre=lambda df: df["variante"].map(
+                lambda v: ordre_variantes.get(str(v), 50)
+            ),
         )
         .sort_values(["_ordre", "variante"])
         .reset_index(drop=True)
@@ -717,6 +724,7 @@ def construire_tableau_gaps(
 ) -> pd.DataFrame:
     """Retourne le tableau des écarts de généralisation non tunés."""
     from .evaluation.diagnostics_generiques import tableau_gaps
+
     return tableau_gaps([r.to_dict() for r in resultats_untuned])
 
 
@@ -837,7 +845,9 @@ def construire_tableau_corroboration_globale(
             continue
         contenu = json.loads(chemin.read_text(encoding="utf-8"))
         secondary_holdout = contenu.get("secondary_holdout", {})
-        if not isinstance(secondary_holdout, dict) or not secondary_holdout.get("enabled"):
+        if not isinstance(secondary_holdout, dict) or not secondary_holdout.get(
+            "enabled"
+        ):
             continue
         lignes.append(
             {
@@ -845,7 +855,9 @@ def construire_tableau_corroboration_globale(
                 "reference_variant": secondary_holdout.get("reference_variant"),
                 "nested_cv_f1": contenu.get("val_f1_macro_mean"),
                 "holdout_tuned_f1": secondary_holdout.get("tuned", {}).get("f1_macro"),
-                "holdout_reference_f1": secondary_holdout.get("reference", {}).get("f1_macro"),
+                "holdout_reference_f1": secondary_holdout.get("reference", {}).get(
+                    "f1_macro"
+                ),
                 "delta_holdout": (
                     secondary_holdout.get("tuned", {}).get("f1_macro", np.nan)
                     - secondary_holdout.get("reference", {}).get("f1_macro", np.nan)
@@ -890,7 +902,9 @@ def extraire_images_notebook(
 
     notebook = Path(notebook_path)
     contenu = json.loads(notebook.read_text(encoding="utf-8"))
-    dossier_sortie = Path(output_dir) if output_dir is not None else notebook.with_suffix("")
+    dossier_sortie = (
+        Path(output_dir) if output_dir is not None else notebook.with_suffix("")
+    )
     dossier_sortie.mkdir(parents=True, exist_ok=True)
 
     extensions = {

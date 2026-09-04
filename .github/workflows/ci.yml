@@ -1,0 +1,113 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Quality (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.13"]
+    env:
+      MPLBACKEND: Agg
+      MPLCONFIGDIR: ${{ github.workspace }}/.cache/matplotlib
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: requirements-lock.txt
+
+      - name: Install locked dependencies and project
+        run: |
+          python -m pip install --require-hashes -r requirements-lock.txt
+          python -m pip install --no-build-isolation --no-deps -e .
+          python -m pip check
+
+      - name: Lint and verify formatting
+        run: |
+          python -m ruff check src tests report/build.py report/generate_localized_figures.py
+          python -m ruff format --check src tests report/build.py report/generate_localized_figures.py
+
+      - name: Run tests
+        run: python -m pytest -q
+
+      - name: Smoke-test installed CLI
+        run: leaf-classification --help
+
+  reports:
+    name: Build and validate bilingual reports
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - name: Install LaTeX and PDF validation tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends \
+            latexmk \
+            poppler-utils \
+            texlive-fonts-recommended \
+            texlive-lang-french \
+            texlive-latex-extra \
+            texlive-latex-recommended
+
+      - name: Build reports with strict log validation
+        run: python report/build.py --language all --check
+
+      - name: Validate PDF metadata and visible text
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          fr_pdf="report/pdf/leaf-classification-portfolio-fr.pdf"
+          en_pdf="report/pdf/leaf-classification-portfolio-en.pdf"
+          test -s "$fr_pdf"
+          test -s "$en_pdf"
+
+          pdfinfo "$fr_pdf" > /tmp/fr-info.txt
+          pdfinfo "$en_pdf" > /tmp/en-info.txt
+          grep -Eq '^Title:.*Classification de feuilles.*portfolio' /tmp/fr-info.txt
+          grep -Eq '^Title:.*Leaf Classification.*portfolio edition' /tmp/en-info.txt
+          grep -Eq '^Author:[[:space:]]+Mouloud Serir[[:space:]]*$' /tmp/fr-info.txt
+          grep -Eq '^Author:[[:space:]]+Mouloud Serir[[:space:]]*$' /tmp/en-info.txt
+          grep -Eq '^Pages:[[:space:]]+[1-9][0-9]*[[:space:]]*$' /tmp/fr-info.txt
+          grep -Eq '^Pages:[[:space:]]+[1-9][0-9]*[[:space:]]*$' /tmp/en-info.txt
+
+          pdftotext -layout "$fr_pdf" /tmp/fr-report.txt
+          pdftotext -layout "$en_pdf" /tmp/en-report.txt
+          grep -Fq '4 septembre 2026' /tmp/fr-report.txt
+          grep -Fq 'September 4, 2026' /tmp/en-report.txt
+          ! grep -Eiq 'Yassine|Yasmine|Ben Khaled|Pierre-Marc Jodoin|Jodoin' \
+            /tmp/fr-report.txt /tmp/en-report.txt
+
+      - name: Upload final reports
+        uses: actions/upload-artifact@v7
+        with:
+          name: bilingual-portfolio-reports
+          path: report/pdf/*.pdf
+          if-no-files-found: error
+          retention-days: 14

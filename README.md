@@ -1,228 +1,157 @@
-# Projet IFT712 - Leaf Classification
+# Leaf Classification — Multiclass ML Benchmark
 
-Projet de classification multiclasse sur le dataset **Kaggle Leaf Classification** dans le cadre du cours **IFT712 - Techniques d'apprentissage**.
+An end-to-end comparison of six supervised-learning models on the Kaggle Leaf
+Classification dataset. This repository is the personal portfolio edition of an
+IFT712 *Techniques d'apprentissage* project, curated and authored by
+[Mouloud Serir](https://github.com/Mouloud08).
 
-L'objectif du dépôt est de comparer plusieurs familles de modèles supervisés sur un même protocole expérimental, puis de documenter leurs performances, leurs erreurs et leurs compromis dans des notebooks d'analyse.
+The project combines a reusable Python experiment pipeline with eight fully
+executed notebooks and bilingual reports. It emphasizes reproducible model
+selection: tuning is evaluated with nested cross-validation, and exploratory
+results are kept separate from confirmatory estimates.
 
-Le rapport final remis pour le projet est disponible dans [`rapport/rapport_leaf_classification_final.pdf`](rapport/rapport_leaf_classification_final.pdf).
+## Result at a glance
 
-## Ce que fait le projet
+| Dataset | Benchmark | Best confirmatory result |
+| --- | --- | --- |
+| 990 labelled leaves · 99 species · 192 numeric features | Perceptron, logistic regression, SVM, random forest, decision tree, MLP | Tuned logistic regression: **macro-F1 0.9787 ± 0.0198**, **accuracy 0.9848** |
 
-Le projet étudie six modèles :
+The reported values are means across the outer folds of nested cross-validation;
+the uncertainty shown for macro-F1 is one standard deviation. See the
+[global comparison notebook](notebooks/08_Comparaison_Globale.ipynb) for the
+model-by-model evidence and diagnostics.
 
-- `perceptron`
-- `regression_logistique`
-- `svm`
-- `foret_aleatoire`
-- `arbre_decision`
-- `mlp`
+![Nested cross-validation comparison of the six tuned models](assets/model-comparison-en.png)
 
-Pour chacun, on retrouve généralement :
+## Start here
 
-- une ou plusieurs variantes exploratoires ;
-- une version ajustée (`tuned`) évaluée plus rigoureusement ;
-- des métriques, prédictions, figures et tableaux d'analyse ;
-- une comparaison finale avec les autres modèles.
+- [English portfolio report](report/pdf/leaf-classification-portfolio-en.pdf)
+- [Rapport portfolio en français](report/pdf/leaf-classification-portfolio-fr.pdf)
+- [Global model comparison notebook](notebooks/08_Comparaison_Globale.ipynb)
+- [Dataset provenance and integrity](data/README.md)
 
-Le dépôt est organisé pour séparer :
+> These reports are revised portfolio editions, not the archived April 2026
+> course submission.
 
-- le **code réutilisable** dans `src/` ;
-- les **artefacts produits** dans `results/` ;
-- les **notebooks d'analyse** dans `notebooks/`.
+## What the project covers
 
-## Point d'entrée principal : les notebooks
+The dataset represents each specimen with 64 margin, 64 shape, and 64 texture
+descriptors. The study compares six model families under a shared evaluation
+framework:
 
-Les notebooks sont le moyen principal pour comprendre, relancer et présenter le projet.  
-Ce sont eux qu'une personne découvrant le dépôt devrait ouvrir en priorité.
+1. Perceptron
+2. Logistic regression
+3. Support vector machine (SVM)
+4. Random forest
+5. Decision tree
+6. Multilayer perceptron (MLP)
 
-Ordre recommandé :
+The workflow includes deterministic data preparation, baseline and improved
+variants, hyperparameter tuning, nested cross-validation, out-of-fold
+predictions, multiclass diagnostics, learning curves, confusion analysis, and a
+final cross-model comparison. The default random seed is `42`.
 
-1. `01_Exploratory_Data_Analysis.ipynb`
-2. `02_Modele_Perceptron.ipynb`
-3. `03_Modele_Regression_Logistique.ipynb`
-4. `04_Modele_SVM.ipynb`
-5. `05_Modele_Foret_Aleatoire.ipynb`
-6. `06_Modele_Arbre_Decision.ipynb`
-7. `07_Modele_MLP.ipynb`
-8. `08_Comparaison_Globale.ipynb`
-
-En pratique :
-
-- `01` sert à comprendre le dataset ;
-- `02` à `07` détaillent l'étude de chaque modèle ;
-- `08` rassemble la comparaison globale et les conclusions quantitatives.
-
-## Architecture du dépôt
+## Repository architecture
 
 ```text
-Projet_Session_IFT712/
-├── data/
-│   └── raw/
-│       └── train.csv
-├── notebooks/
-│   ├── 01_Exploratory_Data_Analysis.ipynb
-│   ├── 02_Modele_Perceptron.ipynb
-│   ├── 03_Modele_Regression_Logistique.ipynb
-│   ├── 04_Modele_SVM.ipynb
-│   ├── 05_Modele_Foret_Aleatoire.ipynb
-│   ├── 06_Modele_Arbre_Decision.ipynb
-│   ├── 07_Modele_MLP.ipynb
-│   └── 08_Comparaison_Globale.ipynb
-├── results/
-│   ├── global/
-│   └── <modele>/
-│       ├── metrics/
-│       ├── predictions/
-│       ├── tuning/
-│       └── figures/
-├── rapport/
-│   └── rapport_leaf_classification_final.pdf
-├── src/
-│   ├── artifacts/
-│   ├── cli/
-│   ├── data/
-│   ├── evaluation/
-│   ├── experiments/
-│   ├── models/
-│   ├── plots/
-│   ├── config.py
-│   ├── notebook_support.py
-│   └── __init__.py
-├── tests/
-├── requirements.txt
-└── README.md
+.
+├── assets/       # Portfolio visuals used by this README
+├── data/         # Included Kaggle training CSV and provenance notes
+├── notebooks/    # EDA, six model studies, and the global comparison
+├── report/       # Bilingual LaTeX sources, build script, and final PDFs
+├── src/          # Data, models, evaluation, experiments, plots, and CLI
+└── tests/        # Unit, integration, methodology, and artifact checks
 ```
 
-### Rôle des dossiers principaux
+Generated experiment artifacts are written to `results/` and intentionally
+ignored by Git. The notebooks retain their checked outputs so the analysis can
+be reviewed directly on GitHub without rerunning the full benchmark.
 
-- `data/raw/` : données d'entrée, en particulier `train.csv`.
-- `notebooks/` : analyses principales du projet.
-- `results/` : sorties générées par le pipeline expérimental.
-- `rapport/` : version finale du rapport de projet.
-- `src/data/` : chargement et préparation des données.
-- `src/models/` : définitions des modèles.
-- `src/evaluation/` : métriques, validation croisée, évaluation.
-- `src/experiments/` : orchestration des variantes, tuning et exécutions complètes.
-- `src/artifacts/` : lecture, écriture et validation des artefacts dans `results/`.
-- `src/notebook_support.py` : helpers utilisés par les notebooks.
-- `tests/` : tests automatisés du code, des modèles et des artefacts.
+## Reproduce the project
 
-## Installation
+### 1. Install
 
-PowerShell :
+Python 3.10 or newer is required. From the repository root:
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+python -m pip install --upgrade pip
+python -m pip install -e ".[dev]"
 ```
 
-Le jeu d'entraînement utilisé par le projet est inclus dans :
-
-```text
-data/raw/train.csv
-```
-
-Pour vérifier l'installation :
+For the exact dependency set used by CI, install the hash-locked environment:
 
 ```powershell
+python -m pip install --require-hashes -r requirements-lock.txt
+python -m pip install --no-build-isolation --no-deps -e .
+```
+
+On macOS or Linux, activate the environment with
+`source .venv/bin/activate` instead.
+
+The checked training data is already available at `data/raw/train.csv`. Its
+shape and SHA-256 fingerprint are documented in [data/README.md](data/README.md).
+
+### 2. Use the command-line pipeline
+
+```powershell
+leaf-classification --help
+leaf-classification --all
+```
+
+The module form is equivalent and works without the installed console wrapper:
+
+```powershell
+python -m src --models regression_logistique svm mlp
+```
+
+Useful options include `--skip-existing`, `--force`, `--no-tuning`,
+`--no-figures`, and `--output-root`. Running every nested-CV study is
+compute-intensive; start with one model when validating a new environment.
+
+### 3. Review or rerun the notebooks
+
+```powershell
+jupyter notebook notebooks/08_Comparaison_Globale.ipynb
+```
+
+Notebook `01` introduces the data, notebooks `02`–`07` study one model each,
+and notebook `08` consolidates the comparison and conclusions.
+
+### 4. Run quality checks
+
+```powershell
+python -m ruff check src tests report/build.py report/generate_localized_figures.py
+python -m ruff format --check src tests report/build.py report/generate_localized_figures.py
 python -m pytest -q
 ```
 
-## Utilisation des notebooks
+### 5. Build the bilingual reports
 
-Une fois l'environnement prêt :
-
-```powershell
-jupyter notebook
-```
-
-Les notebooks constituent le workflow principal pour explorer et présenter le projet.
-
-Ils ne sont pas indépendants du reste du code :
-
-- les notebooks modèles `02` à `07` s'appuient sur les mêmes briques expérimentales que la CLI ;
-- le notebook `08_Comparaison_Globale.ipynb` relit principalement les artefacts déjà produits dans `results/` ;
-- les figures, tableaux et métriques importants doivent donc rester cohérents avec ce qui est généré par le pipeline canonique.
-
-Autrement dit :
-
-- la **CLI** sert surtout à produire ou régénérer proprement les artefacts ;
-- les **notebooks** servent surtout à analyser, interpréter et présenter ces résultats ;
-- `results/` joue le rôle de base commune entre les deux.
-
-## CLI
-
-La CLI sert à exécuter le pipeline expérimental sans passer notebook par notebook.  
-Elle est utile pour régénérer proprement les résultats dans `results/`.
-
-Point d'entrée :
+A local LaTeX distribution with `latexmk` is required.
 
 ```powershell
-python -m src.cli.main --help
+python report/build.py --language all
+python report/build.py --language all --check
 ```
 
-### Commande la plus importante
+Use `--language en` or `--language fr` to build one edition, and `--clean` to
+remove local report build products.
 
-```powershell
-python -m src.cli.main --all
-```
+## Data source
 
-Cette commande lance l'étude sur tous les modèles définis par le projet.  
-Elle exécute les variantes, le tuning lorsque prévu, puis régénère les résultats dans `results/`.
+The included `train.csv` comes from Kaggle's
+[Leaf Classification competition](https://www.kaggle.com/competitions/leaf-classification/data).
+Kaggle's [competition rules](https://www.kaggle.com/competitions/leaf-classification/rules)
+govern use of the competition data. The dataset is third-party material and is
+not covered by the project's copyright notice.
 
-### Exemples utiles
+## Author and rights
 
-Exécuter tous les modèles :
+**Mouloud Serir** · [GitHub @Mouloud08](https://github.com/Mouloud08)
 
-```powershell
-python -m src.cli.main --all
-```
-
-Exécuter seulement certains modèles :
-
-```powershell
-python -m src.cli.main --models regression_logistique svm mlp
-```
-
-Réutiliser les résultats déjà présents :
-
-```powershell
-python -m src.cli.main --all --skip-existing
-```
-
-Forcer une réexécution complète :
-
-```powershell
-python -m src.cli.main --all --force
-```
-
-Désactiver le tuning ou les figures :
-
-```powershell
-python -m src.cli.main --models perceptron svm --no-tuning --no-figures
-```
-
-## Relation entre CLI et notebooks
-
-La CLI et les notebooks sont conçus pour fonctionner ensemble.
-
-- la CLI exécute l'étude de manière batch et écrit les sorties dans `results/` ;
-- les notebooks utilisent ce même socle de code et ces mêmes artefacts pour construire l'analyse ;
-- certains notebooks peuvent rejouer une partie du workflow modèle par modèle, mais ils restent alignés sur la même architecture expérimentale ;
-- la comparaison globale doit être lue à partir des artefacts canoniques de `results/`.
-
-Le chemin recommandé est donc :
-
-1. régénérer `results/` avec la CLI si nécessaire ;
-2. ouvrir les notebooks dans l'ordre `01` à `08` ;
-3. utiliser les notebooks pour l'analyse détaillée et la présentation finale.
-
-## Résumé rapide
-
-Si quelqu'un reprend le projet, le chemin le plus naturel est :
-
-1. installer l'environnement ;
-2. placer `train.csv` dans `data/raw/` ;
-3. lancer la CLI si besoin pour régénérer `results/` ;
-4. ouvrir les notebooks et suivre l'analyse dans l'ordre `01` à `08`.
+This curated repository and both portfolio reports are presented as Mouloud
+Serir's personal portfolio work. Project materials are all rights reserved; see
+[NOTICE.md](NOTICE.md). Third-party dataset rights remain with their respective
+owners.

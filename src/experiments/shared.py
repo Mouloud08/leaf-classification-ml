@@ -96,7 +96,9 @@ def calculer_metriques_complementarite_erreurs(
         "erreurs_communes": int(len(erreurs_communes)),
         "erreurs_union": int(len(erreurs_union)),
         "error_overlap_rate": (
-            1.0 if not erreurs_union else float(len(erreurs_communes) / len(erreurs_union))
+            1.0
+            if not erreurs_union
+            else float(len(erreurs_communes) / len(erreurs_union))
         ),
         "shared_error_rate": (
             0.0 if not n_observations else float(len(erreurs_communes) / n_observations)
@@ -220,8 +222,7 @@ def construire_tuning_run_result(
         n_splits=mesures_nested["n_splits"],
         inner_splits=mesures_nested["inner_splits"],
         best_params_exploratory={
-            k: normaliser_parametre_pour_json(v)
-            for k, v in grid.best_params_.items()
+            k: normaliser_parametre_pour_json(v) for k, v in grid.best_params_.items()
         },
         best_params_per_fold=[
             {k: normaliser_parametre_pour_json(v) for k, v in row.items()}

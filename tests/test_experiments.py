@@ -7,13 +7,24 @@ import uuid
 from pathlib import Path
 from unittest.mock import patch
 
+import numpy as np
 import pandas as pd
-
 from sklearn.model_selection import StratifiedKFold
 
+from src.artifacts import (
+    StudyRunResult,
+    TuningRunResult,
+    UntunedVariantResult,
+    global_paths,
+    model_paths,
+    sauvegarder_mesures,
+    sauvegarder_predictions,
+    valider_artefacts_mesures,
+)
+from src.cli.main import _parse_advanced_figures, build_parser
+from src.data import charger_donnees_modelisation
 from src.experiments import (
     ALL_MODEL_NAMES,
-    MODEL_STUDY_SPECS,
     ModelStudySpec,
     StudySpec,
     UntunedVariantSpec,
@@ -29,19 +40,6 @@ from src.notebook_support import (
     construire_tableau_complementarite_erreurs,
     construire_tableau_corroboration_secondaire,
 )
-from src.artifacts import (
-    StudyRunResult,
-    TuningRunResult,
-    UntunedVariantResult,
-    global_paths,
-    model_paths,
-    sauvegarder_mesures,
-    sauvegarder_predictions,
-    valider_artefacts_mesures,
-)
-from src.data import charger_donnees_modelisation
-from src.cli.main import build_parser, _parse_advanced_figures
-
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -190,13 +188,37 @@ class TestRunnerReuse(unittest.TestCase):
                         "n_dev": 10,
                         "n_holdout": 2,
                         "tuned": {"f1_macro": 0.7, "accuracy": 0.7, "best_params": {}},
-                        "reference": {"variant": "scaled_pca", "f1_macro": 0.6, "accuracy": 0.6},
+                        "reference": {
+                            "variant": "scaled_pca",
+                            "f1_macro": 0.6,
+                            "accuracy": 0.6,
+                        },
                     },
                     "descriptive_holdout_all_variants": [
-                        {"variante": "default", "f1_macro": 0.4, "accuracy": 0.45, "role": "baseline"},
-                        {"variante": "scaled_only", "f1_macro": 0.55, "accuracy": 0.56, "role": "untuned"},
-                        {"variante": "scaled_pca", "f1_macro": 0.6, "accuracy": 0.6, "role": "reference"},
-                        {"variante": "tuned", "f1_macro": 0.7, "accuracy": 0.7, "role": "tuned"},
+                        {
+                            "variante": "default",
+                            "f1_macro": 0.4,
+                            "accuracy": 0.45,
+                            "role": "baseline",
+                        },
+                        {
+                            "variante": "scaled_only",
+                            "f1_macro": 0.55,
+                            "accuracy": 0.56,
+                            "role": "untuned",
+                        },
+                        {
+                            "variante": "scaled_pca",
+                            "f1_macro": 0.6,
+                            "accuracy": 0.6,
+                            "role": "reference",
+                        },
+                        {
+                            "variante": "tuned",
+                            "f1_macro": 0.7,
+                            "accuracy": 0.7,
+                            "role": "tuned",
+                        },
                     ],
                 },
                 paths=paths,
@@ -227,7 +249,9 @@ class TestRunnerReuse(unittest.TestCase):
             )
             with patch(
                 "src.experiments.runner.charger_donnees_modelisation",
-                side_effect=AssertionError("charger_donnees_modelisation ne devrait pas etre appele"),
+                side_effect=AssertionError(
+                    "charger_donnees_modelisation ne devrait pas etre appele"
+                ),
             ):
                 resultat = executer_modele("perceptron", study)
         finally:
@@ -290,7 +314,9 @@ class TestSharedUtilities(unittest.TestCase):
 
     def test_construire_estimateur_variante_with_params(self) -> None:
         spec = UntunedVariantSpec(
-            name="restricted", kind="simple", params={"max_depth": 5},
+            name="restricted",
+            kind="simple",
+            params={"max_depth": 5},
         )
         est = construire_estimateur_variante("arbre_decision", spec)
         self.assertEqual(est.get_params()["max_depth"], 5)
@@ -340,14 +366,18 @@ class TestSharedUtilities(unittest.TestCase):
         self.assertEqual(best.name, "scaled_only")
 
     def test_construire_tableau_complementarite_erreurs_uses_set_overlap(self) -> None:
-        base = ROOT / "results"
+        def predictions_with_errors(error_indices: set[int]) -> pd.DataFrame:
+            y_true = np.full(31, "correct", dtype=object)
+            y_pred = y_true.copy()
+            y_pred[list(error_indices)] = "incorrect"
+            return pd.DataFrame({"y_true": y_true, "y_pred": y_pred})
+
+        shared_lr_svm = set(range(10))
         predictions = {
-            "regression_logistique": pd.read_csv(
-                base / "regression_logistique" / "predictions" / "tuned__predictions.csv"
-            ),
-            "svm": pd.read_csv(base / "svm" / "predictions" / "tuned__predictions.csv"),
-            "foret_aleatoire": pd.read_csv(
-                base / "foret_aleatoire" / "predictions" / "tuned__predictions.csv"
+            "regression_logistique": predictions_with_errors(shared_lr_svm | {10, 11}),
+            "svm": predictions_with_errors(shared_lr_svm | set(range(12, 16))),
+            "foret_aleatoire": predictions_with_errors(
+                set(range(5)) | set(range(16, 31))
             ),
         }
 
@@ -359,7 +389,9 @@ class TestSharedUtilities(unittest.TestCase):
             0.625,
         )
         self.assertAlmostEqual(
-            index.loc[("regression_logistique", "foret_aleatoire"), "error_overlap_rate"],
+            index.loc[
+                ("regression_logistique", "foret_aleatoire"), "error_overlap_rate"
+            ],
             5 / 27,
         )
         self.assertAlmostEqual(
@@ -370,8 +402,12 @@ class TestSharedUtilities(unittest.TestCase):
             index.loc[("regression_logistique", "svm"), "erreurs_communes"],
             10,
         )
-        self.assertEqual(index.loc[("regression_logistique", "svm"), "corriges_par_a_seul"], 4)
-        self.assertEqual(index.loc[("regression_logistique", "svm"), "corriges_par_b_seul"], 2)
+        self.assertEqual(
+            index.loc[("regression_logistique", "svm"), "corriges_par_a_seul"], 4
+        )
+        self.assertEqual(
+            index.loc[("regression_logistique", "svm"), "corriges_par_b_seul"], 2
+        )
 
     def test_valider_artefacts_exige_la_semantique_secondary_holdout(self) -> None:
         artefact_valide = {
@@ -399,7 +435,11 @@ class TestSharedUtilities(unittest.TestCase):
                 "origin": "exploratory_refit",
                 "reference_variant": "scaled_only",
                 "tuned": {"f1_macro": 0.9, "accuracy": 0.9, "best_params": {}},
-                "reference": {"variant": "scaled_only", "f1_macro": 0.8, "accuracy": 0.8},
+                "reference": {
+                    "variant": "scaled_only",
+                    "f1_macro": 0.8,
+                    "accuracy": 0.8,
+                },
             },
         }
         self.assertEqual(valider_artefacts_mesures([artefact_valide]), [])
@@ -417,7 +457,9 @@ class TestSharedUtilities(unittest.TestCase):
             msg=f"Erreurs inattendues: {erreurs}",
         )
 
-    def test_construire_tableau_corroboration_secondaire_expose_la_semantique(self) -> None:
+    def test_construire_tableau_corroboration_secondaire_expose_la_semantique(
+        self,
+    ) -> None:
         mesures_tuned = {
             "secondary_holdout": {
                 "enabled": True,
@@ -426,13 +468,19 @@ class TestSharedUtilities(unittest.TestCase):
                 "origin": "exploratory_refit",
                 "reference_variant": "scaled_only",
                 "tuned": {"f1_macro": 0.9, "accuracy": 0.9, "best_params": {}},
-                "reference": {"variant": "scaled_only", "f1_macro": 0.8, "accuracy": 0.8},
+                "reference": {
+                    "variant": "scaled_only",
+                    "f1_macro": 0.8,
+                    "accuracy": 0.8,
+                },
             }
         }
 
         tableau = construire_tableau_corroboration_secondaire(mesures_tuned)
 
-        self.assertEqual(list(tableau["corroboration_scope"].unique()), ["corroboration_only"])
+        self.assertEqual(
+            list(tableau["corroboration_scope"].unique()), ["corroboration_only"]
+        )
         self.assertEqual(list(tableau["origin"].unique()), ["exploratory_refit"])
         self.assertFalse(tableau["ranking_eligible"].any())
 
@@ -445,11 +493,22 @@ class TestFrozenSplit(unittest.TestCase):
             lignes = []
             for classe in ("a", "b", "c"):
                 for idx in range(10):
-                    lignes.append({"id": f"{classe}_{idx}", "species": classe, "x1": idx, "x2": idx + 1})
+                    lignes.append(
+                        {
+                            "id": f"{classe}_{idx}",
+                            "species": classe,
+                            "x1": idx,
+                            "x2": idx + 1,
+                        }
+                    )
             pd.DataFrame(lignes).to_csv(csv_path, index=False)
 
-            split = charger_donnees_modelisation(csv_path=csv_path, output_root=chemin_temp)
-            split_recharge = charger_donnees_modelisation(csv_path=csv_path, output_root=chemin_temp)
+            split = charger_donnees_modelisation(
+                csv_path=csv_path, output_root=chemin_temp
+            )
+            split_recharge = charger_donnees_modelisation(
+                csv_path=csv_path, output_root=chemin_temp
+            )
         finally:
             import shutil
 
@@ -459,7 +518,11 @@ class TestFrozenSplit(unittest.TestCase):
         self.assertEqual(len(split.X_holdout), 6)
         self.assertEqual(split.metadata["n_dev"], 24)
         self.assertEqual(split.metadata["n_holdout"], 6)
-        self.assertTrue(Path(split.metadata["split_artifact"]).name.endswith("frozen_holdout_split.json"))
+        self.assertTrue(
+            Path(split.metadata["split_artifact"]).name.endswith(
+                "frozen_holdout_split.json"
+            )
+        )
         self.assertTrue(split.X_dev.equals(split_recharge.X_dev))
         self.assertTrue(split.X_holdout.equals(split_recharge.X_holdout))
 

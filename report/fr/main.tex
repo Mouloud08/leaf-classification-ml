@@ -1,0 +1,32 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[french]{babel}
+\input{../style.tex}
+\hypersetup{
+  pdftitle={Classification de feuilles - Edition portfolio},
+  pdfauthor={Mouloud Serir},
+  pdfsubject={Comparaison de six familles de modeles d'apprentissage},
+  pdfkeywords={apprentissage automatique, classification, scikit-learn, validation croisee imbriquee},
+  pdflang={fr-CA}
+}
+
+\begin{document}
+\hypersetup{pageanchor=false}
+\makeportfoliotitle
+  {Projet d'apprentissage automatique}
+  {Projet de session}
+  {Classification de feuilles}
+  {Comparaison de six familles de modèles d'apprentissage\\(Kaggle Leaf Classification)}
+  {Édition portfolio — 4 septembre 2026}
+\clearpage
+\hypersetup{pageanchor=true}
+\portfolioeditionnotice{Cette édition personnelle de portfolio révise la présentation du rapport remis en avril 2026. Elle conserve le protocole, les résultats et les conclusions scientifiques de la remise archivée; les corrections portent sur la langue, la mise en page et la traduction.}
+\tableofcontents
+\newpage
+\input{sections/01-introduction.tex}
+\input{sections/02-eda.tex}
+\input{sections/03-models.tex}
+\input{sections/04-comparison.tex}
+\input{sections/05-conclusion.tex}
+\input{sections/06-appendices.tex}
+\input{sections/07-bibliography.tex}
+\end{document}

@@ -367,11 +367,11 @@ def coefficients_absolus(
         modele.named_steps["modele"] if hasattr(modele, "named_steps") else modele
     )
     coef_abs_mean = np.abs(estimateur_appris.coef_).mean(axis=0)
-    df = pd.DataFrame(
-        {"feature": X.columns, "coef_abs_mean": coef_abs_mean}
-    )
-    return df.sort_values("coef_abs_mean", ascending=False).head(top_n).reset_index(
-        drop=True
+    df = pd.DataFrame({"feature": X.columns, "coef_abs_mean": coef_abs_mean})
+    return (
+        df.sort_values("coef_abs_mean", ascending=False)
+        .head(top_n)
+        .reset_index(drop=True)
     )
 
 
@@ -423,21 +423,25 @@ def decision_function_histogram(
     scores = modele.decision_function(X)
     if scores.ndim == 1:
         y_pred = (scores >= 0).astype(int)
-        return pd.DataFrame({
-            "score": scores,
-            "y_true": y,
-            "y_pred": y_pred,
-            "correct": y_pred == y,
-        })
+        return pd.DataFrame(
+            {
+                "score": scores,
+                "y_true": y,
+                "y_pred": y_pred,
+                "correct": y_pred == y,
+            }
+        )
     # Multiclasse : prendre le score maximal et la classe prédite.
     max_scores = scores.max(axis=1)
     y_pred = modele.predict(X)
-    return pd.DataFrame({
-        "score": max_scores,
-        "y_true": y,
-        "y_pred": y_pred,
-        "correct": y_pred == y,
-    })
+    return pd.DataFrame(
+        {
+            "score": max_scores,
+            "y_true": y,
+            "y_pred": y_pred,
+            "correct": y_pred == y,
+        }
+    )
 
 
 # ---------------------------------------------------------------------------

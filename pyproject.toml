@@ -1,26 +1,56 @@
 [build-system]
-requires = ["setuptools>=68.0"]
+requires = ["setuptools>=77.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "leaf-classification"
 version = "0.1.0"
-description = "Projet IFT712 de classification de feuilles"
+description = "Reproducible multiclass leaf-classification study across six machine-learning models"
+readme = "README.md"
 requires-python = ">=3.10"
-dependencies = [
-    "scikit-learn>=1.3.0",
-    "pandas>=2.0.0",
-    "numpy>=1.24.0",
-    "matplotlib>=3.7.0",
-    "seaborn>=0.12.0",
-    "joblib>=1.3.0",
+authors = [
+    { name = "Mouloud Serir", email = "84584439+Mouloud08@users.noreply.github.com" },
 ]
+keywords = [
+    "classification",
+    "machine-learning",
+    "nested-cross-validation",
+    "scikit-learn",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "joblib>=1.3",
+    "matplotlib>=3.7",
+    "numpy>=1.24",
+    "pandas>=2.0",
+    "scikit-learn>=1.3",
+    "seaborn>=0.12",
+]
+
+[project.urls]
+Homepage = "https://github.com/Mouloud08/leaf-classification-ml"
+Repository = "https://github.com/Mouloud08/leaf-classification-ml"
+
+[project.scripts]
+leaf-classification = "src.cli.main:main"
 
 [project.optional-dependencies]
 dev = [
-    "jupyter>=1.0.0",
-    "pytest>=8.0.0",
-    "ruff>=0.6.0",
+    "jupyter>=1.1,<2",
+    "pip-tools>=7.5,<8",
+    "pytest>=8,<9",
+    "pytest-subtests>=0.14,<1",
+    "ruff>=0.15,<0.16",
 ]
 
 [tool.setuptools.packages.find]
@@ -33,14 +63,17 @@ exclude = [
     ".venv",
     "data",
     "results",
-    "docs/rapport_parts_pdf",
     "notebooks",
 ]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I"]
+ignore = ["E501"]
 
 [tool.ruff.lint.per-file-ignores]
 "src/experiments/figure_runner.py" = ["E402"]
-"src/notebook_support.py" = ["E501"]
-"tests/test_report_readiness.py" = ["E501"]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-ra --strict-markers"
+testpaths = ["tests"]

@@ -62,10 +62,7 @@ def tracer_barres_comparaison(
         raise ValueError("Le tableau de résultats est vide.")
 
     ordre_modeles = (
-        tableau.groupby("modele")[metrique]
-        .mean()
-        .sort_values(ascending=False)
-        .index
+        tableau.groupby("modele")[metrique].mean().sort_values(ascending=False).index
     )
 
     figure, axe = plt.subplots(figsize=(10.8, 6.2))
@@ -179,10 +176,7 @@ def tracer_comparaison_variantes(
     )
     donnees["metrique"] = donnees["metrique"].map(_format_label)
 
-    ordre_metriques = [
-        _format_label(metric_name)
-        for metric_name in colonnes_metriques
-    ]
+    ordre_metriques = [_format_label(metric_name) for metric_name in colonnes_metriques]
     donnees["metrique"] = pd.Categorical(
         donnees["metrique"],
         categories=ordre_metriques,

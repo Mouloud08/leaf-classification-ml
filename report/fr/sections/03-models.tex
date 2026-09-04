@@ -1,0 +1,635 @@
+\section{Étude des modèles}
+
+Cette section compare six familles de modèles dans un cadre expérimental strictement commun. La métrique principale est le \texttt{F1-macro}, retenu pour donner le même poids aux \texttt{99} espèces, et l'\texttt{accuracy} joue le rôle de métrique secondaire.
+
+La lecture suit trois niveaux de preuve bien distincts. Les variantes exploratoires relèvent d'une validation croisée simple et servent à mesurer l'effet du prétraitement ou du contrôle de complexité. Le résultat principal de chaque famille est la variante \texttt{tuned}, évaluée par validation croisée imbriquée. Lorsque disponible, la corroboration secondaire sur le split gelé sert uniquement à vérifier si le signal observé sur le jeu de développement se maintient sur des données jamais vues pendant la modélisation.
+
+Les sous-chapitres qui suivent reprennent une structure commune. Chaque modèle est d'abord replacé dans la logique scientifique de l'étude, puis analysé successivement sous l'angle exploratoire, confirmatoire et, quand elle existe, de la corroboration secondaire.
+
+L'objectif de cette partie n'est donc pas encore de trancher globalement entre les modèles, mais de comprendre comment chaque famille réagit au prétraitement, au contrôle de complexité et au tuning. La synthèse inter-modèles est volontairement réservée à la section suivante, afin de maintenir une séparation nette entre l'analyse propre à chaque famille et la comparaison transversale finale.
+
+% --- PERCEPTRON ---
+\subsection{Modèle Perceptron}
+
+\subsubsection{Positionnement du modèle}
+Le perceptron constitue la baseline linéaire minimale de l'étude. Son intérêt est moins de rivaliser avec les meilleurs modèles que de quantifier ce qu'une frontière de décision élémentaire peut extraire d'un problème multiclasses de grande dimension. Il fournit ainsi un point de comparaison utile pour mesurer l'effet de la standardisation et, plus généralement, le besoin de capacité supplémentaire.
+
+\subsubsection{Exploration}
+La phase exploratoire montre d'emblée que le prétraitement joue un rôle central pour cette famille. La variante brute atteint un \texttt{F1-macro} de \texttt{0.6979} et une \texttt{accuracy} de \texttt{0.7436}. L'ajout du \texttt{StandardScaler} fait progresser le \texttt{F1-macro} a \texttt{0.8228}, tandis que la variante \texttt{scaled\_pca} s'établit a \texttt{0.8057}. Le gain principal provient donc de la mise à l'échelle; la réduction de dimension ne fournit pas ici d'amélioration supplémentaire robuste.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|r|r|r|r|}
+\hline
+\textbf{Variante} & \textbf{Protocole} & \textbf{F1-macro} & \textbf{Accuracy} & \textbf{Gap F1} & \textbf{Temps (s)} \\
+\hline
+\texttt{default} & simple CV & \texttt{0.6979} & \texttt{0.7436} & \texttt{0.1202} & \texttt{0.62} \\
+\texttt{scaled\_only} & simple CV & \texttt{0.8228} & \texttt{0.8460} & \texttt{0.1732} & \texttt{0.60} \\
+\texttt{scaled\_pca} & simple CV & \texttt{0.8057} & \texttt{0.8346} & \texttt{0.1923} & \texttt{0.65} \\
+\hline
+\end{tabular}
+\caption{Comparaison des variantes du perceptron}
+\end{table}
+
+Le perceptron devient donc nettement plus crédible après normalisation, mais la taille du gap de généralisation indiqué que sa marge d'amélioration demeure limitée. Cette lecture exploratoire suggère déjà qu'un modèle linéaire non probabiliste de faible capacité restera plutôt une borne inférieure qu'un candidat de premier rang.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../figures/fr/figA2b_comparaison_perceptron.png}
+\caption{Comparaison exploratoire des variantes du perceptron. Le saut de performance est presque entièrement explique par la standardisation des variables.}
+\end{figure}
+
+\subsubsection{Confirmation}
+L'évaluation confirmatoire par validation croisée imbriquée conduit à un \texttt{F1-macro} moyen de \texttt{0.8085} et une \texttt{accuracy} moyenne de \texttt{0.8409}, avec des écarts-types de \texttt{0.0523} et \texttt{0.0411}. Le score confirmatoire reste légèrement inférieur a celui de la meilleure variante exploratoire (\texttt{scaled\_only}), ce qui est cohérent avec une estimation moins optimiste après sélection de modèle.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|r|}
+\hline
+\textbf{Métrique confirmatoire} & \textbf{Valeur} \\
+\hline
+F1-macro moyen & \texttt{0.8085} \\
+Écart-type F1 & \texttt{0.0523} \\
+Accuracy moyenne & \texttt{0.8409} \\
+Écart-type accuracy & \texttt{0.0411} \\
+Protocole & \texttt{nested CV} \\
+Plis externes & \texttt{5} \\
+Plis internes & \texttt{3} \\
+Temps total (s) & \texttt{29.79} \\
+\hline
+\end{tabular}
+\end{table}
+
+La conclusion scientifique reste stable: le perceptron capte une partie substantielle de la structure du problème une fois les variables standardisées, mais il reste nettement en retrait des meilleures familles. Il remplit donc pleinement son rôle de baseline linéaire minimale sans devenir un candidat crédible pour le classement final.
+
+\subsubsection{Diagnostics descriptifs}
+Les figures associées au perceptron sont avant tout descriptives. L'histogramme de la fonction de décision renseigne sur la dispersion des scores marginaux, tandis que la matrice de confusion et le tableau des principales confusions montrent que les erreurs résiduelles restent relativement diffuses, ce qui est compatible avec les limites d'une frontière linéaire simple sur un problème a \texttt{99} classes.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../figures/fr/fig_perceptron_histogramme_fonction_decision.png}
+\caption{Histogramme exploratoire de la fonction de décision du perceptron. La dispersion des scores reste compatible avec une séparation linéaire utile mais encore limitée.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../figures/fr/figA_confusion_perceptron_tuned.png}
+\caption{Matrice de confusion normalisée obtenue à partir des prédictions hors pli de la variante \texttt{tuned}. Les erreurs résiduelles restent plus diffuses que pour les meilleures familles du projet.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../figures/fr/fig_perceptron_top12_confusions.png}
+\caption{Principales confusions observées pour le perceptron ajusté. Leur dispersion confirme que le modèle reste limité par sa capacité de séparation.}
+\end{figure}
+
+\subsubsection{Corroboration secondaire}
+Une corroboration secondaire est disponible sur le split gelé. La variante de référence est \texttt{scaled\_only}, choisie à partir des résultats exploratoires sur le jeu de développement. Sur la corroboration, cette référence atteint un \texttt{F1-macro} de \texttt{0.8815}, contre \texttt{0.8694} pour la variante \texttt{tuned}. Le delta \texttt{tuned - reference} est donc de \texttt{-0.0121}.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|r|r|l|}
+\hline
+\textbf{Variante} & \textbf{F1 corroboration} & \textbf{Accuracy corroboration} & \textbf{Rôle} \\
+\hline
+\texttt{default} & \texttt{0.8318} & \texttt{0.8586} & baseline \\
+\texttt{scaled\_only} & \texttt{0.8815} & \texttt{0.8939} & référence \\
+\texttt{scaled\_pca} & \texttt{0.8671} & \texttt{0.8838} & descriptif \\
+\texttt{tuned} & \texttt{0.8694} & \texttt{0.8838} & ajusté \\
+\hline
+\end{tabular}
+\end{table}
+
+Pour le perceptron, la corroboration confirme surtout que le gain utile provient de la standardisation. Le tuning n'apporte pas d'amélioration robuste sur cette famille peu flexible, qui conserve donc avant tout le statut de baseline linéaire informative.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../figures/fr/fig_perceptron_corroboration_holdout.png}
+\caption{Comparaison secondaire entre la variante de référence et la variante \texttt{tuned} du perceptron sur le jeu de corroboration.}
+\end{figure}
+
+% --- LOGISTIC RÉGRESSION ---
+\subsection{Modèle Régression logistique}
+
+\subsubsection{Positionnement du modèle}
+La régression logistique constitue la référence linéaire probabiliste du projet. Elle combine une structure de décision simple, une régularisation contrôlée et des probabilités interprétables, ce qui en fait un point d'ancrage particulièrement solide pour juger à la fois la performance prédictive et la qualité de la sortie probabiliste.
+
+\subsubsection{Exploration}
+Les résultats exploratoires mettent en évidence une dépendance très forte à la mise à l'échelle. Sans prétraitement, la régression logistique plafonne a \texttt{0.2591} en \texttt{F1-macro} et \texttt{0.3106} en \texttt{accuracy}. Avec \texttt{StandardScaler}, elle bondit a \texttt{0.9798} en \texttt{F1-macro} et \texttt{0.9861} en \texttt{accuracy}. La variante \texttt{scaled\_pca} reste quasiment au même niveau (\texttt{0.9784} en \texttt{F1-macro}), sans gain robuste par rapport au scaling seul.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|r|r|r|r|}
+\hline
+\textbf{Variante} & \textbf{Protocole} & \textbf{F1-macro} & \textbf{Accuracy} & \textbf{Gap F1} & \textbf{Temps (s)} \\
+\hline
+\texttt{default} & simple CV & \texttt{0.2591} & \texttt{0.3106} & \texttt{0.0899} & \texttt{1.69} \\
+\texttt{scaled\_only} & simple CV & \texttt{0.9798} & \texttt{0.9861} & \texttt{0.0202} & \texttt{8.10} \\
+\texttt{scaled\_pca} & simple CV & \texttt{0.9784} & \texttt{0.9848} & \texttt{0.0216} & \texttt{2.21} \\
+\hline
+\end{tabular}
+\end{table}
+
+Cette phase suffit déjà à établir un résultat fort: sur ce jeu de données, un modèle linéaire bien régularisé devient extrêmement performant dès qu'il est alimenté par des variables correctement standardisées. La famille se place donc immédiatement parmi les principales candidates au classement final.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../figures/fr/fig_lr_comparaison_variantes.png}
+\caption{Comparaison exploratoire des variantes de régression logistique. Le scaling transforme un modèle linéaire faible en l'un des classifieurs les plus performants de l'étude.}
+\end{figure}
+
+\subsubsection{Confirmation}
+La validation croisée imbriquée confirme pleinement cette lecture. La variante \texttt{tuned} atteint un \texttt{F1-macro} moyen de \texttt{0.9787} et une \texttt{accuracy} moyenne de \texttt{0.9848}, avec des écarts-types de \texttt{0.0198} et \texttt{0.0146}. L'estimation confirmatoire est pratiquement identique à celle de la meilleure variante exploratoire, ce qui traduit une excellente stabilité du signal.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|r|}
+\hline
+\textbf{Métrique confirmatoire} & \textbf{Valeur} \\
+\hline
+F1-macro moyen & \texttt{0.9787} \\
+Écart-type F1 & \texttt{0.0198} \\
+Accuracy moyenne & \texttt{0.9848} \\
+Écart-type accuracy & \texttt{0.0146} \\
+Protocole & \texttt{nested CV} \\
+Plis externes & \texttt{5} \\
+Plis internes & \texttt{3} \\
+Temps total (s) & \texttt{77.05} \\
+\hline
+\end{tabular}
+\end{table}
+
+La régression logistique se situe en tête des moyennes confirmatoires et forme avec le SVM le duo de tête du rapport. Sa force ne vient pas d'un tuning complexe, mais d'une adéquation remarquable entre régularisation linéaire, standardisation et structure du problème.
+
+\subsubsection{Diagnostics descriptifs}
+Les diagnostics associés a cette famille éclairent pourquoi elle se comporte si bien. Le chemin de régularisation montre que la performance se stabilise rapidement dans la zone utile de \texttt{C}, ce qui suggère une frontière déjà bien déterminée par les données une fois le scaling appliqué. Les principales confusions résiduelles restent, quant à elles, très peu nombreuses au regard du niveau de performance observé.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../figures/fr/figA_confusion_lr_tuned.png}
+\caption{Matrice de confusion normalisée issue des prédictions hors pli de la variante \texttt{tuned}. La quasi-diagonale confirme une excellente séparabilité inter-classes.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../figures/fr/fig06_regularization_path.png}
+\caption{Diagnostic exploratoire du compromis entre régularisation et performance. Cette figure aide à interpréter le modèle, sans remplacer l'estimation confirmatoire.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../figures/fr/fig_lr_top12_confusions.png}
+\caption{Principales confusions résiduelles de la régression logistique. Leur faible nombre est cohérent avec le niveau de performance confirmatoire observé.}
+\end{figure}
+
+\subsubsection{Corroboration secondaire}
+La corroboration secondaire confirme intégralement la lecture principale. La référence \texttt{scaled\_only}, la variante \texttt{scaled\_pca} et la variante \texttt{tuned} obtiennent toutes \texttt{0.9892} en \texttt{F1-macro} et \texttt{0.9899} en \texttt{accuracy} sur le split gelé. Le delta \texttt{tuned - reference} est donc nul.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|r|r|l|}
+\hline
+\textbf{Variante} & \textbf{F1 corroboration} & \textbf{Accuracy corroboration} & \textbf{Rôle} \\
+\hline
+\texttt{default} & \texttt{0.4800} & \texttt{0.5253} & baseline \\
+\texttt{scaled\_only} & \texttt{0.9892} & \texttt{0.9899} & référence \\
+\texttt{scaled\_pca} & \texttt{0.9892} & \texttt{0.9899} & descriptif \\
+\texttt{tuned} & \texttt{0.9892} & \texttt{0.9899} & ajusté \\
+\hline
+\end{tabular}
+\end{table}
+
+Pour la régression logistique, la corroboration prolonge un constat déjà net dans les analyses précédentes: après standardisation, la famille est à la fois très performante et remarquablement stable. C'est cette combinaison, plus encore que le tuning lui-même, qui en fait la référence pratique du rapport.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../figures/fr/fig_lr_corroboration_holdout.png}
+\caption{Comparaison secondaire entre la variante de référence et la variante \texttt{tuned} de la régression logistique sur le jeu de corroboration.}
+\end{figure}
+
+% --- SVM ---
+\subsection{Modèle SVM RBF}
+
+\subsubsection{Positionnement du modèle}
+Le SVM a noyau RBF représente l'hypothèse non linéaire de référence parmi les méthodes à marge. Son intérêt est de vérifier si une frontière plus souple que celle des modèles linéaires peut apporter un gain tangible, tout en restant contrôlée sur un jeu de données de taille modérée.
+
+\subsubsection{Exploration}
+Le SVM se montre déjà solide sans prétraitement, avec un \texttt{F1-macro} de \texttt{0.8389} et une \texttt{accuracy} de \texttt{0.8561}. La standardisation change toutefois nettement d'échelle: les variantes \texttt{scaled\_only} et \texttt{scaled\_pca} atteignent toutes deux \texttt{0.9712} en \texttt{F1-macro} et \texttt{0.9785} en \texttt{accuracy}. La \texttt{PCA} ne modifie donc pas la lecture empirique, alors que le scaling apparaît comme la condition décisive pour exploiter efficacement le noyau RBF.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|r|r|r|r|}
+\hline
+\textbf{Variante} & \textbf{Protocole} & \textbf{F1-macro} & \textbf{Accuracy} & \textbf{Gap F1} & \textbf{Temps (s)} \\
+\hline
+\texttt{default} & simple CV & \texttt{0.8389} & \texttt{0.8561} & \texttt{0.1364} & \texttt{2.36} \\
+\texttt{scaled\_only} & simple CV & \texttt{0.9712} & \texttt{0.9785} & \texttt{0.0266} & \texttt{2.45} \\
+\texttt{scaled\_pca} & simple CV & \texttt{0.9712} & \texttt{0.9785} & \texttt{0.0266} & \texttt{2.50} \\
+\hline
+\end{tabular}
+\end{table}
+
+Dès la phase exploratoire, le SVM rejoint ainsi le groupe de tête. Il combine une très forte performance à un écart de généralisation limité, ce qui justifie pleinement sa présence parmi les modèles centraux de l'étude.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../figures/fr/fig_svm_comparaison_variantes.png}
+\caption{Comparaison exploratoire des variantes du SVM. Le noyau RBF devient pleinement compétitif après standardisation des variables.}
+\end{figure}
+
+\subsubsection{Confirmation}
+La validation croisée imbriquée confirme cette position de premier plan. La variante \texttt{tuned} atteint un \texttt{F1-macro} moyen de \texttt{0.9756} et une \texttt{accuracy} moyenne de \texttt{0.9823}, avec des écarts-types de \texttt{0.0207} et \texttt{0.0151}. Le score confirmatoire est légèrement supérieur a celui des meilleures variantes exploratoires, ce qui suggère un tuning utile mais modéré.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|r|}
+\hline
+\textbf{Métrique confirmatoire} & \textbf{Valeur} \\
+\hline
+F1-macro moyen & \texttt{0.9756} \\
+Écart-type F1 & \texttt{0.0207} \\
+Accuracy moyenne & \texttt{0.9823} \\
+Écart-type accuracy & \texttt{0.0151} \\
+Protocole & \texttt{nested CV} \\
+Plis externes & \texttt{5} \\
+Plis internes & \texttt{3} \\
+Temps total (s) & \texttt{56.49} \\
+\hline
+\end{tabular}
+\end{table}
+
+Le SVM appartient lui aussi au duo de tête confirmatoire, avec une moyenne très proche de celle de la régression logistique. Il offre donc une alternative non linéaire de très haut niveau, au prix d'un coût d'entraînement plus élevé et d'une moindre interprétabilité structurelle.
+
+\subsubsection{Diagnostics descriptifs}
+\begin{sloppypar}
+Le tableau de tuning exploratoire montre que les meilleures performances se concentrent dans une zone compacte de l'espace des hyperparamètres. Deux constats dominent. Le réglage \texttt{gamma = 0.1} dégrade fortement les scores. De plus, la \texttt{PCA} n'apporte pas de gain robuste face au pipeline standardisé sans réduction de dimension. Le meilleur réglage exploratoire reste donc \texttt{C = 10} avec \texttt{gamma = scale}, sans \texttt{PCA}.
+\end{sloppypar}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|r|r|r|}
+\hline
+\textbf{C / gamma} & \textbf{scale} & \textbf{0.01} & \textbf{0.1} \\
+\hline
+\texttt{1} & \texttt{0.9697} & \texttt{0.9693} & \texttt{0.2539} \\
+\texttt{10} & \texttt{0.9700} & \texttt{0.9679} & \texttt{0.2885} \\
+\hline
+\end{tabular}
+\caption{Tuning exploratoire du SVM sans PCA (\texttt{F1-macro} moyen de CV)}
+\end{table}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|r|r|r|}
+\hline
+\textbf{C / gamma} & \textbf{scale} & \textbf{0.01} & \textbf{0.1} \\
+\hline
+\texttt{1} & \texttt{0.9697} & \texttt{0.9679} & \texttt{0.2917} \\
+\texttt{10} & \texttt{0.9688} & \texttt{0.9654} & \texttt{0.3402} \\
+\hline
+\end{tabular}
+\caption{Tuning exploratoire du SVM avec PCA (\texttt{F1-macro} moyen de CV)}
+\end{table}
+
+Les confusions résiduelles restent rares et localisées, ce qui est compatible avec la qualité du score confirmatoire.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../figures/fr/figA_confusion_svm_tuned.png}
+\caption{Matrice de confusion normalisée issue des prédictions hors pli de la variante \texttt{tuned}. Les erreurs résiduelles sont peu nombreuses et concentrées.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../figures/fr/fig_svm_top12_confusions.png}
+\caption{Principales confusions du SVM ajusté. Leur nombre limité indique que les erreurs se concentrent sur quelques cas structurellement difficiles.}
+\end{figure}
+
+\subsubsection{Corroboration secondaire}
+La corroboration secondaire va dans le même sens que l'analyse confirmatoire, avec un signal plus favorable encore au tuning. La référence \texttt{scaled\_only} obtient \texttt{0.9838} en \texttt{F1-macro} et \texttt{0.9848} en \texttt{accuracy}, tandis que la variante \texttt{tuned} atteint \texttt{0.9946} et \texttt{0.9949}. Le delta \texttt{tuned - reference} est donc de \texttt{+0.0108}.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|r|r|l|}
+\hline
+\textbf{Variante} & \textbf{F1 corroboration} & \textbf{Accuracy corroboration} & \textbf{Rôle} \\
+\hline
+\texttt{default} & \texttt{0.9242} & \texttt{0.9343} & baseline \\
+\texttt{scaled\_only} & \texttt{0.9838} & \texttt{0.9848} & référence \\
+\texttt{scaled\_pca} & \texttt{0.9838} & \texttt{0.9848} & descriptif \\
+\texttt{tuned} & \texttt{0.9946} & \texttt{0.9949} & ajusté \\
+\hline
+\end{tabular}
+\end{table}
+
+Pour le SVM, la corroboration conserve une utilité pratique visible: le tuning y demeure favorable sur le split gelé. La famille apparaît ainsi comme l'une des solutions les plus convaincantes du rapport, très proche de la régression logistique en niveau mais plus dépendante d'un réglage fin.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../figures/fr/fig_svm_corroboration_holdout.png}
+\caption{Comparaison secondaire entre la variante de référence et la variante \texttt{tuned} du SVM sur le jeu de corroboration.}
+\end{figure}
+
+% --- RANDOM FOREST ---
+\subsection{Modèle Forêt aléatoire}
+
+\subsubsection{Positionnement du modèle}
+La forêt aléatoire représente la famille d'ensembles arborescents du projet. Elle est particulièrement intéressante ici parce qu'elle peut capter des interactions non linéaires sans exiger de mise à l'échelle, et parce qu'elle stabilise les coupures que l'arbre de décision unique peine à généraliser.
+
+\subsubsection{Exploration}
+La lecture exploratoire est très favorable a cette famille. La variante \texttt{default} atteint \texttt{0.9764} en \texttt{F1-macro} et \texttt{0.9785} en \texttt{accuracy}, avec un gap de généralisation contenu (\texttt{0.0236}). La variante \texttt{restricted\_depth}, ajoutee comme contrôle de complexité, descend a \texttt{0.9345} en \texttt{F1-macro} et \texttt{0.9445} en \texttt{accuracy}. Restreindre la profondeur reduit donc légèrement le temps de calcul mais dégrade nettement la performance.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|r|r|r|r|}
+\hline
+\textbf{Variante} & \textbf{Protocole} & \textbf{F1-macro} & \textbf{Accuracy} & \textbf{Gap F1} & \textbf{Temps (s)} \\
+\hline
+\texttt{default} & simple CV & \texttt{0.9764} & \texttt{0.9785} & \texttt{0.0236} & \texttt{9.16} \\
+\texttt{restricted\_depth} & simple CV & \texttt{0.9345} & \texttt{0.9445} & \texttt{0.0651} & \texttt{5.42} \\
+\hline
+\end{tabular}
+\end{table}
+
+Des ce stade, la forêt aléatoire se place parmi les meilleurs modèles du projet. Sa force principale tient au fait qu'elle atteint ce niveau sans prétraitement sophistique, ce qui en fait une option robuste et simple a mobiliser sur des variables tabulaires déjà bien informatives.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../figures/fr/fig_rf_comparaison_variantes.png}
+\caption{Comparaison exploratoire des variantes de forêt aléatoire. La version de base est déjà très performante et la restriction de profondeur se révèle trop coûteuse en termes de performance.}
+\end{figure}
+
+\subsubsection{Confirmation}
+La validation croisée imbriquée aboutit à un \texttt{F1-macro} moyen de \texttt{0.9702} et une \texttt{accuracy} moyenne de \texttt{0.9747}, avec des écarts-types de \texttt{0.0140} et \texttt{0.0089}. Le score confirmatoire reste légèrement inférieur a celui de la meilleure variante exploratoire, ce qui est attendu dès lors que l'estimation corrige l'optimisme de la sélection.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|r|}
+\hline
+\textbf{Métrique confirmatoire} & \textbf{Valeur} \\
+\hline
+F1-macro moyen & \texttt{0.9702} \\
+Écart-type F1 & \texttt{0.0140} \\
+Accuracy moyenne & \texttt{0.9747} \\
+Écart-type accuracy & \texttt{0.0089} \\
+Protocole & \texttt{nested CV} \\
+Plis externes & \texttt{5} \\
+Plis internes & \texttt{3} \\
+Temps total (s) & \texttt{250.11} \\
+\hline
+\end{tabular}
+\end{table}
+
+La forêt aléatoire se maintient ainsi dans le trio de tête. Elle est légèrement derriere la régression logistique et le SVM, mais elle demeure très compétitive et remarquablement stable. Son principal coût tient au temps d'entraînement plus élevé que celui des modèles linéaires.
+
+\subsubsection{Diagnostics descriptifs}
+La courbe \texttt{OOB} montre que le gain marginal se stabilise rapidement quand le nombre d'arbres augmente. Cette lecture est pleinement cohérente avec la bonne tenue de la variante \texttt{default} et avec le caractère progressif, plutôt que disruptif, du tuning. Les figures de confusion confirment par ailleurs que les erreurs résiduelles restent rares et structurees.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../figures/fr/fig10_oob_vs_n_estimators.png}
+\caption{Évolution exploratoire du score OOB selon le nombre d'arbres. La courbe suggère une stabilisation rapide de la performance lorsque la forêt est suffisamment grande.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../figures/fr/figA_confusion_rf_tuned.png}
+\caption{Matrice de confusion normalisée obtenue à partir des prédictions hors pli de la variante \texttt{tuned}. Le motif reste très proche de celui des meilleurs modèles du projet.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../figures/fr/fig_rf_top12_confusions.png}
+\caption{Principales confusions résiduelles de la forêt aléatoire. Leur volume limité confirme la forte séparabilité effective du problème pour cette famille.}
+\end{figure}
+
+\subsubsection{Corroboration secondaire}
+Une corroboration secondaire est disponible sur le split gelé. La référence retenue est la variante \texttt{default}, choisie à partir des résultats exploratoires sur le jeu de développement. Sur la corroboration, \texttt{default} et \texttt{tuned} obtiennent exactement les mêmes scores, soit \texttt{0.9842} en \texttt{F1-macro} et \texttt{0.9848} en \texttt{accuracy}. Le delta \texttt{tuned - reference} est donc nul.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|r|r|l|}
+\hline
+\textbf{Variante} & \textbf{F1 corroboration} & \textbf{Accuracy corroboration} & \textbf{Rôle} \\
+\hline
+\texttt{default} & \texttt{0.9842} & \texttt{0.9848} & référence \\
+\texttt{restricted\_depth} & \texttt{0.9468} & \texttt{0.9545} & descriptif \\
+\texttt{tuned} & \texttt{0.9842} & \texttt{0.9848} & ajusté \\
+\hline
+\end{tabular}
+\end{table}
+
+La corroboration confirme ici la très bonne tenue de la famille sans fournir d'argument clair en faveur d'un gain additionnel du tuning. La forêt aléatoire reste donc un modèle de premier plan, robuste et très performant, mais dont la configuration de base est déjà proche de l'optimum pratique sur ce jeu de données.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../figures/fr/fig_rf_corroboration_holdout.png}
+\caption{Comparaison secondaire entre la variante de référence et la variante \texttt{tuned} de la forêt aléatoire sur le jeu de corroboration.}
+\end{figure}
+
+% --- DÉCISION TREE ---
+\subsection{Modèle Arbre de décision}
+
+\subsubsection{Positionnement du modèle}
+L'arbre de décision est etudie ici moins comme candidat final que comme point de référence sur le compromis entre interprétabilité et généralisation. Cette famille permet de lire directement l'effet de la profondeur, de la taille de feuille et de l'elagage, mais elle est aussi particulièrement exposee au sur-apprentissage dans un problème multiclasses riche.
+
+\subsubsection{Exploration}
+Les deux variantes exploratoires bornent clairement le comportement de la famille. La variante \texttt{default} atteint \texttt{0.5809} en \texttt{F1-macro} et \texttt{0.6174} en \texttt{accuracy}, mais avec un gap de généralisation très élevé (\texttt{0.4191}). A l'inverse, \texttt{restricted\_depth} reduit fortement ce gap (\texttt{0.0797}) mais au prix d'un effondrement de la performance, avec seulement \texttt{0.1468} en \texttt{F1-macro}.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|r|r|r|r|}
+\hline
+\textbf{Variante} & \textbf{Protocole} & \textbf{F1-macro} & \textbf{Accuracy} & \textbf{Gap F1} & \textbf{Temps (s)} \\
+\hline
+\texttt{default} & simple CV & \texttt{0.5809} & \texttt{0.6174} & \texttt{0.4191} & \texttt{1.04} \\
+\texttt{restricted\_depth} & simple CV & \texttt{0.1468} & \texttt{0.1529} & \texttt{0.0797} & \texttt{0.56} \\
+\hline
+\end{tabular}
+\end{table}
+
+La conclusion exploratoire est donc sans ambiguïté: un arbre trop libre memorise les données, tandis qu'un arbre trop contraint perd l'essentiel de son pouvoir discriminant. L'espace utile de la famille existe, mais il parait etroit et instable.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../figures/fr/fig_dt_comparaison_variantes.png}
+\caption{Comparaison exploratoire des variantes de l'arbre de décision. Le compromis performance-complexité reste globalement défavorable à un arbre unique.}
+\end{figure}
+
+\subsubsection{Confirmation}
+La validation croisée imbriquée confirme cette fragilité. La variante \texttt{tuned} obtient un \texttt{F1-macro} moyen de \texttt{0.4295} et une \texttt{accuracy} moyenne de \texttt{0.4610}, avec des écarts-types de \texttt{0.0546} et \texttt{0.0627}. Le recul par rapport à la variante \texttt{default} ne signifie pas que le tuning détériore le modèle; il signale surtout qu'une estimation confirmatoire plus stricte corrige l'optimisme de l'évaluation simple sur un estimateur très instable.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|r|}
+\hline
+\textbf{Métrique confirmatoire} & \textbf{Valeur} \\
+\hline
+F1-macro moyen & \texttt{0.4295} \\
+Écart-type F1 & \texttt{0.0546} \\
+Accuracy moyenne & \texttt{0.4610} \\
+Écart-type accuracy & \texttt{0.0627} \\
+Protocole & \texttt{nested CV} \\
+Plis externes & \texttt{5} \\
+Plis internes & \texttt{3} \\
+Temps total (s) & \texttt{11.47} \\
+\hline
+\end{tabular}
+\end{table}
+
+L'arbre de décision se place ainsi très loin derriere les autres familles. Il reste pedagogiquement utile pour lire les mecanismes de sur-apprentissage, mais il ne constitue pas une solution compétitive dans le cadre de ce projet.
+
+\subsubsection{Diagnostics descriptifs}
+La courbe de validation selon \texttt{max\_depth} expose directement le cœur du problème: le score d'entraînement augmente vite avec la profondeur, alors que le score de validation plafonne puis se dégrade. Les matrices de confusion montrent en conséquence un motif beaucoup plus diffus que celui observé pour les meilleurs modèles.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../figures/fr/figA3_validation_curve_max_depth.png}
+\caption{Courbe de validation exploratoire selon \texttt{max\_depth}. La divergence entre apprentissage et validation illustre directement la fragilité de la famille.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../figures/fr/figA_confusion_dt_tuned.png}
+\caption{Matrice de confusion normalisée issue des prédictions hors pli de la variante \texttt{tuned}. Les erreurs restent nombreuses et disperses.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../figures/fr/fig_dt_top12_confusions.png}
+\caption{Principales confusions de l'arbre ajusté. Leur dispersion est cohérente avec une généralisation insuffisante sur un problème a \texttt{99} classes.}
+\end{figure}
+
+\subsubsection{Absence de corroboration secondaire}
+Contrairement aux autres familles éligibles, aucune corroboration secondaire n'est publiée pour l'arbre de décision dans les artefacts canoniques. La lecture scientifique repose donc uniquement sur l'articulation entre exploration, confirmation et diagnostics de confusion.
+
+Cette absence ne change pas la conclusion de fond. Même sans recours à la corroboration secondaire, les résultats confirmatoires suffisent à montrer qu'un arbre unique reste trop instable pour rivaliser avec les modèles linéaires régularisés, le SVM, la forêt aléatoire ou même le MLP.
+
+% --- MLP ---
+\subsection{Modèle MLP}
+
+\subsubsection{Positionnement du modèle}
+Le MLP représente la famille neuronale dense de l'étude. Il permet de tester si une capacité non linéaire plus flexible que celle des modèles linéaires ou a noyau se traduit en gain empirique sur un jeu tabulaire de taille modérée, avec un nombre d'exemples par classe relativement faible.
+
+\subsubsection{Exploration}
+La phase exploratoire montre de façon très nette que le prétraitement est une condition de fonctionnement du modèle. Sans scaling, le MLP s'effondre a \texttt{0.1642} en \texttt{F1-macro} et \texttt{0.1863} en \texttt{accuracy}, avec une variabilité très forte. Une fois les variables standardisées, la variante \texttt{scaled\_only} atteint \texttt{0.9389} en \texttt{F1-macro} et \texttt{0.9482} en \texttt{accuracy}, tandis que \texttt{scaled\_pca} obtient \texttt{0.9323} et \texttt{0.9444}.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|r|r|r|r|}
+\hline
+\textbf{Variante} & \textbf{Protocole} & \textbf{F1-macro} & \textbf{Accuracy} & \textbf{Gap F1} & \textbf{Temps (s)} \\
+\hline
+\texttt{default} & simple CV & \texttt{0.1642} & \texttt{0.1863} & \texttt{0.0262} & \texttt{1.97} \\
+\texttt{scaled\_only} & simple CV & \texttt{0.9389} & \texttt{0.9482} & \texttt{0.0552} & \texttt{2.01} \\
+\texttt{scaled\_pca} & simple CV & \texttt{0.9323} & \texttt{0.9444} & \texttt{0.0604} & \texttt{1.97} \\
+\hline
+\end{tabular}
+\end{table}
+
+Le diagnostic central est donc clair: le MLP devient compétitif uniquement lorsqu'il est alimenté par un pipeline de standardisation strict. La \texttt{PCA} n'apporte pas de bénéfice net et reste légèrement en retrait par rapport à la variante \texttt{scaled\_only}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../figures/fr/fig_mlp_comparaison_variantes.png}
+\caption{Comparaison exploratoire des variantes du MLP. Le contraste entre la version brute et les versions standardisées illustre la dépendance du réseau à l'échelle des variables.}
+\end{figure}
+
+\subsubsection{Confirmation}
+L'évaluation confirmatoire aboutit à un \texttt{F1-macro} moyen de \texttt{0.9389} et une \texttt{accuracy} moyenne de \texttt{0.9482}, avec des écarts-types de \texttt{0.0322} et \texttt{0.0279}. La variante \texttt{tuned} reproduit donc presque exactement la meilleure lecture exploratoire, ce qui suggère que le tuning confirme davantage une configuration déjà solide qu'il n'apporte un gain substantiel.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|r|}
+\hline
+\textbf{Métrique confirmatoire} & \textbf{Valeur} \\
+\hline
+F1-macro moyen & \texttt{0.9389} \\
+Écart-type F1 & \texttt{0.0322} \\
+Accuracy moyenne & \texttt{0.9482} \\
+Écart-type accuracy & \texttt{0.0279} \\
+Protocole & \texttt{nested CV} \\
+Plis externes & \texttt{5} \\
+Plis internes & \texttt{3} \\
+Temps total (s) & \texttt{38.25} \\
+\hline
+\end{tabular}
+\end{table}
+
+Le MLP se place ainsi au quatrieme rang du classement confirmatoire. Il reste nettement performant, mais il ne transforme pas sa flexibilite supplémentaire en avantage sur le trio compose de la régression logistique, du SVM et de la forêt aléatoire.
+
+\subsubsection{Diagnostics descriptifs}
+Les diagnostics associés au MLP éclairent surtout sa dynamique d'optimisation. La courbe de perte indique une convergence correcte, tandis que le tableau de tuning exploratoire montre que l'essentiel du signal vient ici de la taille de la couche cachée et non de \texttt{alpha}. La configuration \texttt{(128,)} domine systématiquement \texttt{(64,)}, alors que la \texttt{PCA} reste légèrement en retrait. Ces diagnostics aident à comprendre le comportement du modèle, sans concurrencer les métriques confirmatoires.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../figures/fr/figA5_loss_curve.png}
+\caption{Diagnostic exploratoire de convergence du MLP. La loss se stabilise correctement, mais cette lecture reste descriptive.}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|r|r|}
+\hline
+\textbf{hidden\_layer\_sizes / alpha} & \textbf{0.0001} & \textbf{0.0010} \\
+\hline
+\texttt{(64,)} & \texttt{0.9055} & \texttt{0.9055} \\
+\texttt{(128,)} & \texttt{0.9341} & \texttt{0.9341} \\
+\hline
+\end{tabular}
+\caption{Tuning exploratoire du MLP sans PCA (\texttt{F1-macro} moyen de CV)}
+\end{table}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|r|r|}
+\hline
+\textbf{hidden\_layer\_sizes / alpha} & \textbf{0.0001} & \textbf{0.0010} \\
+\hline
+\texttt{(64,)} & \texttt{0.9107} & \texttt{0.9107} \\
+\texttt{(128,)} & \texttt{0.9266} & \texttt{0.9266} \\
+\hline
+\end{tabular}
+\caption{Tuning exploratoire du MLP avec PCA (\texttt{F1-macro} moyen de CV)}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../figures/fr/figA_confusion_mlp_tuned.png}
+\caption{Matrice de confusion normalisée issue des prédictions hors pli de la variante \texttt{tuned}. Les erreurs résiduelles restent limitées, mais plus nombreuses que pour les trois meilleures familles.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../figures/fr/fig_mlp_top12_confusions.png}
+\caption{Principales confusions du MLP ajusté. Elles restent relativement concentrées et confirment un niveau globalement compétitif.}
+\end{figure}
+
+\subsubsection{Corroboration secondaire}
+Le jeu de corroboration gelé conserve \texttt{scaled\_only} comme référence secondaire. Sur ce split, la référence et la variante \texttt{tuned} obtiennent exactement les mêmes scores, soit \texttt{0.9785} en \texttt{F1-macro} et \texttt{0.9798} en \texttt{accuracy}. La variante \texttt{scaled\_pca} reste légèrement en retrait. Le delta \texttt{tuned - reference} est donc nul.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|r|r|l|}
+\hline
+\textbf{Variante} & \textbf{F1 corroboration} & \textbf{Accuracy corroboration} & \textbf{Rôle} \\
+\hline
+\texttt{default} & \texttt{0.0080} & \texttt{0.0404} & baseline \\
+\texttt{scaled\_only} & \texttt{0.9785} & \texttt{0.9798} & référence \\
+\texttt{scaled\_pca} & \texttt{0.9737} & \texttt{0.9747} & descriptif \\
+\texttt{tuned} & \texttt{0.9785} & \texttt{0.9798} & ajusté \\
+\hline
+\end{tabular}
+\end{table}
+
+Le message reste simple pour le MLP: avec un prétraitement adéquat, la famille devient solide, mais le tuning n'y ajoute pas de gain robuste sur ce corpus. Elle demeure crédible sans dépasser les meilleures options plus sobres.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../figures/fr/fig_mlp_corroboration_holdout.png}
+\caption{Comparaison secondaire entre la variante de référence et la variante \texttt{tuned} du MLP sur le jeu de corroboration.}
+\end{figure}
+
+% ==========================================
+% 4. COMPARAISON GLOBALE ET DISCUSSION
+% ==========================================

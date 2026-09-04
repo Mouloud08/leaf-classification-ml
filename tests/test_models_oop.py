@@ -91,7 +91,9 @@ class TestModeleBase(unittest.TestCase):
         for cls in modeles_sans_scaling:
             with self.subTest(modele=cls.__name__):
                 modele = cls()
-                with self.assertRaises(ValueError, msg="PCA sans scaling doit lever ValueError"):
+                with self.assertRaises(
+                    ValueError, msg="PCA sans scaling doit lever ValueError"
+                ):
                     modele.creer_pipeline(utiliser_pca=True)
 
     def test_modeles_avec_pca_exposent_hyperparametre_pca(self) -> None:

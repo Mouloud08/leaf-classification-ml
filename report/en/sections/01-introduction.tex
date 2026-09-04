@@ -1,0 +1,18 @@
+\section{Introduction}
+
+\subsection{Context}
+This project studies Kaggle's \texttt{Leaf Classification} dataset as a tabular multiclass classification problem. Each leaf is described by pre-extracted numerical variables rather than by a raw image, shifting the focus to preprocessing quality, model choice, and, above all, the rigor of the evaluation protocol.
+
+The difficulty stems less from class imbalance than from the ratio between the number of species and the small number of examples available for each one. In this setting, modest performance differences can be artificially amplified unless the exploratory stages and confirmatory estimation are kept strictly separate.
+
+\subsection{Study objective}
+This report compares six families of scikit-learn models within a scientifically defensible framework: perceptron, logistic regression, RBF SVM, random forest, decision tree, and MLP. The aim is not merely to identify the highest score, but to establish which gains remain credible after tuning, accounting for between-fold variability, and secondary verification on a frozen corroboration set.
+
+The report therefore follows a straightforward progression: the EDA motivates preprocessing choices; the model chapters clearly distinguish exploration from confirmation; and the overall discussion compares the \texttt{tuned} variants in terms of performance, stability, and practical cost.
+
+\subsection{Report structure}
+Section 2 presents the exploratory data analysis and the methodological framework used throughout the study. Section 3 examines each of the six model families separately. Section 4 provides the overall comparison and scientific discussion, followed by a brief conclusion, appendices, and bibliography.
+
+% ==========================================
+% 2. EDA
+% ==========================================

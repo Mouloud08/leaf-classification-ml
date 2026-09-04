@@ -7,11 +7,11 @@ import unittest
 import numpy as np
 from sklearn.tree import DecisionTreeClassifier
 
+from src.evaluation import evaluer_dummy_classifier
 from src.evaluation.sanity_checks import (
     verifier_bruit_aleatoire,
     verifier_overfit_petit_echantillon,
 )
-from src.evaluation import evaluer_dummy_classifier
 
 
 class TestDummyClassifierBaseline(unittest.TestCase):
@@ -20,7 +20,10 @@ class TestDummyClassifierBaseline(unittest.TestCase):
         X_fake = rng.rand(200, 10)
         y_fake = np.tile(np.arange(10), 20)
         result = evaluer_dummy_classifier(
-            X_fake, y_fake, strategie="most_frequent", n_splits=3,
+            X_fake,
+            y_fake,
+            strategie="most_frequent",
+            n_splits=3,
         )
         self.assertLess(result["val_accuracy_mean"], 0.20)
 

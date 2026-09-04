@@ -1,0 +1,201 @@
+\section{Analyse exploratoire des données}
+
+\subsection{Objectif et périmètre descriptif}
+L'analyse exploratoire a pour fonction de caractériser la structure du jeu de données, d'en vérifier l'intégrité et d'identifier les principales propriétés statistiques susceptibles d'influencer les choix de prétraitement. Dans ce cadre, les constats présentés ci-dessous demeurent descriptifs : ils portent sur la distribution des observations, l'échelle des variables, la redondance entre descripteurs et l'organisation globale du nuage de points, sans préjuger du comportement d'un modèle de classification donné.
+
+Deux précautions méthodologiques s'imposent des cette étape. D'une part, la présence d'une structure visible dans les corrélations ou dans les projections de dimension réduite ne constitue pas une preuve de séparabilité robuste. D'autre part, les hypothèses de preprocessing suggérées par cette section doivent être lues comme des pistes raisonnables d'expérimentation, et non comme des conclusions confirmatoires.
+
+\subsection{Fiche signalétique et intégrité des données}
+Le jeu de données d'apprentissage comprend \texttt{990} observations et \texttt{194} colonnes, dont \texttt{192} variables explicatives numériques, un identifiant \texttt{id} et une étiquette de classe \texttt{species}. Les descripteurs sont répartis en trois familles de même taille, \texttt{margin}, \texttt{shape} et \texttt{texture}, chacune comportant \texttt{64} variables. Cette structuration est importante pour l'interprétation de l'EDA, car elle permet de distinguer les phénomènes de redondance internes à une famille des dépendances plus faibles entre familles.
+
+Les contrôles élémentaires d'intégrité ne révèlent pas d'anomalie majeure : aucune valeur manquante n'est observée, aucun doublon complet n'apparaît dans la table, aucun doublon strict n'est détecté sur les seules variables explicatives et l'identifiant \texttt{id} est unique pour chaque échantillon. Ces propriétés simplifient l'analyse ultérieure, puisqu'elles épargnent toute étape de nettoyage structurel avant la modélisation.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|r|}
+\hline
+\textbf{Indicateur} & \textbf{Valeur} \\
+\hline
+Lignes & \texttt{990} \\
+Colonnes & \texttt{194} \\
+Variables explicatives & \texttt{192} \\
+Classes & \texttt{99} \\
+Variables \texttt{margin} & \texttt{64} \\
+Variables \texttt{shape} & \texttt{64} \\
+Variables \texttt{texture} & \texttt{64} \\
+Valeurs manquantes & \texttt{0} \\
+Doublons complets & \texttt{0} \\
+Doublons sur les seules variables & \texttt{0} \\
+\texttt{id} unique & \texttt{Oui} \\
+\hline
+\end{tabular}
+\caption{Fiche signalétique du jeu de données}
+\end{table}
+
+\subsection{Répartition des classes}
+La variable cible présente une structure remarquablement régulière : les \texttt{99} espèces sont représentées par exactement \texttt{10} observations chacune. Ce point écarte tout déséquilibre de classe au sens usuel et permet d'interpréter les résumés descriptifs sans risque de domination mécanique par quelques espèces sur-représentées. En revanche, cette régularité ne signifie pas que le problème est simple. Avec seulement \texttt{10} feuilles par espèce, chaque classe demeure faiblement documentée, ce qui laisse présager une variabilité non négligeable des estimations des performances lorsque l'on passera à l'évaluation.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|r|}
+\hline
+\textbf{Métrique} & \textbf{Valeur} \\
+\hline
+Minimum par classe & \texttt{10} \\
+Maximum par classe & \texttt{10} \\
+Moyenne par classe & \texttt{10.0} \\
+Écart-type & \texttt{0.0} \\
+\hline
+\end{tabular}
+\caption{Résumé de la répartition des classes}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../figures/fr/fig01_distribution_classes.png}
+\caption{Nombre d'observations par espèce. L'uniformité de la hauteur des barres confirme l'absence de déséquilibre entre classes dans l'échantillon d'apprentissage.}
+\end{figure}
+
+\subsection{Échelle, dispersion et forme des variables}
+L'examen des distributions marginales montre que les trois familles de variables n'occupent pas les mêmes ordres de grandeur. Les variables \texttt{shape} évoluent dans un intervalle très resserré, avec une moyenne des écarts-types de \texttt{0.00029}, alors que les variables \texttt{margin} et \texttt{texture} affichent respectivement \texttt{0.01688} et \texttt{0.02696}. Cette hétérogénéité d'échelle est scientifiquement importante, car elle affecte directement les méthodes sensibles à la norme des variables ou à la géométrie du nuage de points.
+
+Les boxplots jouent ici un rôle central. Contrairement à un simple tableau de moyennes, ils renseignent simultanément sur la médiane, la dispersion interquartile, l'asymétrie et la présence de valeurs extrêmes. Dans ce jeu de données, ils montrent que la famille \texttt{texture} concentré la plus forte dispersion, tandis que \texttt{shape} reste beaucoup plus contractée. Cette lecture ne permet pas d'affirmer qu'une standardisation améliorera nécessairement toutes les procédures d'apprentissage, mais elle fournit une justification descriptive solide à l'examen de variantes avec mise à l'échelle.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{|l|r|r|r|r|r|r|r|}
+\hline
+\textbf{Famille} & \textbf{Min} & \textbf{Max} & \textbf{Q1 moy.} & \textbf{Médiane moy.} & \textbf{Q3 moy.} & \textbf{Moy. des moy.} & \textbf{Moy. écart-types} \\
+\hline
+\texttt{margin} & \texttt{0.00000} & \texttt{0.38867} & \texttt{0.00354} & \texttt{0.01028} & \texttt{0.02237} & \texttt{0.01562} & \texttt{0.01688} \\
+\texttt{shape} & \texttt{0.00002} & \texttt{0.00301} & \texttt{0.00041} & \texttt{0.00056} & \texttt{0.00073} & \texttt{0.00061} & \texttt{0.00029} \\
+\texttt{texture} & \texttt{0.00000} & \texttt{0.85352} & \texttt{0.00072} & \texttt{0.00543} & \texttt{0.01871} & \texttt{0.01563} & \texttt{0.02696} \\
+\hline
+\end{tabular}
+\caption{Statistiques descriptives par famille de variables}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../figures/fr/figA11_boxplots_variables.png}
+\caption{Boxplots de variables sélectionnées dans les familles \texttt{margin}, \texttt{shape} et \texttt{texture}. La comparaison visuelle souligne l'hétérogénéité d'échelle et la dispersion plus marquée des variables de texture.}
+\end{figure}
+
+La forme des distributions confirme cette lecture. La skewness absolue moyenne des \texttt{192} variables atteint environ \texttt{2.20}, avec un maximum proche de \texttt{10.91}, ce qui indique des distributions souvent asymétriques et parfois fortement concentrées près de zéro. Ce résultat invite à la prudence dans l'interprétation de statistiques purement moyennes et renforce l'intérêt de descriptions robustes fondées sur les quartiles et les boxplots.
+
+\subsection{Corrélations et redondance entre descripteurs}
+L'étude de la matrice de corrélation met en évidence une structure en blocs nette. La famille \texttt{shape} est de loin la plus redondante, avec une corrélation absolue moyenne intra-famille de \texttt{0.6996}, contre \texttt{0.2606} pour \texttt{margin} et \texttt{0.1612} pour \texttt{texture}. Les dépendances inter-familles demeurent faibles, comprises entre \texttt{0.0548} et \texttt{0.0781}, ce qui suggère que les trois familles ne capturent pas exactement la même information descriptive.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|r|}
+\hline
+\textbf{Bloc} & \textbf{Corrélation absolue moyenne} \\
+\hline
+\texttt{shape-shape} & \texttt{0.6996} \\
+\texttt{margin-margin} & \texttt{0.2606} \\
+\texttt{texture-texture} & \texttt{0.1612} \\
+\texttt{margin-shape} & \texttt{0.0675} \\
+\texttt{margin-texture} & \texttt{0.0781} \\
+\texttt{shape-texture} & \texttt{0.0548} \\
+\hline
+\end{tabular}
+\caption{Corrélation absolue moyenne intra- et inter-familles}
+\end{table}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|l|r|}
+\hline
+\textbf{Rang} & \textbf{Paire} & \textbf{Corrélation} \\
+\hline
+1 & \texttt{shape49} - \texttt{shape50} & \texttt{0.9939} \\
+2 & \texttt{shape17} - \texttt{shape18} & \texttt{0.9939} \\
+3 & \texttt{shape15} - \texttt{shape16} & \texttt{0.9937} \\
+4 & \texttt{shape16} - \texttt{shape17} & \texttt{0.9936} \\
+5 & \texttt{shape18} - \texttt{shape19} & \texttt{0.9936} \\
+\hline
+\end{tabular}
+\caption{Paires de variables les plus corrélées}
+\end{table}
+
+Au total, \texttt{445} paires de variables présentent une corrélation absolue au moins egale a \texttt{0.90}, et \texttt{197} une corrélation au moins egale a \texttt{0.95}. Ces ordres de grandeur justifient l'examen d'une réduction de dimension par \texttt{PCA}, mais sans présumer de son utilité effective pour les étapes ulterieures d'apprentissage.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../figures/fr/figA12_heatmap_correlation.png}
+\caption{Matrice de corrélation des \texttt{192} variables. La structure en blocs fait apparaitre une redondance interne particulièrement forte au sein de la famille \texttt{shape}, alors que les liaisons entre familles restent plus faibles.}
+\end{figure}
+
+\subsection{Réduction de dimension et organisation globale}
+La \texttt{PCA} a été appliquée sur les données standardisées afin de résumer la structure linéaire du jeu de données. Les deux premières composantes expliquent environ \texttt{24.2 \%} et \texttt{10.4 \%} de la variance totale, soit un peu moins de \texttt{34.6 \%} à elles seules. Les cinq premières composantes atteignent \texttt{50.7 \%}, et les dix premières \texttt{64.7 \%}. La réduction est donc réelle, mais elle n'est pas assez radicale pour suggérer qu'un espace de très faible dimension suffirait à résumer adequatement l'information.
+
+Les seuils de variance cumulée confirment cette lecture. Il faut \texttt{23} composantes pour atteindre \texttt{80 \%} de variance expliquée, \texttt{44} pour \texttt{90 \%}, \texttt{69} pour \texttt{95 \%} et \texttt{116} pour \texttt{99 \%}. Ainsi, la \texttt{PCA} peut être défendue comme outil de compression modérée et d'atténuation de la redondance linéaire, mais non comme réduction drastique du problème.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|r|}
+\hline
+\textbf{Variance expliquée cumulée} & \textbf{Nombre de composantes} \\
+\hline
+\texttt{80 \%} & \texttt{23} \\
+\texttt{90 \%} & \texttt{44} \\
+\texttt{95 \%} & \texttt{69} \\
+\texttt{99 \%} & \texttt{116} \\
+\hline
+\end{tabular}
+\caption{Nombre de composantes pour différents seuils de variance}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../figures/fr/figA13_pca_variance_cumulative.png}
+\caption{Variance expliquée cumulée après standardisation. La croissance progressive de la courbe indique qu'une grande partie de l'information est compressible, mais qu'un nombre substantiel de composantes demeure nécessaire pour conserver presque toute la variance.}
+\end{figure}
+
+La projection \texttt{t-SNE} en deux dimensions complète cette lecture sous un angle non linéaire. Dans le notebook, elle est calculée après une réduction préalable par \texttt{PCA} a \texttt{50} composantes, avec une perplexité de \texttt{30}. Son intérêt n'est pas de résumer quantitativement la variance, mais d'examiner la cohérence locale des voisinages entre observations. La figure fait apparaitre des regroupements partiels et des zones de chevauchement, ce qui suggère une structure exploitable sans laisser attendre une séparation triviale des \texttt{99} espèces dans un espace de très basse dimension.
+
+Cette interprétation doit rester prudente. La \texttt{t-SNE} préserve avant tout des relations de proximité locales et dépend de ses hyperparamètres ; elle ne fournit ni une mesure de séparabilité globale ni un argument suffisant pour privilégier un prétraitement particulier. Elle a ici une valeur heuristique : elle confirme l'existence d'une organisation du nuage de points au-dela du bruit pur, sans permettre d'en déduire la difficulté exacte de la tâche.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../figures/fr/figA14_tsne_2d.png}
+\caption{Projection \texttt{t-SNE} 2D des \texttt{99} espèces après standardisation et réduction préalable par \texttt{PCA}. La présence de regroupements locaux coexiste avec des chevauchements importants, compatibles avec un problème apprenable mais loin d'être trivial.}
+\end{figure}
+
+\subsection{Implications méthodologiques et synthèse}
+Quatre enseignements se dégagent de cette analyse exploratoire. Premièrement, le jeu de données est structurellement sain et parfaitement équilibré, mais il reste parcimonieux au niveau de chaque espèce, ce qui invite à la retenue dans l'interprétation des variations observées sur de petits sous-ensembles. Deuxièmement, les différences d'échelle et de dispersion entre familles fournissent une motivation descriptive forte pour examiner des procédures de standardisation. Troisièmement, la redondance marquée, surtout dans \texttt{shape}, rend méthodologiquement plausible l'étude d'une \texttt{PCA} comme outil de compression linéaire. Quatrièmement, les projections de dimension réduite indiquent l'existence d'une structure exploitable, tout en rappelant que cette structure n'équivaut pas à une séparabilité simple.
+
+En conséquence, les choix de prétraitement qui seront examinés par la suite peuvent être scientifiquement motivés par cette EDA, mais ils demeurent hypothétiques à ce stade. La standardisation et la \texttt{PCA} apparaissent comme des options raisonnables d'exploration, non comme des garanties d'amélioration.
+
+\subsection{Garde-fous du protocole pour la suite}
+Les constats descriptifs précédents justifient un protocole prudent pour la comparaison des modèles. Le corpus est équilibré, mais chaque espèce reste faiblement documentée; il serait donc méthodologiquement risqué de mélanger sélection de variantes, tuning et évaluation finale sur un même sous-ensemble. Pour cette raison, la suite du rapport distingue explicitement ce qui relève de l'exploration, de la confirmation et de la corroboration secondaire.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Élément} & \textbf{Valeur retenue} \\
+\hline
+Split gelé & \texttt{80 \%} développement / \texttt{20 \%} corroboration \\
+Taille développement & \texttt{792} \\
+Taille du jeu de corroboration & \texttt{198} \\
+Validation croisée principale & \texttt{5} plis externes \\
+Tuning interne & \texttt{3} plis internes \\
+Métrique principale & \texttt{F1-macro} \\
+Métrique secondaire & \texttt{Accuracy} \\
+Seed globale & \texttt{42} \\
+Statut des variantes non \texttt{tuned} & \texttt{Exploratoire} \\
+Statut des variantes \texttt{tuned} & \texttt{Confirmatoire} \\
+Statut du jeu de corroboration & \texttt{Corroboration secondaire} \\
+\hline
+\end{tabular}
+\caption{Garde-fous du protocole expérimental}
+\end{table}
+
+Cette hiérarchie des preuves guidera toute la lecture des sections suivantes. Les variantes non \texttt{tuned} documentent l'effet du preprocessing et du tuning, les résultats \texttt{tuned} fondent le classement principal, et le jeu de corroboration gelé n'intervient qu'en vérification secondaire.
+
+% ==========================================
+% 3. ÉTUDE DES MODÈLES
+% ==========================================

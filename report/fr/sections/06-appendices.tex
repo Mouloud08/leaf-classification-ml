@@ -1,0 +1,119 @@
+\section{Annexes}
+
+\subsection{Statut et usage des annexes}
+Les annexes rassemblent les éléments utiles à la reproductibilité, à l'audit méthodologique et à la lecture détaillée des artefacts sans alourdir le corps du rapport. Elles prolongent donc l'analyse, mais n'en déplacent pas la base inférentielle. Les conclusions principales demeurent fondées sur les variantes \texttt{tuned} évaluées en \texttt{nested\_cv}; les autres informations conservées ici ont un statut descriptif, exploratoire ou documentaire selon les cas.
+
+\subsection{Protocole détaille et artefacts canoniques}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Élément} & \textbf{Valeur retenue} \\
+\hline
+Seed globale & \texttt{42} \\
+Split gelé & \texttt{80 \%} développement / \texttt{20 \%} corroboration \\
+Taille développement & \texttt{792} \\
+Taille du jeu de corroboration & \texttt{198} \\
+Validation croisée principale & \texttt{5} plis externes \\
+Tuning interne & \texttt{3} plis \\
+Variance conservée par la \texttt{PCA} & \texttt{0.99} \\
+Métrique principale & \texttt{F1-macro} \\
+Métrique secondaire & \texttt{Accuracy} \\
+Parallelisme CV & \texttt{CV\_N\_JOBS = 1} \\
+\hline
+\end{tabular}
+\caption{Paramètres du protocole expérimental}
+\end{table}
+
+La préservation d'un split gelé, distinct du sous-ensemble de développement, permet de maintenir une séparation claire entre analyse principale et corroboration secondaire. Les variantes non \texttt{tuned} servent à explorer l'effet du preprocessing et de la capacité des modèles; les variantes \texttt{tuned} constituent seules la base du classement inter-modèles.
+
+\subsection{Résultats detailles par variante}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|l|r|r|r|}
+\hline
+\textbf{Modèle} & \textbf{Variante} & \textbf{Statut} & \textbf{F1-macro val} & \textbf{Accuracy val} & \textbf{Temps (s)} \\
+\hline
+\texttt{perceptron} & \texttt{default} & Exploratoire & \texttt{0.6979} & \texttt{0.7436} & \texttt{0.62} \\
+\texttt{perceptron} & \texttt{scaled\_only} & Exploratoire & \texttt{0.8228} & \texttt{0.8460} & \texttt{0.60} \\
+\texttt{perceptron} & \texttt{scaled\_pca} & Exploratoire & \texttt{0.8057} & \texttt{0.8346} & \texttt{0.65} \\
+\texttt{perceptron} & \texttt{tuned} & Confirmatoire & \texttt{0.8085} & \texttt{0.8409} & \texttt{29.79} \\
+\texttt{regression\_logistique} & \texttt{default} & Exploratoire & \texttt{0.2591} & \texttt{0.3106} & \texttt{1.69} \\
+\texttt{regression\_logistique} & \texttt{scaled\_only} & Exploratoire & \texttt{0.9798} & \texttt{0.9861} & \texttt{8.10} \\
+\texttt{regression\_logistique} & \texttt{scaled\_pca} & Exploratoire & \texttt{0.9784} & \texttt{0.9848} & \texttt{2.21} \\
+\texttt{regression\_logistique} & \texttt{tuned} & Confirmatoire & \texttt{0.9787} & \texttt{0.9848} & \texttt{77.05} \\
+\texttt{svm} & \texttt{default} & Exploratoire & \texttt{0.8389} & \texttt{0.8561} & \texttt{2.36} \\
+\texttt{svm} & \texttt{scaled\_only} & Exploratoire & \texttt{0.9712} & \texttt{0.9785} & \texttt{2.45} \\
+\texttt{svm} & \texttt{scaled\_pca} & Exploratoire & \texttt{0.9712} & \texttt{0.9785} & \texttt{2.50} \\
+\texttt{svm} & \texttt{tuned} & Confirmatoire & \texttt{0.9756} & \texttt{0.9823} & \texttt{56.49} \\
+\texttt{foret\_aleatoire} & \texttt{default} & Exploratoire & \texttt{0.9764} & \texttt{0.9785} & \texttt{9.16} \\
+\texttt{foret\_aleatoire} & \texttt{restricted\_depth} & Exploratoire & \texttt{0.9345} & \texttt{0.9445} & \texttt{5.42} \\
+\texttt{foret\_aleatoire} & \texttt{tuned} & Confirmatoire & \texttt{0.9702} & \texttt{0.9747} & \texttt{250.11} \\
+\texttt{arbre\_decision} & \texttt{default} & Exploratoire & \texttt{0.5809} & \texttt{0.6174} & \texttt{1.04} \\
+\texttt{arbre\_decision} & \texttt{restricted\_depth} & Exploratoire & \texttt{0.1468} & \texttt{0.1529} & \texttt{0.56} \\
+\texttt{arbre\_decision} & \texttt{tuned} & Confirmatoire & \texttt{0.4295} & \texttt{0.4610} & \texttt{11.47} \\
+\texttt{mlp} & \texttt{default} & Exploratoire & \texttt{0.1642} & \texttt{0.1863} & \texttt{1.97} \\
+\texttt{mlp} & \texttt{scaled\_only} & Exploratoire & \texttt{0.9389} & \texttt{0.9482} & \texttt{2.01} \\
+\texttt{mlp} & \texttt{scaled\_pca} & Exploratoire & \texttt{0.9323} & \texttt{0.9444} & \texttt{1.97} \\
+\texttt{mlp} & \texttt{tuned} & Confirmatoire & \texttt{0.9389} & \texttt{0.9482} & \texttt{38.25} \\
+\hline
+\end{tabular}
+\caption{Résultats de validation par variante}
+\end{table}
+
+Ce tableau doit être lu en respectant le statut de chaque ligne. Les scores des variantes exploratoires servent à documenter l'effet du prétraitement et de la complexité; ils ne doivent pas être confondus avec les scores confirmatoires des variantes \texttt{tuned}.
+
+\subsection{Hyperparamètres retenus par pli externe}
+La stabilité de la sélection par pli renseigne utilement sur la robustesse des familles de modèles. Certaines familles convergent vers les mêmes réglages sur presque tous les plis, tandis que d'autres montrent une variabilité plus marquée, particulièrement sur l'usage de la \texttt{PCA} ou sur l'intensité de la régularisation.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|>{\raggedright\arraybackslash}p{10.5cm}|}
+\hline
+\textbf{Modèle} & \textbf{Règles observées sur les 5 plis externes} \\
+\hline
+\texttt{perceptron} & \texttt{alpha = 0.001}, \texttt{penalty = l1} sur tous les plis; \texttt{PCA} retenue une seule fois, sinon \texttt{passthrough} \\
+\hline
+\texttt{regression\_logistique} & \texttt{C} alterne entre \texttt{1.0} et \texttt{10.0}; \texttt{PCA} retenue sur un seul pli, sinon \texttt{passthrough} \\
+\hline
+\texttt{svm} & \texttt{C = 10.0} et \texttt{gamma = scale} sur tous les plis; \texttt{PCA} retenue une seule fois \\
+\hline
+\texttt{foret\_aleatoire} & Règles presque parfaitement stables: \texttt{max\_depth = None}, \texttt{max\_features = sqrt}, \texttt{min\_samples\_leaf = 1}, \texttt{n\_estimators = 400} sur tous les plis \\
+\hline
+\texttt{arbre\_decision} & \texttt{max\_depth = 20}, \texttt{criterion = gini}, \texttt{min\_samples\_leaf = 1}; seul \texttt{ccp\_alpha} varie, avec \texttt{0.005} sur un pli et \texttt{0.0} sinon \\
+\hline
+\texttt{mlp} & \texttt{hidden\_layer\_sizes = [128]} sur tous les plis; \texttt{alpha = 0.0001} sur quatre plis et \texttt{0.001} sur un pli; jamais de \texttt{PCA} \\
+\hline
+\end{tabular}
+\caption{Hyperparamètres retenus par pli externe}
+\end{table}
+
+La forêt aléatoire, le SVM et le MLP montrent une sélection par pli très homogène. La régression logistique et le perceptron restent plus sensibles à la régularisation linéaire et au choix éventuel d'une \texttt{PCA}, sans que cette variabilité remette en cause leur lecture globale. Dans le cas de l'arbre de décision, la stabilité de la profondeur ne compense pas l'instabilité prédictive observée sur les scores.
+
+\subsection{Déclaration d'utilisation de l'IA}
+Cette déclaration est fournie à titre de transparence documentaire. L'assistance par IA a été utilisée de manière ponctuelle au cours du projet, mais elle n'a pas remplacé les choix scientifiques, l'exécution des expériences ni la validation finale des résultats.
+
+\paragraph{Où l'IA a été utilisée}
+\begin{itemize}
+    \item aide à la structuration de documents Markdown et LaTeX ;
+    \item assistance ponctuelle pour du nettoyage, de la réorganisation et de la documentation du dépôt ;
+    \item aide technique pour certains ajustements de code, de scripts et de notebooks ;
+    \item proposition ou génération initiale de certaines portions de code, ensuite relues, modifiées, testées et validées humainement avant leur conservation.
+\end{itemize}
+
+\paragraph{Ce qui a été fait manuellement}
+\begin{itemize}
+    \item définition du sujet, des objectifs et du protocole expérimental ;
+    \item choix des modèles, des variantes, des métriques et du cadre d'évaluation ;
+    \item exécution des expériences, des notebooks et du pipeline ;
+    \item relecture, correction et validation des portions de code retenues ;
+    \item vérification des résultats numériques, des figures et de leur cohérence ;
+    \item sélection des éléments retenus dans le rapport final ;
+    \item interprétation scientifique des résultats et rédaction finale validée humainement.
+\end{itemize}
+
+% ==========================================
+% 7. BIBLIOGRAPHIE
+% ==========================================

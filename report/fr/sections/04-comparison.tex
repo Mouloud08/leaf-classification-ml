@@ -1,0 +1,145 @@
+\section{Comparaison Globale et Discussion}
+
+La comparaison inter-modèles présentée dans cette section repose exclusivement sur les variantes \texttt{tuned} évaluées par validation croisée imbriquée. Ce choix vise a limiter le biais de sélection introduit par le tuning des hyperparamètres, conformément aux recommandations classiques de la littérature sur l'évaluation des modèles (Varma and Simon, 2006; Cawley and Talbot, 2010). Les variantes non tunees et les diagnostics spécifiques gardent un rôle interprétatif, tandis que le jeu de corroboration gelé reste un contrôle secondaire.
+
+\subsection{Résultats confirmatoires inter-modèles}
+Le tableau suivant rassemble les six familles de modèles sur la base de leur performance confirmatoire \texttt{tuned}, avec \texttt{F1-macro} comme métrique principale et \texttt{accuracy} comme métrique secondaire.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|r|r|r|}
+\hline
+\textbf{Modèle} & \textbf{F1-macro (mean $\pm$ std)} & \textbf{Accuracy (mean $\pm$ std)} & \textbf{Temps (s)} \\
+\hline
+Régression logistique & $0.9787 \pm 0.0198$ & $0.9848 \pm 0.0146$ & \texttt{77.05} \\
+SVM RBF & $0.9756 \pm 0.0207$ & $0.9823 \pm 0.0151$ & \texttt{56.49} \\
+Forêt aléatoire & $0.9702 \pm 0.0140$ & $0.9747 \pm 0.0089$ & \texttt{250.11} \\
+MLP & $0.9389 \pm 0.0322$ & $0.9482 \pm 0.0279$ & \texttt{38.25} \\
+Perceptron & $0.8085 \pm 0.0523$ & $0.8409 \pm 0.0411$ & \texttt{29.79} \\
+Arbre de décision & $0.4295 \pm 0.0546$ & $0.4610 \pm 0.0627$ & \texttt{11.47} \\
+\hline
+\end{tabular}
+\caption{Comparaison confirmatoire inter-modèles}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../figures/fr/fig02_barplot_comparatif_tuned.png}
+\caption{Comparaison confirmatoire inter-modèles}
+\end{figure}
+
+La hiérarchie qui se dégage est nette. La régression logistique et le SVM RBF forment le duo de tête confirmatoire, avec un léger avantage moyen pour la régression logistique. La forêt aléatoire reste à un niveau très élevé, mais légèrement en retrait. Le MLP constitue une solution sérieuse sans rejoindre les trois meilleurs modèles. Le perceptron joue correctement son rôle de baseline linéaire après preprocessing, tandis que l'arbre de décision seul apparaît clairement insuffisant dans ce problème multiclasse.
+
+Le point central de lecture est la proximité entre régression logistique et SVM. L'écart observé sur \texttt{F1-macro} moyen est faible, mais la régression logistique conserve la meilleure moyenne. En l'absence de test statistique formel entre modèles très proches, il est plus prudent de parler de co-leaders confirmatoires, avec la régression logistique en tête sur la moyenne, que de vainqueur unique au sens strict.
+
+\subsection{Stabilité relative et compromis pratique}
+Les écarts-types inter-plis ne constituent pas un test statistique, mais ils apportent une information utile sur la stabilité relative des familles de modèles sous le protocole retenu.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|r|l|}
+\hline
+\textbf{Modèle} & \textbf{Amplitude F1} & \textbf{Commentaire de stabilité} \\
+\hline
+Régression logistique & \texttt{0.0512} & Tres bon niveau de stabilité \\
+SVM RBF & \texttt{0.0549} & Stabilité proche de la régression logistique \\
+Forêt aléatoire & \texttt{0.0343} & La plus stable parmi les trois meilleurs modèles \\
+MLP & \texttt{0.0896} & Variabilité plus marquée \\
+Perceptron & \texttt{0.1121} & Stabilité insuffisante pour viser le haut du classement \\
+Arbre de décision & \texttt{0.1449} & Instabilité structurelle très forte \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../figures/fr/fig3b_temps_vs_performance.png}
+\caption{Compromis temps de calcul / performance}
+\end{figure}
+
+Du point de vue pratique, la régression logistique émerge comme le meilleur compromis entre performance moyenne, coût et interprétabilité. Elle atteint le meilleur niveau confirmatoire observé tout en restant plus simple à lire qu'un SVM RBF et beaucoup moins coûteuse qu'une forêt aléatoire. Le SVM obtient un résultat très proche, mais au prix d'une interprétabilité plus faible. La forêt aléatoire confirme sa robustesse, mais son coût de calcul est de loin le plus élevé du groupe de tête.
+
+Le MLP et le perceptron sont relativement rapides, mais cet avantage ne compense pas leur déficit de performance par rapport aux meilleurs candidats. L'arbre de décision, enfin, est certes peu coûteux, mais sa faiblesse prédictive interdit d'en faire une solution défendable dans le cadre du projet.
+
+\subsection{Analyse transversale des erreurs}
+Les prédictions \texttt{OOF tuned} sur le sous-ensemble de développement (\texttt{n = 792}) permettent de completer l'analyse globale par une lecture plus fine du volume et du profil des erreurs.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|r|r|r|}
+\hline
+\textbf{Modèle} & \textbf{Observations correctes} & \textbf{Erreurs} & \textbf{Part d'erreurs} \\
+\hline
+Régression logistique & \texttt{780} & \texttt{12} & \texttt{1.5 \%} \\
+SVM RBF & \texttt{778} & \texttt{14} & \texttt{1.8 \%} \\
+Forêt aléatoire & \texttt{772} & \texttt{20} & \texttt{2.5 \%} \\
+MLP & \texttt{751} & \texttt{41} & \texttt{5.2 \%} \\
+Perceptron & \texttt{666} & \texttt{126} & \texttt{15.9 \%} \\
+Arbre de décision & \texttt{365} & \texttt{427} & \texttt{53.9 \%} \\
+\hline
+\end{tabular}
+\end{table}
+
+Cette lecture confirme la hiérarchie observée sur \texttt{F1-macro}. Les deux co-leaders commettent très peu d'erreurs à l'échelle du jeu de développement, la forêt aléatoire reste proche, puis l'on observe une rupture plus nette avec le MLP, le perceptron et surtout l'arbre de décision. Autrement dit, la difference entre les meilleurs modèles et les modèles plus faibles ne relève pas seulement de petites fluctuations de score : elle se traduit par un changement d'ordre de grandeur dans le nombre d'erreurs.
+
+Le recouvrement des erreurs entre les trois meilleurs modèles apporte un complément utile a cette lecture.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|r|r|r|}
+\hline
+\textbf{Comparaison} & \textbf{Erreurs communes} & \textbf{Erreurs distinctes} & \textbf{Jaccard} \\
+\hline
+Régression logistique vs SVM & \texttt{10} & \texttt{16} & \texttt{0.625} \\
+Régression logistique vs Forêt aléatoire & \texttt{5} & \texttt{27} & \texttt{0.185} \\
+SVM vs Forêt aléatoire & \texttt{5} & \texttt{29} & \texttt{0.172} \\
+\hline
+\end{tabular}
+\end{table}
+
+La régression logistique et le SVM partagent donc une partie substantielle de leurs erreurs résiduelles. Le recouvrement est même fort: 10 erreurs communes sur 16 erreurs distinctes au total, soit un Jaccard de \texttt{0.625}. Cette proximité est cohérente avec leur quasi-égalité en performance et suggère qu'ils exploitent des structures discriminantes très semblables. La forêt aléatoire partage moins d'erreurs avec eux, ce qui renforce l'idée d'un profil descriptif partiellement différent, sans toutefois remettre en cause son léger retrait sur la métrique principale.
+
+Dans l'ensemble, l'analyse transversale des erreurs suggère que les gains restants ne se jouent plus sur une séparation globale grossière, mais sur un petit nombre de cas ambigus. Les meilleurs modèles se distinguent donc moins par la nature générale du problème que par leur capacité à traiter ces régions frontières résiduelles.
+
+\subsection{Corroboration secondaire sur le jeu de corroboration gelé}
+Le jeu de corroboration gelé fournit une vérification externe secondaire des pipelines retenus. Il ne remplace ni la logique confirmatoire de la \texttt{nested CV}, ni la hiérarchie établie plus haut.
+
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}p{3.0cm}|>{\centering\arraybackslash}p{2.8cm}|>{\centering\arraybackslash}p{2.2cm}|>{\centering\arraybackslash}p{2.2cm}|Y|}
+\hline
+\textbf{Modèle} & \textbf{Variante de référence} & \textbf{F1 corroboration ref} & \textbf{F1 corroboration tuned} & \textbf{Commentaire} \\
+\hline
+Régression logistique & \texttt{scaled\_only} & \texttt{0.9892} & \texttt{0.9892} & Tuning neutre sur la corroboration \\
+SVM RBF & \texttt{scaled\_only} & \texttt{0.9838} & \texttt{0.9946} & Tuning favorable sur la corroboration \\
+Forêt aléatoire & \texttt{default} & \texttt{0.9842} & \texttt{0.9842} & Tuning neutre sur la corroboration \\
+MLP & \texttt{scaled\_only} & \texttt{0.9785} & \texttt{0.9785} & Tuning neutre sur la corroboration \\
+Perceptron & \texttt{scaled\_only} & \texttt{0.8815} & \texttt{0.8694} & Tuning légèrement défavorable sur la corroboration \\
+\hline
+\end{tabularx}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../figures/fr/fig_global_corroboration_holdout.png}
+\caption{Comparaison, pour chaque modèle éligible, entre la variante de référence retenue sur le jeu de développement et la variante \texttt{tuned} sur le jeu de corroboration gelé.}
+\end{figure}
+
+Pris isolement, ces chiffres pourraient inviter à reclasser certains modèles. Une telle lecture serait méthodologiquement fautive. Le jeu de corroboration ne constitue pas ici une nouvelle phase de sélection, mais un contrôle final secondaire sur un split unique. Il confirme globalement la solidité des meilleurs pipelines, mais ne doit pas être mobilisé pour invalider la hiérarchie principale fondée sur les estimations confirmatoires en validation croisée imbriquée.
+
+\subsection{Discussion scientifique}
+Plusieurs enseignements généraux se dégagent de l'étude. Le premier est qu'un modèle linéaire bien régularisé peut rester extrêmement compétitif dans un problème multiclasses à forte dimension dès lors que le preprocessing est adapté. La régression logistique montre ici qu'une structure relativement sobre peut suffire à atteindre un niveau de généralisation très élevé.
+
+Le deuxième enseignement est que le SVM RBF confirme l'existence de structures non linéaires exploitables, sans toutefois apporter de gain net mesurable par rapport à la régression logistique. Dans ce contexte, le choix entre les deux peut donc être orienté par des critères pratiques, en particulier l'interprétabilité et le coût de calcul.
+
+Le troisième enseignement concerne la forêt aléatoire. Sa très bonne performance, obtenue sans scaling, montre qu'une approche arboricole agrégée capture elle aussi efficacement la structure du problème. En revanche, son surcoût important et son léger retrait sur \texttt{F1-macro} rendent moins naturel le choix de cette famille lorsque l'on recherche un compromis global.
+
+Le cas du MLP est également instructif. Le modèle devient compétitif après normalisation, mais il ne dépasse pas les meilleures approches plus simples. Cette observation est cohérente avec un régime de données relativement modeste au regard de la complexité multiclasses du problème : une capacité de représentation plus élevée ne se traduit pas automatiquement par une meilleure généralisation.
+
+Enfin, le contraste entre l'arbre de décision et la forêt aléatoire rappelle le rôle décisif de l'agrégation. L'interprétabilité d'un arbre unique ne suffit pas lorsque la variance du modèle devient trop forte. Ici, l'arbre seul constitue surtout un contrepoint utile pour montrer ce que l'ensemble corrige.
+
+En synthèse, le projet montre surtout qu'un modèle linéaire bien régularisé peut rester très compétitif dès lors que le preprocessing est adapté. Les gains apportés par des modèles plus flexibles restent ici modestes et doivent être jugés à la lumière de leur coût, de leur stabilité et de leur lisibilité.
+
+% ==========================================
+% 5. CONCLUSION
+% ==========================================

@@ -1,0 +1,13 @@
+\section{Conclusion}
+
+Cette étude visait a comparer six familles de modèles sur le jeu de données \texttt{Leaf Classification} dans un cadre séparant explicitement exploration, confirmation et corroboration secondaire. Le classement principal repose sur les variantes \texttt{tuned} évaluées par validation croisée imbriquée, avec \texttt{F1-macro} comme métrique de référence.
+
+Les résultats confirment un duo de tête constitué de la régression logistique et du SVM RBF, avec un léger avantage moyen pour la régression logistique et une forêt aléatoire très proche en soutien. Le MLP reste crédible sans rejoindre ce trio, tandis que le perceptron et surtout l'arbre de décision demeurent en retrait.
+
+Du point de vue pratique, la régression logistique apparaît comme le choix le plus défendable, car elle combine le meilleur score moyen observé, un coût de calcul modéré et une interprétabilité supérieure à celle des alternatives non linéaires les plus proches. Le jeu de corroboration gelé soutient globalement cette lecture sans la redéfinir.
+
+Cette conclusion reste toutefois située: elle repose sur un seul jeu de données, sans validation externe indépendante, et sur un unique schéma de validation croisée imbriquée. Les prolongements les plus naturels consistent donc à répéter l'évaluation sur plusieurs répartitions, à tester la robustesse des conclusions sur des données externes et à approfondir l'analyse des erreurs résiduelles communes aux meilleurs modèles.
+
+% ==========================================
+% 6. ANNEXES
+% ==========================================

@@ -27,9 +27,9 @@ from .notebook_support import (
     construire_tableau_variantes,
     creer_contexte_notebook,
     creer_notebook_context,
-    extraire_images_notebook,
     evaluer_variantes_untuned,
     executer_tuning_confirmatoire,
+    extraire_images_notebook,
 )
 from .plots import (
     tracer_courbes_precision_rappel_ovr,

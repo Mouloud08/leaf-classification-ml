@@ -23,12 +23,18 @@ def tracer_decision_function_histogram(
         bins = 50
         ax.hist(
             donnees.loc[donnees["correct"], "score"],
-            bins=bins, color="#54A24B", alpha=0.75, edgecolor="white",
+            bins=bins,
+            color="#54A24B",
+            alpha=0.75,
+            edgecolor="white",
             label="Correctes",
         )
         ax.hist(
             donnees.loc[~donnees["correct"], "score"],
-            bins=bins, color="#E45756", alpha=0.75, edgecolor="white",
+            bins=bins,
+            color="#E45756",
+            alpha=0.75,
+            edgecolor="white",
             label="Erreurs",
         )
         ax.legend(frameon=False)

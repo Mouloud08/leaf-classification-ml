@@ -1,0 +1,32 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[english]{babel}
+\input{../style.tex}
+\hypersetup{
+  pdftitle={Leaf Classification - portfolio edition},
+  pdfauthor={Mouloud Serir},
+  pdfsubject={Comparison of six machine-learning model families},
+  pdfkeywords={machine learning, classification, scikit-learn, nested cross-validation},
+  pdflang={en-CA}
+}
+
+\begin{document}
+\hypersetup{pageanchor=false}
+\makeportfoliotitle
+  {Machine Learning Project}
+  {Course project}
+  {Leaf Classification}
+  {A comparison of six machine-learning model families\\(Kaggle Leaf Classification)}
+  {Portfolio edition — September 4, 2026}
+\clearpage
+\hypersetup{pageanchor=true}
+\portfolioeditionnotice{This personal portfolio edition revises the presentation of the report submitted in April 2026. It preserves the protocol, results, and scientific conclusions of the archived submission; the revisions concern language, layout, and translation.}
+\tableofcontents
+\newpage
+\input{sections/01-introduction.tex}
+\input{sections/02-eda.tex}
+\input{sections/03-models.tex}
+\input{sections/04-comparison.tex}
+\input{sections/05-conclusion.tex}
+\input{sections/06-appendices.tex}
+\input{sections/07-bibliography.tex}
+\end{document}

@@ -15,6 +15,7 @@ def _is_notebook() -> bool:
     except NameError:
         return False
 
+
 if not _is_notebook():
     matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -241,6 +242,7 @@ def _dispatch_figure(
 
     if fig_name == "arbre_tronque" and model_name == "arbre_decision":
         from sklearn.base import clone
+
         est = clone(estimateur)
         est.fit(X, y)
         class_names = (

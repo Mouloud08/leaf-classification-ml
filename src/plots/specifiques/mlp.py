@@ -17,10 +17,7 @@ def tracer_loss_curve(
     y (droite) affiche la performance de validation de l'arrêt anticipé par itération.
     Une ligne verticale indique l'itération de convergence (dernier point).
     """
-    has_val = (
-        "val_score" in donnees.columns
-        and donnees["val_score"].notna().any()
-    )
+    has_val = "val_score" in donnees.columns and donnees["val_score"].notna().any()
 
     fig, ax1 = plt.subplots(figsize=(11, 6))
 

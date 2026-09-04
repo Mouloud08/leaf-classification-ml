@@ -49,9 +49,7 @@ class ModelArtifactPaths:
 
     def figure_file(self, name: str, category: str = "core") -> Path:
         base = (
-            self.figures_core_dir
-            if category == "core"
-            else self.figures_advanced_dir
+            self.figures_core_dir if category == "core" else self.figures_advanced_dir
         )
         return base / f"{name}.png"
 

@@ -46,6 +46,8 @@ def tracer_validation_curve_max_depth(
     sns.despine(ax=ax)
     fig.tight_layout()
     return fig
+
+
 def tracer_arbre_tronque(
     estimateur: Any,
     feature_names: list[str],

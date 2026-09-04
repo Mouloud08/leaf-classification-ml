@@ -8,6 +8,7 @@ from sklearn.pipeline import Pipeline
 def _get_modeles():
     """Import paresseux pour eviter l'import circulaire."""
     from . import MODELES
+
     return MODELES
 
 

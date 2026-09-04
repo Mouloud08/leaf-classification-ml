@@ -10,28 +10,24 @@ from pathlib import Path
 import pandas as pd
 
 from src.artifacts import (
-    ModelArtifactPaths,
-    GlobalArtifactPaths,
     artifact_integrity_table,
     canonical_artifact_completeness,
     charger_mesures,
+    global_paths,
     model_paths,
     recompute_metrics_from_predictions,
     sauvegarder_mesures,
     sauvegarder_predictions,
-    global_paths,
 )
 from src.artifacts.schema import (
     FigureBundleResult,
-    FigureRequest,
     StudyRunResult,
     TuningRunResult,
     UntunedVariantResult,
 )
 from src.artifacts.validation import (
-    MetricsArtifactValidationError,
-    derive_stage,
     derive_selection_protocol,
+    derive_stage,
     normaliser_mesures_pour_schema,
     valider_artefacts_mesures,
 )
@@ -49,19 +45,29 @@ class TestArtifactPaths(unittest.TestCase):
     def test_model_paths_structure(self) -> None:
         paths = model_paths("perceptron", root=Path("/tmp/test"))
         self.assertEqual(paths.metrics_dir, Path("/tmp/test/perceptron/metrics"))
-        self.assertEqual(paths.predictions_dir, Path("/tmp/test/perceptron/predictions"))
+        self.assertEqual(
+            paths.predictions_dir, Path("/tmp/test/perceptron/predictions")
+        )
         self.assertEqual(paths.tuning_dir, Path("/tmp/test/perceptron/tuning"))
-        self.assertEqual(paths.figures_core_dir, Path("/tmp/test/perceptron/figures/core"))
-        self.assertEqual(paths.figures_advanced_dir, Path("/tmp/test/perceptron/figures/advanced"))
+        self.assertEqual(
+            paths.figures_core_dir, Path("/tmp/test/perceptron/figures/core")
+        )
+        self.assertEqual(
+            paths.figures_advanced_dir, Path("/tmp/test/perceptron/figures/advanced")
+        )
 
     def test_model_paths_files(self) -> None:
         paths = model_paths("svm", root=Path("/tmp/test"))
-        self.assertEqual(paths.metrics_file("default"), Path("/tmp/test/svm/metrics/default.json"))
+        self.assertEqual(
+            paths.metrics_file("default"), Path("/tmp/test/svm/metrics/default.json")
+        )
         self.assertEqual(
             paths.predictions_file("tuned"),
             Path("/tmp/test/svm/predictions/tuned__predictions.csv"),
         )
-        self.assertEqual(paths.grid_search_file(), Path("/tmp/test/svm/tuning/grid_search.csv"))
+        self.assertEqual(
+            paths.grid_search_file(), Path("/tmp/test/svm/tuning/grid_search.csv")
+        )
         self.assertEqual(
             paths.figure_file("confusion", category="core"),
             Path("/tmp/test/svm/figures/core/confusion.png"),
@@ -73,9 +79,12 @@ class TestArtifactPaths(unittest.TestCase):
 
     def test_global_paths_structure(self) -> None:
         paths = global_paths(root=Path("/tmp/test"))
-        self.assertEqual(paths.manifest_file, Path("/tmp/test/global/study_manifest.json"))
         self.assertEqual(
-            paths.metrics_summary_file, Path("/tmp/test/global/comparison/metrics_summary.csv")
+            paths.manifest_file, Path("/tmp/test/global/study_manifest.json")
+        )
+        self.assertEqual(
+            paths.metrics_summary_file,
+            Path("/tmp/test/global/comparison/metrics_summary.csv"),
         )
 
     def test_ensure_dirs(self) -> None:
@@ -128,6 +137,7 @@ class TestArtifactSchema(unittest.TestCase):
         )
         d = result.to_dict()
         import math
+
         self.assertTrue(math.isnan(d["train_accuracy_mean"]))
         self.assertTrue(math.isnan(d["generalization_gap_f1_macro"]))
 
@@ -289,11 +299,15 @@ class TestCanonicalArtifactLoading(unittest.TestCase):
             shutil.rmtree(tmp, ignore_errors=True)
 
         self.assertEqual(
-            completeness.loc[completeness["modele"] == "modele_integrite", "canonical_complete"].item(),
+            completeness.loc[
+                completeness["modele"] == "modele_integrite", "canonical_complete"
+            ].item(),
             True,
         )
         self.assertEqual(
-            completeness.loc[completeness["modele"] == "modele_manquant", "canonical_complete"].item(),
+            completeness.loc[
+                completeness["modele"] == "modele_manquant", "canonical_complete"
+            ].item(),
             False,
         )
         self.assertEqual(integrity.iloc[0]["status"], "ok")
